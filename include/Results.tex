@@ -19,10 +19,10 @@ The final hardware and software configuration should be fixed in the reproducibi
 
 \begin{table}[H]
 \centering
-\caption{Experimental hardware and software environment.}
-\label{tab:results-env}
-\begin{tabular}{l|p{0.62\linewidth}} \hline\hline
-Item & Value \\ \hline
+\begin{tabular}{@{}lp{0.62\linewidth}@{}}
+\toprule
+Item & Value \\
+\midrule
 Node name & \texttt{ganymede} \\
 GPU model & TODO: insert final GPU model, e.g., H100, H20, A100, or V100. \\
 Number of GPUs & TODO: insert final number of GPUs. \\
@@ -33,8 +33,11 @@ Operating system & TODO: insert Linux distribution and kernel version. \\
 CUDA toolkit & TODO: insert final CUDA version. \\
 NVML version & TODO: insert final NVML version. \\
 CUDASTF version & TODO: insert repository commit hash. \\
-Compiler and flags & TODO: insert compiler version and build flags. \\ \hline\hline
+Compiler and flags & TODO: insert compiler version and build flags. \\
+\bottomrule
 \end{tabular}
+\caption{Experimental hardware and software environment.}
+\label{tab:results-env}
 \end{table}
 
 All placement experiments reported as final placement evidence use DVFS disabled. This isolates the placement effect from frequency-control effects. For each benchmark and scheduler, a fresh process is launched for each repetition, avoiding cross-run scheduler or runtime state carry-over.
@@ -46,18 +49,21 @@ The evaluation uses two classes of benchmarks. The first class consists of local
 
 \begin{table}[H]
 \centering
-\caption{Benchmarks used in the results chapter.}
-\label{tab:results-benchmarks}
-\begin{tabular}{l|l|p{0.50\linewidth}} \hline\hline
-Benchmark & Role & Purpose \\ \hline
+\begin{tabular}{@{}llp{0.50\linewidth}@{}}
+\toprule
+Benchmark & Role & Purpose \\
+\midrule
 Domain Decomposition Halo Exchange & Main placement benchmark & Exposes repeated halo-data ownership movement across GPUs. \\
 Blocked Low-Rank Tile Update & Main placement benchmark & Exposes repeated updates to hot logical data tiles. \\
 Cholesky & Sanity benchmark & Checks compatibility on a standard irregular multi-GPU workload. \\
 CG & Sanity benchmark & Checks behavior on a sparse iterative workload. \\
 FDTD & Sanity benchmark & Checks behavior on a stencil-like workload. \\
 MiniWeather & Sanity benchmark & Checks behavior on a weather-like mini-application. \\
-MixedPCG & Historical DVFS benchmark & Provides early energy-aware runtime evidence. \\ \hline\hline
+MixedPCG & Historical DVFS benchmark & Provides early energy-aware runtime evidence. \\
+\bottomrule
 \end{tabular}
+\caption{Benchmarks used in the results chapter.}
+\label{tab:results-benchmarks}
 \end{table}
 
 \subsection{Schedulers Compared}
@@ -169,17 +175,20 @@ The compared schedulers are \(\mathrm{HEFT}\), \(\mathrm{Bandit}\), and \(\mathr
 
 \begin{table}[H]
 \centering
-\caption{Main placement experiment configuration.}
-\label{tab:results-main-config}
-\begin{tabular}{l|p{0.62\linewidth}} \hline\hline
-Item & Value \\ \hline
+\begin{tabular}{@{}lp{0.62\linewidth}@{}}
+\toprule
+Item & Value \\
+\midrule
 Job directory & \texttt{jobs/20260428-134943-ceg-heft-placement-compare-ganymede} \\
 Schedulers & \(\mathrm{HEFT}\), \(\mathrm{Bandit}\), \(\mathrm{LAR\mbox{-}HEFT}\) \\
 Benchmarks & Domain Decomposition Halo Exchange; Blocked Low-Rank Tile Update \\
 Runs & 5 \\
 DVFS & Disabled \\
-Isolation & Fresh process per scheduler, benchmark, and run \\ \hline\hline
+Isolation & Fresh process per scheduler, benchmark, and run \\
+\bottomrule
 \end{tabular}
+\caption{Main placement experiment configuration.}
+\label{tab:results-main-config}
 \end{table}
 
 \subsection{Runtime Results}
@@ -189,28 +198,34 @@ Table~\ref{tab:results-main-runtime} reports the mean wall time for the main pla
 
 \begin{table}[H]
 \centering
-\caption{Main placement runtime results on locality-sensitive benchmarks. Lower is better.}
-\label{tab:results-main-runtime}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|r|r|r} \hline\hline
-Benchmark & HEFT (ms) & Bandit (ms) & Bandit vs HEFT & LAR-HEFT (ms) & LAR-HEFT vs HEFT \\ \hline
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Benchmark & HEFT (ms) & Bandit (ms) & Bandit vs HEFT & LAR-HEFT (ms) & LAR-HEFT vs HEFT \\
+\midrule
 Domain Decomposition Halo Exchange & 20748.580 & 18819.460 & \(-9.298\%\) & 19192.900 & \(-7.498\%\) \\
-Blocked Low-Rank Tile Update & 18640.740 & 16810.940 & \(-9.816\%\) & 16708.080 & \(-10.368\%\) \\ \hline\hline
+Blocked Low-Rank Tile Update & 18640.740 & 16810.940 & \(-9.816\%\) & 16708.080 & \(-10.368\%\) \\
+\bottomrule
 \end{tabular}
 }
+\caption{Main placement runtime results on locality-sensitive benchmarks. Lower is better.}
+\label{tab:results-main-runtime}
 \end{table}
 
 The normalized results are shown in Table~\ref{tab:results-normalized-runtime}. On Domain Decomposition Halo Exchange, Bandit is more aggressive and reaches a normalized runtime of \(0.907\), while LAR-HEFT reaches \(0.925\). On Blocked Low-Rank Tile Update, LAR-HEFT reaches \(0.896\), slightly outperforming Bandit.
 
 \begin{table}[H]
 \centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Benchmark & HEFT & Bandit & LAR-HEFT \\
+\midrule
+Domain Decomposition Halo Exchange & 1.000 & 0.907 & 0.925 \\
+Blocked Low-Rank Tile Update & 1.000 & 0.902 & 0.896 \\
+\bottomrule
+\end{tabular}
 \caption{Normalized runtime relative to HEFT. Lower is better.}
 \label{tab:results-normalized-runtime}
-\begin{tabular}{l|r|r|r} \hline\hline
-Benchmark & HEFT & Bandit & LAR-HEFT \\ \hline
-Domain Decomposition Halo Exchange & 1.000 & 0.907 & 0.925 \\
-Blocked Low-Rank Tile Update & 1.000 & 0.902 & 0.896 \\ \hline\hline
-\end{tabular}
 \end{table}
 
 These results support the main placement claim: on workloads where logical-data ownership matters, a HEFT-residual locality gate can improve runtime while preserving HEFT as the fallback baseline.
@@ -222,32 +237,38 @@ Table~\ref{tab:results-ddhe-movement} reports the data-movement metrics for Doma
 
 \begin{table}[H]
 \centering
-\caption{Data movement on Domain Decomposition Halo Exchange. Lower is better.}
-\label{tab:results-ddhe-movement}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|r|r} \hline\hline
-Scheduler & Owner switches & Copy events & Copy bytes & Copy time \\ \hline
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Scheduler & Owner switches & Copy events & Copy bytes & Copy time \\
+\midrule
 HEFT & 703 & 959 & 6.687 GB & 133.743 ms \\
 Bandit & 55 \((-92.176\%)\) & 311 & 2.169 GB \((-67.570\%)\) & 43.372 ms \((-67.571\%)\) \\
-LAR-HEFT & 367 \((-47.795\%)\) & 623 & 4.344 GB \((-35.036\%)\) & 86.884 ms \((-35.037\%)\) \\ \hline\hline
+LAR-HEFT & 367 \((-47.795\%)\) & 623 & 4.344 GB \((-35.036\%)\) & 86.884 ms \((-35.037\%)\) \\
+\bottomrule
 \end{tabular}
 }
+\caption{Data movement on Domain Decomposition Halo Exchange. Lower is better.}
+\label{tab:results-ddhe-movement}
 \end{table}
 
 Table~\ref{tab:results-blrtu-movement} reports the data-movement metrics for Blocked Low-Rank Tile Update. Bandit and LAR-HEFT produce the same data-movement result on this benchmark. Both reduce owner switches by \(67.337\%\), copy bytes by \(22.908\%\), and copy time by \(22.908\%\) relative to HEFT.
 
 \begin{table}[H]
 \centering
-\caption{Data movement on Blocked Low-Rank Tile Update. Lower is better.}
-\label{tab:results-blrtu-movement}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|r|r} \hline\hline
-Scheduler & Owner switches & Copy events & Copy bytes & Copy time \\ \hline
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Scheduler & Owner switches & Copy events & Copy bytes & Copy time \\
+\midrule
 HEFT & 199 & 31592 & 7.470 GB & 149.401 ms \\
 Bandit & 65 \((-67.337\%)\) & 31490 & 5.759 GB \((-22.908\%)\) & 115.176 ms \((-22.908\%)\) \\
-LAR-HEFT & 65 \((-67.337\%)\) & 31490 & 5.759 GB \((-22.908\%)\) & 115.176 ms \((-22.908\%)\) \\ \hline\hline
+LAR-HEFT & 65 \((-67.337\%)\) & 31490 & 5.759 GB \((-22.908\%)\) & 115.176 ms \((-22.908\%)\) \\
+\bottomrule
 \end{tabular}
 }
+\caption{Data movement on Blocked Low-Rank Tile Update. Lower is better.}
+\label{tab:results-blrtu-movement}
 \end{table}
 
 \subsection{Result Mechanism}
@@ -332,16 +353,19 @@ The compared schedulers are HEFT, Bandit, and LAR-HEFT. The benchmarks are Chole
 
 \begin{table}[H]
 \centering
-\caption{Standard benchmark sanity-check configuration.}
-\label{tab:results-standard-config}
-\begin{tabular}{l|p{0.62\linewidth}} \hline\hline
-Item & Value \\ \hline
+\begin{tabular}{@{}lp{0.62\linewidth}@{}}
+\toprule
+Item & Value \\
+\midrule
 Job directory & \texttt{jobs/20260428-142523-ceg-heft-standard-4bench-ganymede} \\
 Schedulers & HEFT, Bandit, LAR-HEFT \\
 Benchmarks & Cholesky, CG, FDTD, MiniWeather \\
 Runs & 3 \\
-DVFS & Disabled \\ \hline\hline
+DVFS & Disabled \\
+\bottomrule
 \end{tabular}
+\caption{Standard benchmark sanity-check configuration.}
+\label{tab:results-standard-config}
 \end{table}
 
 \subsection{Wall-Time Results}
@@ -351,17 +375,20 @@ Table~\ref{tab:results-standard-walltime} reports harness wall time. Cholesky sh
 
 \begin{table}[H]
 \centering
-\caption{Standard benchmark wall-time sanity check. Lower is better.}
-\label{tab:results-standard-walltime}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|r|p{0.29\linewidth}} \hline\hline
-Benchmark & HEFT (ms) & Bandit (ms) & LAR-HEFT (ms) & Interpretation \\ \hline
+\begin{tabular}{@{}lrrrp{0.29\linewidth}@{}}
+\toprule
+Benchmark & HEFT (ms) & Bandit (ms) & LAR-HEFT (ms) & Interpretation \\
+\midrule
 Cholesky & 15359.693 & 14805.137 \((-3.610\%)\) & 14793.343 \((-3.687\%)\) & Stable positive result. \\
 CG & 15412.320 & 15364.705 \((-0.309\%)\) & 15394.864 \((-0.113\%)\) & Approximately neutral. \\
 FDTD & 21236.918 & 21629.416 \((+1.848\%)\) & 21320.690 \((+0.394\%)\) & Approximately neutral or small regression. \\
-MiniWeather & 14629.525 & 14550.235 \((-0.542\%)\) & 14716.207 \((+0.593\%)\) & Within small wall-time variation. \\ \hline\hline
+MiniWeather & 14629.525 & 14550.235 \((-0.542\%)\) & 14716.207 \((+0.593\%)\) & Within small wall-time variation. \\
+\bottomrule
 \end{tabular}
 }
+\caption{Standard benchmark wall-time sanity check. Lower is better.}
+\label{tab:results-standard-walltime}
 \end{table}
 
 \subsection{Internal Kernel-Time Results}
@@ -371,17 +398,20 @@ Table~\ref{tab:results-standard-kernel} reports internal kernel time from the sa
 
 \begin{table}[H]
 \centering
-\caption{Internal kernel-time sanity check. Lower is better.}
-\label{tab:results-standard-kernel}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|r} \hline\hline
-Benchmark & HEFT (ms) & Bandit (ms) & LAR-HEFT (ms) \\ \hline
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Benchmark & HEFT (ms) & Bandit (ms) & LAR-HEFT (ms) \\
+\midrule
 Cholesky & 120.144 & 46.501 \((-61.295\%)\) & 51.468 \((-57.162\%)\) \\
 CG & 1026.333 & 978.333 \((-4.677\%)\) & 986.667 \((-3.865\%)\) \\
 FDTD & 6784.000 & 7012.667 \((+3.371\%)\) & 6755.333 \((-0.423\%)\) \\
-MiniWeather & 135.667 & 98.667 \((-27.273\%)\) & 102.333 \((-24.570\%)\) \\ \hline\hline
+MiniWeather & 135.667 & 98.667 \((-27.273\%)\) & 102.333 \((-24.570\%)\) \\
+\bottomrule
 \end{tabular}
 }
+\caption{Internal kernel-time sanity check. Lower is better.}
+\label{tab:results-standard-kernel}
 \end{table}
 
 The standard benchmarks are therefore not used as the main evidence for the locality scheduler. Instead, they serve as compatibility and no-catastrophic-regression evidence. The main performance claim remains tied to the locality-sensitive benchmarks where runtime improvement and data-movement reduction align.
@@ -396,15 +426,18 @@ An early \texttt{slack} scheduler attempted to use slack directly for placement.
 
 \begin{table}[H]
 \centering
-\caption{Negative result for the naive slack scheduler. Lower is better.}
-\label{tab:results-slack-negative}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|r} \hline\hline
-Benchmark & HEFT (ms) & Bandit (ms) & Slack (ms) \\ \hline
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Benchmark & HEFT (ms) & Bandit (ms) & Slack (ms) \\
+\midrule
 Domain Decomposition Halo Exchange & 20738.860 & 18701.960 \((-9.822\%)\) & 33101.740 \((+59.612\%)\) \\
-Blocked Low-Rank Tile Update & 18648.960 & 16805.720 \((-9.884\%)\) & 18919.420 \((+1.450\%)\) \\ \hline\hline
+Blocked Low-Rank Tile Update & 18648.960 & 16805.720 \((-9.884\%)\) & 18919.420 \((+1.450\%)\) \\
+\bottomrule
 \end{tabular}
 }
+\caption{Negative result for the naive slack scheduler. Lower is better.}
+\label{tab:results-slack-negative}
 \end{table}
 
 This negative result is important because it motivates the certificate-based design. A scheduler should not deviate from HEFT simply because it observes apparent slack. Instead, it must bind together:
@@ -424,38 +457,44 @@ The uploaded documents recommend an ablation study but do not yet provide final 
 
 \begin{table}[H]
 \centering
-\caption{Planned gate-adaptation ablation. Values marked TODO require final runs.}
-\label{tab:results-gate-ablation}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|r|r|r} \hline\hline
-Scheduler & Runtime & Copy bytes & Copy time & Owner switches & Certificate pass rate \\ \hline
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Scheduler & Runtime & Copy bytes & Copy time & Owner switches & Certificate pass rate \\
+\midrule
 HEFT & TODO & TODO & TODO & TODO & N/A \\
 Fixed default gate & TODO & TODO & TODO & TODO & TODO \\
 Fixed aggressive gate & TODO & TODO & TODO & TODO & TODO \\
 Adaptive LAR-HEFT & TODO & TODO & TODO & TODO & TODO \\
-Bandit & TODO & TODO & TODO & TODO & TODO \\ \hline\hline
+Bandit & TODO & TODO & TODO & TODO & TODO \\
+\bottomrule
 \end{tabular}
 }
+\caption{Planned gate-adaptation ablation. Values marked TODO require final runs.}
+\label{tab:results-gate-ablation}
 \end{table}
 
 The intended interpretation is as follows. A fixed aggressive gate may perform well on strong bad cases but may be less safe on workloads with high criticality or high EFT penalty. A fixed default gate is safer but may miss locality opportunities. Adaptive LAR-HEFT should balance these cases by selecting the gate profile at the window level.
 
 \begin{table}[H]
 \centering
-\caption{Planned certificate-component ablation. Values marked TODO require final runs.}
-\label{tab:results-certificate-ablation}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|r|r} \hline\hline
-Variant & Runtime & Copy time & Owner switches & Harmful deviations \\ \hline
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Variant & Runtime & Copy time & Owner switches & Harmful deviations \\
+\midrule
 Full LAR-HEFT & TODO & TODO & TODO & TODO \\
 Without absolute copy-saving threshold & TODO & TODO & TODO & TODO \\
 Without relative copy-saving threshold & TODO & TODO & TODO & TODO \\
 Without absolute EFT bound & TODO & TODO & TODO & TODO \\
 Without relative EFT bound & TODO & TODO & TODO & TODO \\
 Without criticality-dependent thresholds & TODO & TODO & TODO & TODO \\
-Without owner-switch term & TODO & TODO & TODO & TODO \\ \hline\hline
+Without owner-switch term & TODO & TODO & TODO & TODO \\
+\bottomrule
 \end{tabular}
 }
+\caption{Planned certificate-component ablation. Values marked TODO require final runs.}
+\label{tab:results-certificate-ablation}
 \end{table}
 
 No conclusion is claimed from these ablation tables until the final measurements are available.
@@ -486,18 +525,21 @@ provided that certificate logging is enabled and no log records are dropped.
 
 \begin{table}[H]
 \centering
-\caption{Explainability metrics. Final measured values require certificate-log replay.}
-\label{tab:results-explainability}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|p{0.45\linewidth}|p{0.25\linewidth}} \hline\hline
-Metric & Definition & Current status \\ \hline
+\begin{tabular}{@{}lp{0.45\linewidth}p{0.25\linewidth}@{}}
+\toprule
+Metric & Definition & Current status \\
+\midrule
 Certificate coverage & Non-HEFT decisions with valid certificate divided by all non-HEFT decisions. & \(100\%\) by construction; TODO: confirm from logs. \\
 Decision fidelity & Replayed decisions matching actual decisions divided by all decisions. & TODO: replay from \texttt{LAR\_HEFT\_TASK\_CERTIFICATE}. \\
 Certificate validity & Fraction of certificates whose stated conditions reproduce pass/fail behavior. & TODO: replay with threshold perturbation. \\
 Explanation sparsity & Average number of active reasons per decision. & TODO: measure from reject-reason logs. \\
-Window attribution consistency & Fraction of windows whose feature signs match monotonic constraints. & TODO: measure from window logs. \\ \hline\hline
+Window attribution consistency & Fraction of windows whose feature signs match monotonic constraints. & TODO: measure from window logs. \\
+\bottomrule
 \end{tabular}
 }
+\caption{Explainability metrics. Final measured values require certificate-log replay.}
+\label{tab:results-explainability}
 \end{table}
 
 \subsection{Decision Fidelity}
@@ -545,10 +587,10 @@ A representative explanation table should report feature contributions. Since fi
 
 \begin{table}[H]
 \centering
-\caption{Template for a window-level feature-attribution explanation. Values marked TODO require final logs.}
-\label{tab:results-window-explanation-template}
-\begin{tabular}{l|r|r|r} \hline\hline
-Feature & Value & Coefficient & Contribution \\ \hline
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Feature & Value & Coefficient & Contribution \\
+\midrule
 Mean criticality & TODO & TODO & TODO \\
 High-criticality fraction & TODO & TODO & TODO \\
 Baseline copy pressure & TODO & TODO & TODO \\
@@ -556,11 +598,15 @@ Locality opportunity rate & TODO & TODO & TODO \\
 Mean best copy saving & TODO & TODO & TODO \\
 Mean best EFT penalty & TODO & TODO & TODO \\
 Owner-switch risk & TODO & TODO & TODO \\
-Device load imbalance & TODO & TODO & TODO \\ \hline
+Device load imbalance & TODO & TODO & TODO \\
+\midrule
 Predicted advantage \(\beta^T x(W)\) & \multicolumn{3}{r}{TODO} \\
 Uncertainty bonus \(U(W)\) & \multicolumn{3}{r}{TODO} \\
-Selected profile & \multicolumn{3}{r}{TODO} \\ \hline\hline
+Selected profile & \multicolumn{3}{r}{TODO} \\
+\bottomrule
 \end{tabular}
+\caption{Template for a window-level feature-attribution explanation. Values marked TODO require final logs.}
+\label{tab:results-window-explanation-template}
 \end{table}
 
 \section{Historical DVFS and Energy-Aware Results}
@@ -586,14 +632,17 @@ E_{\mathrm{HEFT}} = 37296.40\ \mathrm{J}.
 
 \begin{table}[H]
 \centering
-\caption{Historical MixedPCG run5 DVFS result summary.}
-\label{tab:results-mixedpcg-run5}
-\begin{tabular}{l|p{0.60\linewidth}} \hline\hline
-Result & Value \\ \hline
+\begin{tabular}{@{}lp{0.60\linewidth}@{}}
+\toprule
+Result & Value \\
+\midrule
 Fastest point & \texttt{energy\_aware\_v2.min\_time}, 149240 ms \((-1.72\%\) vs HEFT) \\
 Lowest energy & \texttt{energy\_aware\_v2.min\_e2dp}, 36438.47 J \((-2.30\%\) vs HEFT) \\
-Best EDP / ED$^{2}$P / E$^{2}$DP & \texttt{energy\_aware\_v2.min\_e2dp}, \(-3.93\%\) / \(-5.54\%\) / \(-6.14\%\) vs HEFT \\ \hline\hline
+Best EDP / ED$^{2}$P / E$^{2}$DP & \texttt{energy\_aware\_v2.min\_e2dp}, \(-3.93\%\) / \(-5.54\%\) / \(-6.14\%\) vs HEFT \\
+\bottomrule
 \end{tabular}
+\caption{Historical MixedPCG run5 DVFS result summary.}
+\label{tab:results-mixedpcg-run5}
 \end{table}
 
 This result validates the energy-aware pipeline direction, but it should not be used as a final absolute energy claim because the corresponding profile is described as a script-generated smoke profile rather than a final measured one.
@@ -605,18 +654,21 @@ The MixedPCG run6 anchor objective is \texttt{min\_time}. Table~\ref{tab:results
 
 \begin{table}[H]
 \centering
-\caption{Historical MixedPCG run6 result for anchor objective \texttt{min\_time}.}
-\label{tab:results-mixedpcg-run6}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|r|r|r} \hline\hline
-Metric & HEFT & v1 & v2 & v2 vs HEFT & v2 vs v1 \\ \hline
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Metric & HEFT & v1 & v2 & v2 vs HEFT & v2 vs v1 \\
+\midrule
 Time (ms) & 153352 & 142455 & 141101 & \(-7.99\%\) & \(-0.95\%\) \\
 Energy (J) & 37066.16 & 34899.04 & 34675.33 & \(-6.45\%\) & \(-0.64\%\) \\
 EDP & 5684170.28 & 4971542.62 & 4892724.13 & \(-13.92\%\) & \(-1.59\%\) \\
 ED$^{2}$P & 871678881.42 & 708221104.18 & 690368266.83 & \(-20.80\%\) & \(-2.52\%\) \\
-E$^{2}$DP & 210690384341.24 & 173502060580.41 & 169656837075.26 & \(-19.48\%\) & \(-2.22\%\) \\ \hline\hline
+E$^{2}$DP & 210690384341.24 & 173502060580.41 & 169656837075.26 & \(-19.48\%\) & \(-2.22\%\) \\
+\bottomrule
 \end{tabular}
 }
+\caption{Historical MixedPCG run6 result for anchor objective \texttt{min\_time}.}
+\label{tab:results-mixedpcg-run6}
 \end{table}
 
 The result suggests that energy-aware control can improve both runtime and energy metrics on some workloads. However, other objectives in the same historical report can be dominated by earlier versions, so the final thesis should frame DVFS as a promising runtime-integrated extension rather than as a fully stable outperforming scheduler.
@@ -632,17 +684,20 @@ The main observation is that \texttt{energy\_aware\_v2} is not always the fastes
 
 \begin{table}[H]
 \centering
-\caption{Historical Cholesky energy-aware trade-off: v2 relative to v1.}
-\label{tab:results-cholesky-dvfs}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|r|r} \hline\hline
-Objective & v2 vs v1 time & v2 vs v1 energy & v2 vs v1 EDP & v2 vs v1 E$^{2}$DP \\ \hline
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Objective & v2 vs v1 time & v2 vs v1 energy & v2 vs v1 EDP & v2 vs v1 E$^{2}$DP \\
+\midrule
 \texttt{min\_time} & \(+12.694\%\) & \(+14.094\%\) & \(+28.577\%\) & \(+46.699\%\) \\
 \texttt{min\_energy} & \(+26.594\%\) & \(-28.571\%\) & \(-9.575\%\) & \(-35.410\%\) \\
 \texttt{min\_edp} & \(+17.671\%\) & \(-32.727\%\) & \(-20.839\%\) & \(-46.746\%\) \\
-\texttt{min\_ed2p} & \(+15.519\%\) & \(-29.553\%\) & \(-18.621\%\) & \(-42.671\%\) \\ \hline\hline
+\texttt{min\_ed2p} & \(+15.519\%\) & \(-29.553\%\) & \(-18.621\%\) & \(-42.671\%\) \\
+\bottomrule
 \end{tabular}
 }
+\caption{Historical Cholesky energy-aware trade-off: v2 relative to v1.}
+\label{tab:results-cholesky-dvfs}
 \end{table}
 
 This result demonstrates a real energy--runtime trade-off. Some objectives reduce energy and composite metrics at the cost of additional runtime. Because the experiment is historical and uses an earlier implementation path, it should be reported as supporting evidence for the feasibility of runtime-integrated DVFS rather than as a final headline result.
@@ -676,16 +731,19 @@ and
 
 \begin{table}[H]
 \centering
-\caption{Transition-hiding result template. Values marked TODO require final DVFS logs.}
-\label{tab:results-transition-hiding}
-\begin{tabular}{l|r} \hline\hline
-Metric & Value \\ \hline
+\begin{tabular}{@{}lr@{}}
+\toprule
+Metric & Value \\
+\midrule
 Transition count \(N_{\mathrm{tr}}\) & TODO \\
 Total transition latency \(L_{\mathrm{tr}}\) & TODO \\
 Hidden transition latency \(L_{\mathrm{hidden}}\) & TODO \\
 Visible transition latency \(L_{\mathrm{visible}}\) & TODO \\
-Hidden transition fraction \(\eta_{\mathrm{hidden}}\) & TODO \\ \hline\hline
+Hidden transition fraction \(\eta_{\mathrm{hidden}}\) & TODO \\
+\bottomrule
 \end{tabular}
+\caption{Transition-hiding result template. Values marked TODO require final DVFS logs.}
+\label{tab:results-transition-hiding}
 \end{table}
 
 \section{Scheduler Overhead}
@@ -695,20 +753,23 @@ The final thesis should report scheduler overhead to show that explainability an
 
 \begin{table}[H]
 \centering
-\caption{Scheduler overhead reporting template. Values marked TODO require final profiling.}
-\label{tab:results-overhead-template}
 \resizebox{\linewidth}{!}{
-\begin{tabular}{l|r|r|p{0.34\linewidth}} \hline\hline
-Component & Absolute overhead & Runtime share & Notes \\ \hline
+\begin{tabular}{@{}lrrp{0.34\linewidth}@{}}
+\toprule
+Component & Absolute overhead & Runtime share & Notes \\
+\midrule
 HEFT candidate evaluation & TODO & TODO & Per-task candidate EFT computation. \\
 MSI residency update & TODO & TODO & Logical-data state maintenance. \\
 Certificate evaluation & TODO & TODO & Locality Dominance Certificate check. \\
 Window controller & TODO & TODO & Gate-profile selection. \\
 Shadow evaluation & TODO & TODO & Paired default/aggressive window simulation. \\
 Logging & TODO & TODO & Certificate and window explanation logs. \\
-DVFS tuner & TODO & TODO & Asynchronous frequency-control overhead. \\ \hline\hline
+DVFS tuner & TODO & TODO & Asynchronous frequency-control overhead. \\
+\bottomrule
 \end{tabular}
 }
+\caption{Scheduler overhead reporting template. Values marked TODO require final profiling.}
+\label{tab:results-overhead-template}
 \end{table}
 
 \section{Threats to Validity}

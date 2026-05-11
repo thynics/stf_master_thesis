@@ -45,12 +45,10 @@ where $A(s,g)$ is the predicted time at which $s$ is available on $g$, and $X(s,
 
 \begin{table}[t]
 \centering
-\caption{Main runtime state used by the placement and DVFS layers.}
-\label{tab:methods-state}
-\begin{tabular}{l|p{0.67\linewidth}}
-\hline\hline
+\begin{tabular}{@{}lp{0.67\linewidth}@{}}
+\toprule
 Symbol or state & Meaning \\
-\hline
+\midrule
 $R[g]$ & Predicted ready time of GPU $g$. \\
 $M[s,g]$ & MSI-style residency state of logical data object $s$ on GPU $g$. \\
 $C(t)$ & Estimated execution time of task $t$. \\
@@ -59,8 +57,10 @@ $d(t)$ & Number of dependency descriptors attached to task $t$ across all access
 $q(t)$ & Local criticality proxy used by placement and DVFS. \\
 $p_W$ & Gate profile selected for the current placement window. \\
 $\ell_g$ & Committed DVFS level currently assigned to GPU $g$. \\
-\hline\hline
+\bottomrule
 \end{tabular}
+\caption{Main runtime state used by the placement and DVFS layers.}
+\label{tab:methods-state}
 \end{table}
 
 \section{HEFT Baseline Candidate Evaluation}
@@ -181,16 +181,16 @@ p\in\{\mathrm{default},\mathrm{aggressive}\}.
 Each profile defines a maximum normalized finish-time penalty and a minimum normalized copy gain. The implementation uses separate thresholds for critical and non-critical tasks. With the default parameterization,
 \begin{table}[t]
 \centering
-\caption{Default residual-gate profiles in the current implementation.}
-\label{tab:gate-profiles}
-\begin{tabular}{l|cc|cc}
-\hline\hline
+\begin{tabular}{@{}lcccc@{}}
+\toprule
 Profile & $\delta_{\mathrm{crit}}$ & $\delta_{\mathrm{noncrit}}$ & $\tau_{\mathrm{crit}}$ & $\tau_{\mathrm{noncrit}}$ \\
-\hline
+\midrule
 $\mathrm{default}$ & $0.003$ & $0.015$ & $0.25$ & $0.15$ \\
 $\mathrm{aggressive}$ & $0.004$ & $0.020$ & $0.20$ & $0.10$ \\
-\hline\hline
+\bottomrule
 \end{tabular}
+\caption{Default residual-gate profiles in the current implementation.}
+\label{tab:gate-profiles}
 \end{table}
 where $\delta$ denotes the allowed value of $\rho_F$ and $\tau$ denotes the required value of $\rho_K$. The aggressive profile is more permissive because it allows a slightly larger finish-time penalty and requires a smaller copy gain.
 
@@ -669,40 +669,9 @@ where $f_{\mathrm{mem}}$ remains at the highest supported memory clock on the pr
 \section{Implementation Interface}
 \label{sec:methods-implementation-interface}
 
-The placement scheduler is selected with \texttt{CUDASTF\_SCHEDULE}. Table~\ref{tab:method-interface} summarizes the paper-level configuration interface used to describe the implementation. Experimental code names are intentionally omitted from the method description; the names below refer to the stable scheduler functions rather than to intermediate development aliases.
+The implementation exposes the placement method through the stable scheduler name \texttt{bandit\_scheduler}. The guarded DVFS extension is exposed as \texttt{win\_dvfs}, which selects the same HEFT-relative bandit placement path and enables the windowed proposal--commit frequency controller. Detailed environment variables are treated as reproducibility metadata rather than as part of the method itself.
 
-\begin{table}[t]
-\centering
-\caption{Scheduler aliases and runtime configuration interface.}
-\label{tab:method-interface}
-\begin{tabular}{p{0.44\linewidth}|p{0.48\linewidth}}
-\hline\hline
-Configuration & Meaning \\
-\hline
-\texttt{CUDASTF\_SCHEDULE=}\newline\texttt{bandit\_scheduler} & Default placement method: HEFT baseline plus copy-only residual gate and window-level LinUCB gate selection. \\
-\texttt{CUDASTF\_SCHEDULE=}\newline\texttt{win\_dvfs} & Placement scheduler with the windowed proposal--commit DVFS layer enabled. \\
-\texttt{CUDASTF\_SCHEDULE=}\newline\texttt{win\_dvfs\_midrank}$\langle N\rangle$ & \texttt{win\_dvfs} path with a specified mid-frequency rank and the next lower rank used for low frequency. \\
-\texttt{CUDASTF\_BANDIT\_}\newline\texttt{WINDOW\_SIZE} & Number of tasks per placement-controller window. \\
-\texttt{CUDASTF\_BANDIT\_ALPHA} & LinUCB uncertainty weight. \\
-\texttt{CUDASTF\_BANDIT\_LAMBDA} & Ridge regularization used to initialize the LinUCB inverse covariance state. \\
-\texttt{CUDASTF\_BANDIT\_REWARD\_ETA} & Deviation-rate penalty applied to the window reward. \\
-\texttt{CUDASTF\_BANDIT\_REWARD\_}\newline\texttt{KAPPA\_CRITICAL} and \texttt{KAPPA\_NONCRITICAL} & Penalty weights that convert normalized finish-time loss into the task-level relative reward. \\
-\texttt{CUDASTF\_BANDIT\_AGGR\_}\newline\texttt{BIAS\_ALPHA\_SCALE} & Exploration-scale adjustment for the aggressive profile. \\
-\texttt{CUDASTF\_BANDIT\_AGGR\_}\newline\texttt{BIAS\_SCORE\_PRIOR} & Additive score prior for the aggressive profile. \\
-\texttt{CUDASTF\_BANDIT\_AGGR\_}\newline\texttt{BIAS\_DEFAULT\_MARGIN} & Margin that the default profile must overcome to replace aggressive. \\
-\texttt{CUDASTF\_BANDIT\_LOG} and \texttt{CUDASTF\_BANDIT\_PHASE\_LOG} & Emit placement-window and scheduler-phase diagnostics. \\
-\texttt{CUDASTF\_WIN\_DVFS\_ENABLE} & Enable the DVFS framework when using a compatible bandit placement scheduler. \\
-\texttt{CUDASTF\_WIN\_DVFS\_LOG} & Emit \texttt{WIN\_DVFS\_*} proposal, frequency-map, window, and commit-summary logs. \\
-\texttt{CUDASTF\_WIN\_DVFS\_ENABLE\_LOW} & Allow the committer to consider the low-frequency level. \\
-\texttt{CUDASTF\_WIN\_DVFS\_MID\_RANK} and \texttt{CUDASTF\_WIN\_DVFS\_LOW\_RANK} & Select the lower graphics-clock ranks used for mid and low levels. \\
-\texttt{CUDASTF\_WIN\_DVFS\_WINDOW\_TASKS} & Number of per-GPU task intents accumulated before a DVFS commit is considered. \\
-\texttt{CUDASTF\_WIN\_DVFS\_MID\_ENTER\_WINDOWS} and \texttt{LOW\_ENTER\_WINDOWS} & Consecutive eligible windows required before committing mid or low frequency. \\
-\texttt{CUDASTF\_WIN\_DVFS\_FORCE\_HIGH\_WINDOWS} and \texttt{LOW\_DISABLE\_WINDOWS} & Recovery intervals used by the slowdown guardrail after unsafe lower-frequency behavior. \\
-\hline\hline
-\end{tabular}
-\end{table}
-
-The implementation logs task-level placement information, residual-gate decisions, window rewards, profile scores, copy statistics, and DVFS proposal and commit summaries. The main placement log prefixes are \texttt{BANDIT\_SCHEDULER\_TASK}, \texttt{BANDIT\_SCHEDULER\_WINDOW\_START}, \texttt{BANDIT\_SCHEDULER\_WINDOW\_END}, and \texttt{BANDIT\_SCHEDULER\_BANDIT\_SCORE}. The DVFS log prefixes are \texttt{WIN\_DVFS\_CONFIG}, \texttt{WIN\_DVFS\_FREQ\_MAP}, \texttt{WIN\_DVFS\_TASK}, \texttt{WIN\_DVFS\_WINDOW}, and \texttt{WIN\_DVFS\_COMMIT\_STATS}. These records are used to connect observed performance differences to concrete scheduling mechanisms: baseline HEFT placement, copy-saving deviations, window-level profile selection, and DVFS frequency commits.
+The runtime logs task-level placement information, residual-gate decisions, window rewards, profile scores, copy statistics, and DVFS proposal and commit summaries. The main placement log prefixes are \texttt{BANDIT\_SCHEDULER\_TASK}, \texttt{BANDIT\_SCHEDULER\_WINDOW\_START}, \texttt{BANDIT\_SCHEDULER\_WINDOW\_END}, and \texttt{BANDIT\_SCHEDULER\_BANDIT\_SCORE}. The DVFS log prefixes are \texttt{WIN\_DVFS\_CONFIG}, \texttt{WIN\_DVFS\_FREQ\_MAP}, \texttt{WIN\_DVFS\_TASK}, \texttt{WIN\_DVFS\_WINDOW}, and \texttt{WIN\_DVFS\_COMMIT\_STATS}. These records are used to connect observed performance differences to concrete scheduling mechanisms: baseline HEFT placement, copy-saving deviations, window-level profile selection, and DVFS frequency commits.
 
 \section{Method Summary}
 \label{sec:methods-summary}

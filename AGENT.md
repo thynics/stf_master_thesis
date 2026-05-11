@@ -25,6 +25,7 @@ Maintain this repository as an Overleaf-compatible LaTeX master's thesis. Edits 
 - Keep citation keys exactly as they appear in `references.bib`; BibLaTeX keys are case-sensitive.
 - Do not invent references. Add a BibTeX entry only when the source is real and relevant.
 - Use `booktabs`-style tables where possible. Avoid vertical rules in new academic tables unless matching an existing table style is more important.
+- Keep thesis tables visually consistent: use `\toprule`, `\midrule`, and `\bottomrule`, avoid `\hline` and vertical rules, and place table captions below the `tabular` block.
 - Keep figures Overleaf-friendly: prefer PDF, PNG, or JPG; use relative paths; avoid very large image files when a compressed version is readable.
 - Close every LaTeX environment cleanly and keep labels unique.
 
