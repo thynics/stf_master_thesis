@@ -39,6 +39,7 @@ Maintain this repository as an Overleaf-compatible LaTeX master's thesis. Edits 
   - `HEFT` for the earliest-finish-time baseline.
   - `bandit_scheduler` for the implemented HEFT-relative bandit placement scheduler.
   - `win_dvfs` for the guarded windowed proposal--commit DVFS extension.
+  - Do not use numeric internal development aliases for scheduler generations in thesis prose, tables, captions, algorithm names, or reproducibility variable lists. Translate them to the stable method names above.
   - `bandit_scheduler_rule_dvfs` or `bandit_scheduler_rule_dvfs_v1` only when referring to historical job records or legacy aliases.
   - `energy_aware` for the older profile-driven energy-aware scheduler.
 
