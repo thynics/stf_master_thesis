@@ -534,10 +534,10 @@ A proposer can use the following features:
 A conceptual scoring function is
 \begin{equation}
 s(v) = w_{\kappa}\kappa(v) + w_T c_T(v) + w_B b(v)
-       - w_W q(v) - w_S s_{\mathrm{slack}}(v) + w_H h(v),
+       - w_W \omega(v) - w_S s_{\mathrm{slack}}(v) + w_H h(v),
 \label{eq:dvfs_proposer_score}
 \end{equation}
-where $b(v)$ is backlog pressure, $q(v)$ is copy/wait ratio, $s_{\mathrm{slack}}(v)$ is normalized slack, and $h(v)$ indicates a heavy task. Positive terms push the decision toward high frequency, while negative terms indicate that lower frequency may be safe.
+where $b(v)$ is backlog pressure, $\omega(v)$ is the copy-wait ratio from Equation~\eqref{eq:copy_wait_ratio}, $s_{\mathrm{slack}}(v)$ is normalized slack, and $h(v)$ indicates a heavy task. Positive terms push the decision toward high frequency, while negative terms indicate that lower frequency may be safe.
 
 \subsubsection{High-Frequency Conditions}
 \label{subsubsec:high_frequency_conditions}
@@ -568,11 +568,11 @@ where $p_v$ is the proposal of task $v$ and $\omega_v$ is a proposal weight. Cri
 
 The committer should enter a lower frequency only when the estimated performance risk fits within the available slack. A simple estimate of extra runtime when moving from high frequency to target frequency $\phi$ is
 \begin{equation}
-\Delta T_v(\phi) = \alpha_v T_v \left(1 - q(v)\right)
+\Delta T_v(\phi) = \alpha_v T_v \left(1 - \omega(v)\right)
 \left(\frac{f_{g,\mathrm{high}}}{f_{g,\phi}} - 1\right),
 \label{eq:estimated_extra_runtime}
 \end{equation}
-where $q(v)$ is the copy/wait ratio and $\alpha_v$ increases for critical or heavy tasks. The aggregate extra runtime should satisfy a slack-budget condition:
+where $\omega(v)$ is the copy-wait ratio and $\alpha_v$ increases for critical or heavy tasks. The aggregate extra runtime should satisfy a slack-budget condition:
 \begin{equation}
 \sum_{v \in W_d} \Delta T_v(\phi) \leq \beta S_{W_d} + B,
 \label{eq:slack_budget_condition}
@@ -582,51 +582,58 @@ where $S_{W_d}$ is the estimated slack reserve, $\beta$ controls how much slack 
 \subsection{Guardrails and Stability}
 \label{subsec:guardrails_stability}
 
-A proposal--commit system needs guardrails to avoid performance regressions. Typical guardrails include:
-\begin{itemize}
-    \item force high frequency for windows with high critical mass;
-    \item force high frequency when urgent heavy tasks appear;
-    \item prevent low frequency under high backlog;
-    \item require consecutive eligible windows before entering mid or low;
-    \item require a minimum meaningful gap between high and lower graphics clocks;
-    \item return to high frequency after recent slowdown is detected;
-    \item temporarily disable low frequency after a low-frequency slowdown.
-\end{itemize}
+A proposal--commit system needs guardrails to avoid performance regressions. Table~\ref{tab:dvfs_guardrails} summarizes the guardrails used by the windowed controller.
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}p{0.26\linewidth}p{0.34\linewidth}p{0.32\linewidth}@{}}
+\toprule
+Guardrail & Trigger & Effect \\
+\midrule
+Critical-work protection & High criticality mass or urgent heavy tasks in the window & Force the next committed level to $\mathrm{HIGH}$ \\
+Backlog protection & High backlog pressure on the selected GPU & Prevent lower-frequency commits while the device is overloaded \\
+Frequency-separation check & Mid or low graphics clocks are too close to the high clock & Treat the lower level as unavailable to avoid ineffective transitions \\
+Eligibility persistence & Mid or low eligibility appears only transiently & Require consecutive eligible windows before entering a lower level \\
+Slowdown recovery & Recent window runtime or busy-tail time exceeds moving-average guard bands & Force recovery windows at $\mathrm{HIGH}$ \\
+Low-level cooldown & A slowdown is observed after a low-frequency commit & Temporarily disable $\mathrm{LOW}$ while keeping $\mathrm{MID}$ available if safe \\
+\bottomrule
+\end{tabular}
+\caption{Guardrails used by the windowed proposal--commit DVFS controller.}
+\label{tab:dvfs_guardrails}
+\end{table}
 
 The purpose of these guardrails is not to maximize energy savings for every local window. Instead, they protect the global runtime objective and make DVFS behaviour stable. In the implementation, recent slowdown is detected from window-level runtime and busy-tail measurements maintained as moving averages. If enough recent windows exceed the allowed slowdown ratios, the committer forces recovery to high frequency. This turns the lower-frequency levels into optimistic choices that must continue to earn their place.
 
-\subsection{Algorithmic View}
-\label{subsec:algorithmic_view_proposal_commit}
+\subsection{Algorithm}
+\label{subsec:algorithm_proposal_commit}
 
-Listing~\ref{lst:proposal_commit_pipeline} summarizes the runtime decision pipeline in simplified form.
+Algorithm~\ref{alg:proposal_commit_pipeline} formalizes one scheduling step with windowed proposal--commit DVFS.
 
-\begin{listing}[H]
-\caption{Simplified runtime pipeline for placement and proposal--commit DVFS.}
-\label{lst:proposal_commit_pipeline}
-\begin{minted}[frame=single,fontsize=\small]{text}
-for each ready task v:
-    estimate candidate cost on each GPU
-    d_base = GPU with earliest finish time
-
-    alt = best copy-saving alternative satisfying end-time gate
-    d_exec = alt if accepted else d_base
-
-    criticality = estimate_criticality(v)
-    proposal = propose_frequency(v, d_exec, criticality)
-    add proposal to device-level DVFS window
-
-    committed_level = current committed level of d_exec
-    attach committed frequency to task v
-
-    launch task after dependencies and data transfers
-    update data residency and device ready time
-
-    if DVFS window is complete:
-        aggregate proposal votes and slack budget
-        apply guardrails
-        commit high, mid, or low for later tasks on that GPU
-\end{minted}
-\end{listing}
+\begin{algorithm}[t]
+\caption{Runtime scheduling with windowed proposal--commit DVFS}
+\label{alg:proposal_commit_pipeline}
+\begin{algorithmic}[1]
+\Require Ready task $v$, GPU set $D$, placement state $\mathcal{S}$, DVFS windows $\{W_d\}_{d\in D}$
+\Ensure Selected GPU $d_{\mathrm{exec}}$ and frequency annotation for task $v$
+\ForAll{$d \in D$}
+    \State $\xi(v,d) \gets \Call{EvaluateCandidate}{v,d,\mathcal{S}}$
+\EndFor
+\State $d_{\mathrm{base}} \gets \arg\min_{d\in D} F_d(v)$
+\State $d_{\mathrm{exec}} \gets \Call{ResidualGate}{v,d_{\mathrm{base}},\{\xi(v,d)\}_{d\in D}}$
+\State $\kappa(v) \gets \Call{CriticalityProxy}{v}$
+\State $p_v \gets \Call{ProposeLevel}{v,d_{\mathrm{exec}},\kappa(v),\xi(v,d_{\mathrm{base}})}$
+\State $\Call{AccumulateIntent}{W_{d_{\mathrm{exec}}},p_v,v}$
+\State $\ell_v \gets \Call{CommittedLevel}{W_{d_{\mathrm{exec}}}}$
+\State $\Call{AnnotateFrequency}{v,\Call{FrequencyPair}{d_{\mathrm{exec}},\ell_v}}$
+\State $\mathcal{S} \gets \Call{UpdatePlacementState}{\mathcal{S},v,d_{\mathrm{exec}}}$
+\If{$\Call{WindowComplete}{W_{d_{\mathrm{exec}}}}$}
+    \State $m \gets \Call{AggregateWindowMetrics}{W_{d_{\mathrm{exec}}}}$
+    \State $\ell_{\mathrm{next}} \gets \Call{CommitLevelWithGuardrails}{m}$
+    \State $\Call{ResetWindow}{W_{d_{\mathrm{exec}}},\ell_{\mathrm{next}}}$
+\EndIf
+\State \Return $(d_{\mathrm{exec}},\ell_v)$
+\end{algorithmic}
+\end{algorithm}
 
 \section{Multi-Objective Runtime Scheduling Framework}
 \label{sec:theory_runtime_framework}
