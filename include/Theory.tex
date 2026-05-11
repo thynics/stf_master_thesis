@@ -11,7 +11,7 @@
 \chapter{Theory}
 \label{ch:theory}
 
-This chapter introduces the theoretical background for a runtime-level scheduling and DVFS-control framework for single-node multi-GPU task graphs. The target execution model is CUDA Sequential Task Flow (CUDASTF), where applications are represented as task graphs with data-driven dependencies. The central optimization goal is to reduce energy consumption and energy--delay product (EDP) while keeping the performance loss within a user-defined bound. To support this goal, the chapter first introduces multi-GPU task graph execution and CUDASTF, then reviews GPU dynamic voltage and frequency scaling (DVFS), energy--performance metrics, DAG scheduling, data-locality-aware placement, online bandit scheduling, and proposal--commit DVFS control.
+This chapter introduces the theoretical background for a runtime-level scheduling and DVFS-control framework for single-node multi-GPU task graphs. The target execution model is CUDA Sequential Task Flow (CUDASTF), where applications are represented as task graphs with data-driven dependencies. The central optimization goal is to reduce energy consumption and energy--delay product (EDP) while keeping the performance loss within a user-defined bound. To support this goal, the chapter first introduces multi-GPU task graph execution and CUDASTF, then reviews GPU dynamic voltage and frequency scaling (DVFS), energy--performance metrics, DAG scheduling, data-locality-aware placement, online bandit scheduling, and windowed proposal--commit DVFS control.
 
 \section{Multi-GPU Task Graph Execution}
 \label{sec:theory_task_graphs}
@@ -64,7 +64,7 @@ DVFS reduces energy only when the saved power outweighs the additional runtime a
 \section{CUDASTF Execution Model}
 \label{sec:theory_cudastf}
 
-CUDASTF is the runtime substrate considered in this thesis. It implements a CUDA-oriented Sequential Task Flow model in which applications are expressed through task submissions with data-access information. The runtime derives data-driven dependencies, manages data placement, and schedules work across GPUs \cite{augonnet2024cudastf}.
+CUDASTF is the runtime substrate considered in this thesis. It implements a CUDA-oriented Sequential Task Flow model in which applications are expressed through task submissions with data-access information. The runtime derives data-driven dependencies, manages data placement, and schedules work across GPUs \cite{Augonnet2024CUDASTF}.
 
 \subsection{Sequential Task Flow Model}
 \label{subsec:stf_model}
@@ -97,7 +97,7 @@ These properties make CUDASTF a suitable setting for combining DAG scheduling wi
 \section{GPU DVFS and Energy--Performance Trade-offs}
 \label{sec:theory_dvfs}
 
-Dynamic voltage and frequency scaling (DVFS) is a hardware power-management mechanism that changes operating frequencies, and when supported, the corresponding voltages. On GPUs, DVFS is commonly exposed through core and memory frequency controls. Prior GPU DVFS studies show that the best frequency setting depends strongly on workload characteristics, and that maximum frequency is not always energy-optimal \cite{mei2017survey,ali2022optimal,ali2023automated,wang2024dso}.
+Dynamic voltage and frequency scaling (DVFS) is a hardware power-management mechanism that changes operating frequencies, and when supported, the corresponding voltages. On GPUs, DVFS is commonly exposed through core and memory frequency controls. Prior GPU DVFS studies show that the best frequency setting depends strongly on workload characteristics, and that maximum frequency is not always energy-optimal \cite{Mei2017Survey,Ali2022Optimal,Ali2023Portable,Wang2024DSO}.
 
 \subsection{GPU Core and Memory Frequency Domains}
 \label{subsec:core_memory_frequency}
@@ -110,6 +110,13 @@ A frequency configuration can be written as
 \label{eq:frequency_config}
 \end{equation}
 where $f_g$ is the GPU core frequency and $f_m$ is the memory frequency. A DVFS policy chooses $\phi$ for a task, a group of tasks, or a larger execution phase.
+
+Although the hardware may expose many supported clock pairs, the runtime policy in this thesis uses a small discrete abstraction:
+\begin{equation}
+L = \{\mathrm{HIGH},\mathrm{MID},\mathrm{LOW}\}.
+\label{eq:dvfs_levels}
+\end{equation}
+The high level represents the fastest available graphics clock, while the mid and low levels are selected by rank among lower supported graphics clocks. The memory clock is treated conservatively and kept at the highest supported level in the main implementation. This discrete-level view keeps the online decision space small enough for a runtime scheduler while still exposing meaningful energy--performance choices.
 
 \subsection{Workload Sensitivity to Frequency Scaling}
 \label{subsec:workload_sensitivity}
@@ -222,41 +229,50 @@ Slowdown & $T_{\mathrm{app}}/T_{\mathrm{base}} - 1$ & Relative performance loss 
 \label{tab:energy_performance_metrics}
 \end{table}
 
-\section{Task Characterization under Frequency Scaling}
+\section{Online Task Characterization for DVFS}
 \label{sec:theory_task_characterization}
 
-A runtime scheduler cannot rely on expensive offline modelling for every task instance. It needs lightweight task characterization that is accurate enough for scheduling but cheap enough to use online. This section introduces the modelling assumptions used by the thesis.
+A runtime scheduler cannot rely on expensive offline modelling for every task instance. Offline task-type profiles can be useful background information, but the DVFS path studied in this thesis is designed to operate from information already available inside the scheduler. The characterization problem is therefore not to predict exact power and runtime for every frequency pair. It is to separate tasks that should remain at high frequency from tasks that are plausible mid- or low-frequency candidates under the current DAG and device context.
 
-\subsection{Task-Type-Level Modelling}
-\label{subsec:task_type_modeling}
+\subsection{Observable Runtime Features}
+\label{subsec:observable_runtime_features}
 
-Instead of building a separate model for every task invocation, tasks can be grouped by task type. A task type may be identified by the kernel name, task symbol, operation category, or runtime metadata. For each type $k$, the runtime can estimate execution time and power under a small number of representative frequency configurations:
-\begin{align}
-\widehat{T}_{k}(\phi) &\approx T_k(\phi), \\
-\widehat{P}_{k}(\phi) &\approx P_k(\phi).
-\end{align}
+For each scheduled task $v$, the runtime observes or estimates a small set of features:
+\begin{itemize}
+    \item task cost $T(v)$;
+    \item dependency fan-in and input-byte volume;
+    \item copy time and queue-wait time under the selected placement context;
+    \item device backlog on the chosen GPU;
+    \item a local criticality proxy derived from cost, dependencies, and input size;
+    \item task-symbol hints for heavy kernels such as dense linear algebra operations.
+\end{itemize}
+These features are cheap to compute because they are already needed for HEFT-style candidate evaluation or are available from CUDASTF task metadata.
 
-This approach is less precise than full per-call modelling, but it is more suitable for a runtime. It also matches task-graph applications where the same operation type appears repeatedly, such as tiled linear algebra or iterative solvers.
+\subsection{Copy-Wait Ratio and Slack Proxy}
+\label{subsec:copy_wait_slack_proxy}
 
-\subsection{Frequency Sensitivity Features}
-\label{subsec:frequency_sensitivity_features}
-
-A lightweight classifier can use features such as runtime, input size, dependency count, copy time, queue delay, and observed sensitivity to frequency changes. A simple sensitivity score for task type $k$ between high and lower frequency configurations can be defined as
+The implementation uses copy and waiting time as a proxy for how much execution can hide slower core frequency. Let $W(v)$ denote the predicted copy-plus-queue waiting component and let $T(v)$ denote the predicted compute component. A normalized copy-wait ratio is
 \begin{equation}
-\sigma_k = \frac{\widehat{T}_{k}(\phi_{\mathrm{low}}) - \widehat{T}_{k}(\phi_{\mathrm{high}})}{\widehat{T}_{k}(\phi_{\mathrm{high}})}.
-\label{eq:frequency_sensitivity}
+\omega(v) =
+\frac{W(v)}{\max(\varepsilon, W(v)+T(v))}.
+\label{eq:copy_wait_ratio}
 \end{equation}
-A large $\sigma_k$ indicates that the task type is sensitive to frequency reduction, while a small $\sigma_k$ suggests that it may tolerate lower frequency.
+A large $\omega(v)$ indicates that the task is dominated by data movement or queue waiting, so a lower core frequency is less likely to be fully visible in the application makespan. The scheduler also uses a slack proxy
+\begin{equation}
+s(v)=1-\kappa(v),
+\label{eq:slack_proxy}
+\end{equation}
+where $\kappa(v)$ is the local criticality proxy. This is not an exact critical-path slack computation, but it gives the DVFS layer a conservative signal: high-criticality tasks are treated as having little slack, while low-criticality tasks may be considered for lower frequency when other guard conditions agree.
 
 \subsection{Runtime Suitability}
 \label{subsec:runtime_suitability}
 
-The model must be inexpensive to update. It should avoid complex profiling that interrupts execution or requires many samples per task type. In this thesis, the role of the model is not to predict exact power and runtime for every possible frequency pair. Instead, it provides enough information to distinguish tasks that should remain at high frequency from tasks that are candidates for mid or low frequency under sufficient slack.
+The model must be inexpensive to evaluate and robust to imperfect estimates. For this reason, the thesis uses online proxies and guardrails rather than a large offline table of per-task frequency sensitivities. A task may request lower frequency only when multiple signals agree: it is not critical, not urgently heavy, not on a backlogged device, and has enough copy-wait time or slack to hide the expected slowdown. This conservative characterization matches the implementation goal of exposing an energy-control path without turning every task into a separate profiling problem.
 
 \section{HEFT-Based DAG Scheduling}
 \label{sec:theory_heft}
 
-Heterogeneous Earliest Finish Time (HEFT) is a widely used list-scheduling heuristic for heterogeneous systems \cite{topcuoglu2002heft}. The full HEFT algorithm ranks tasks and then places them on processors according to earliest finish time. This thesis uses HEFT primarily as a baseline placement principle: for each ready task, estimate its finish time on each GPU and select the device with the earliest finish time.
+Heterogeneous Earliest Finish Time (HEFT) is a widely used list-scheduling heuristic for heterogeneous systems \cite{Topcuoglu2002HEFT}. The full HEFT algorithm ranks tasks and then places them on processors according to earliest finish time. This thesis uses HEFT primarily as a baseline placement principle: for each ready task, estimate its finish time on each GPU and select the device with the earliest finish time.
 
 \subsection{Earliest-Finish-Time Placement}
 \label{subsec:eft_placement}
@@ -402,7 +418,7 @@ This window-level design reduces noise and overhead. It also makes reward attrib
 \subsection{LinUCB Selection}
 \label{subsec:linucb_selection}
 
-LinUCB is a contextual bandit algorithm that assumes the expected reward of an action is approximately linear in the context \cite{li2010linucb}. For each arm $a$, the algorithm maintains a parameter estimate $\theta_a$. Given context $x$, it computes
+LinUCB is a contextual bandit algorithm that assumes the expected reward of an action is approximately linear in the context \cite{Li2010ContextualBandit}. For each arm $a$, the algorithm maintains a parameter estimate $\theta_a$. Given context $x$, it computes
 \begin{equation}
 \mathrm{score}_a = \theta_a^{T}x + \alpha \sqrt{x^{T}A_a^{-1}x},
 \label{eq:linucb_score}
@@ -484,10 +500,10 @@ where $L_{\mathrm{hidden}}$ is the portion overlapped with communication, synchr
 
 This is one of the main reasons to integrate DVFS with task-graph scheduling. A runtime that sees dependencies and data movement can choose transition points more intelligently than an external controller that only observes coarse application phases.
 
-\section{Proposal--Commit DVFS Control}
+\section{Windowed Proposal--Commit DVFS Control}
 \label{sec:theory_proposal_commit}
 
-The DVFS design in this thesis separates task-level frequency intent from device-level frequency commitment. This avoids making the placement bandit responsible for a very large joint action space of devices and frequencies. Instead, placement is the first layer, and DVFS is the second layer.
+The DVFS design in this thesis separates task-level frequency intent from device-level frequency commitment. This avoids making the placement bandit responsible for a very large joint action space of devices and frequencies. Instead, placement is the first layer, and DVFS is the second layer. The implementation exposes this design as \texttt{win\_dvfs}, emphasizing that the committed frequency is selected at a per-device window granularity rather than independently for every task.
 
 \subsection{Two-Layer Runtime Control}
 \label{subsec:two_layer_control}
@@ -498,12 +514,12 @@ The runtime control problem is separated into two decisions:
     \item \textbf{DVFS layer}: choose the frequency level for the selected GPU, using proposal--commit control.
 \end{enumerate}
 
-This separation simplifies learning and attribution. The placement layer reasons about data locality, queue delay, and finish time. The DVFS layer reasons about criticality, slack, backlog, and frequency sensitivity after the device has been selected.
+This separation simplifies learning and attribution. The placement layer reasons about data locality, queue delay, and finish time. The DVFS layer reasons about criticality, slack, backlog, and frequency risk after the device has been selected. It also makes the implementation more debuggable: placement decisions can be explained relative to HEFT, while frequency decisions can be explained through proposal shares and commit guardrails.
 
 \subsection{Task-Level Proposer}
 \label{subsec:task_level_proposer}
 
-The proposer assigns each scheduled task a frequency intent, such as high, mid, or low. The intent is not immediately applied. It is a vote that expresses what the task appears to need under the current context.
+The proposer assigns each scheduled task a frequency intent, such as high, mid, or low. The intent is not immediately applied to that same task. It is a vote that expresses what the task appears to need under the current context and contributes to the next device-level commit decision. The current task receives the frequency level that was already committed by the previous window for the selected GPU.
 
 A proposer can use the following features:
 \begin{itemize}
@@ -536,7 +552,7 @@ A task may request mid frequency when it has sufficient copy/wait time, moderate
 \subsection{Device-Level Window Committer}
 \label{subsec:device_window_committer}
 
-The committer aggregates task proposals over a device-level window. Only the committer changes the actual committed frequency level. This prevents individual tasks from causing frequent frequency oscillations.
+The committer aggregates task proposals over a device-level window. Only the committer changes the actual committed frequency level, and the new level affects later tasks on the same GPU. This delayed-commit design prevents individual tasks from causing frequent frequency oscillations and amortizes transition overhead across a region of execution.
 
 For a device window $W_d$, weighted proposal shares can be written as
 \begin{align}
@@ -572,10 +588,12 @@ A proposal--commit system needs guardrails to avoid performance regressions. Typ
     \item force high frequency when urgent heavy tasks appear;
     \item prevent low frequency under high backlog;
     \item require consecutive eligible windows before entering mid or low;
-    \item return to high frequency after recent slowdown is detected.
+    \item require a minimum meaningful gap between high and lower graphics clocks;
+    \item return to high frequency after recent slowdown is detected;
+    \item temporarily disable low frequency after a low-frequency slowdown.
 \end{itemize}
 
-The purpose of these guardrails is not to maximize energy savings for every local window. Instead, they protect the global runtime objective and make DVFS behaviour stable.
+The purpose of these guardrails is not to maximize energy savings for every local window. Instead, they protect the global runtime objective and make DVFS behaviour stable. In the implementation, recent slowdown is detected from window-level runtime and busy-tail measurements maintained as moving averages. If enough recent windows exceed the allowed slowdown ratios, the committer forces recovery to high frequency. This turns the lower-frequency levels into optimistic choices that must continue to earn their place.
 
 \subsection{Algorithmic View}
 \label{subsec:algorithmic_view_proposal_commit}
@@ -606,7 +624,7 @@ for each ready task v:
     if DVFS window is complete:
         aggregate proposal votes and slack budget
         apply guardrails
-        commit high, mid, or low for the next window
+        commit high, mid, or low for later tasks on that GPU
 \end{minted}
 \end{listing}
 
@@ -650,4 +668,4 @@ The theory motivates four design choices:
 \section{Summary}
 \label{sec:theory_summary}
 
-This chapter presented the theoretical foundation for energy-aware scheduling of multi-GPU task graphs. A CUDASTF application can be viewed as a DAG where tasks, dependencies, data residency, and communication costs are visible to the runtime. GPU DVFS introduces an energy--performance trade-off that depends on task type, frequency sensitivity, criticality, and transition overhead. HEFT-style scheduling provides a strong baseline for performance, but it does not directly optimize energy or data-locality-driven trade-offs. Controlled deviation from HEFT, contextual bandit adaptation, region-level DVFS, and proposal--commit frequency control form the theoretical basis for the framework developed in this thesis.
+This chapter presented the theoretical foundation for energy-aware scheduling of multi-GPU task graphs. A CUDASTF application can be viewed as a DAG where tasks, dependencies, data residency, and communication costs are visible to the runtime. GPU DVFS introduces an energy--performance trade-off that depends on criticality, copy-wait behavior, backlog, frequency levels, and transition overhead. HEFT-style scheduling provides a strong baseline for performance, but it does not directly optimize energy or data-locality-driven trade-offs. Controlled deviation from HEFT, contextual bandit adaptation, region-level DVFS, and windowed proposal--commit frequency control form the theoretical basis for the framework developed in this thesis.

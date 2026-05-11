@@ -38,7 +38,8 @@ Maintain this repository as an Overleaf-compatible LaTeX master's thesis. Edits 
 - Keep terminology consistent:
   - `HEFT` for the earliest-finish-time baseline.
   - `bandit_scheduler` for the implemented HEFT-relative bandit placement scheduler.
-  - `bandit_scheduler_rule_dvfs` or `bandit_scheduler_rule_dvfs_v1` for the rule-DVFS extension when referring to implementation names.
+  - `win_dvfs` for the guarded windowed proposal--commit DVFS extension.
+  - `bandit_scheduler_rule_dvfs` or `bandit_scheduler_rule_dvfs_v1` only when referring to historical job records or legacy aliases.
   - `energy_aware` for the older profile-driven energy-aware scheduler.
 
 ## Editing Workflow

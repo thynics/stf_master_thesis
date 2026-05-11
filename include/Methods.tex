@@ -430,7 +430,7 @@ The state update after placement is essential because the next ready task observ
 \section{DVFS Framework}
 \label{sec:methods-dvfs-framework}
 
-The DVFS layer is implemented as a conservative rule-based proposer and per-GPU window committer. It is separate from the placement bandit: placement chooses the GPU, and DVFS chooses the frequency level to use on that GPU. The DVFS layer is enabled by the rule-DVFS scheduler aliases listed in the implementation interface or by the corresponding DVFS enable environment variables.
+The DVFS layer is implemented as a conservative proposer and per-GPU window committer. It is separate from the placement bandit: placement chooses the GPU, and DVFS chooses the frequency level to use on that GPU. The DVFS layer is enabled by \texttt{CUDASTF\_SCHEDULE=win\_dvfs} or by the corresponding \texttt{CUDASTF\_WIN\_DVFS\_*} environment variables.
 
 When DVFS is active, the runtime first checks that the selected placement scheduler supports per-task frequency annotations and that valid graphics-clock levels can be obtained for all GPUs. The implementation defines three abstract levels,
 \begin{equation}
@@ -609,7 +609,7 @@ To avoid oscillation, the committer requires consecutive eligible windows before
 \subsection{Performance Guardrail and Frequency Application}
 \label{subsec:methods-dvfs-application}
 
-The guardrail is not an additional frequency-optimization objective. Its role is to make the rule-based DVFS layer fail-safe. The proposer and committer decide from predicted task features, while the guardrail observes the realized behavior of recent windows and revokes lower-frequency operation when those decisions appear to increase runtime.
+The guardrail is not an additional frequency-optimization objective. Its role is to make the proposal--commit DVFS layer fail-safe. The proposer and committer decide from predicted task features, while the guardrail observes the realized behavior of recent windows and revokes lower-frequency operation when those decisions appear to increase runtime.
 
 After each per-GPU commit, the runtime updates exponential moving averages for two window-level measurements: the total window runtime and the busy-tail duration between the first and last task endpoints in the window. A slowdown indicator is raised when the current window runtime exceeds its moving average by more than $2\%$ or when the busy-tail duration exceeds its moving average by more than $3\%$. The moving-average coefficient is $0.2$. Recent indicators are stored in a four-window ring buffer. If at least two of the recent windows indicate slowdown, the next windows are forced to $\mathrm{HIGH}$ frequency for a recovery interval. If the slowdown follows a $\mathrm{LOW}$ commit, $\mathrm{LOW}$ is disabled for a longer interval. This mechanism prevents an unsafe lower-frequency choice from persisting across multiple scheduling windows.
 
@@ -635,14 +635,18 @@ The placement scheduler is selected with \texttt{CUDASTF\_SCHEDULE}. Table~\ref{
 Configuration & Meaning \\
 \hline
 \texttt{CUDASTF\_SCHEDULE=}\newline\texttt{bandit\_scheduler} & Default placement method: HEFT baseline plus copy-only residual gate and window-level LinUCB gate selection. \\
-\texttt{CUDASTF\_SCHEDULE=}\newline\texttt{bandit\_scheduler\_rule\_dvfs} & Placement scheduler with the rule-based DVFS proposer and per-GPU committer enabled. \\
-\texttt{CUDASTF\_SCHEDULE=}\newline\texttt{bandit\_scheduler\_rule\_dvfs\_}\newline\texttt{midrank}$\langle N\rangle$ & Rule-based DVFS path with a specified mid-frequency rank. \\
+\texttt{CUDASTF\_SCHEDULE=}\newline\texttt{win\_dvfs} & Placement scheduler with the windowed proposal--commit DVFS layer enabled. \\
+\texttt{CUDASTF\_SCHEDULE=}\newline\texttt{win\_dvfs\_midrank}$\langle N\rangle$ & \texttt{win\_dvfs} path with a specified mid-frequency rank and the next lower rank used for low frequency. \\
 \texttt{CUDASTF\_BANDIT\_}\newline\texttt{WINDOW\_SIZE} & Number of tasks per placement-controller window. \\
 \texttt{CUDASTF\_BANDIT\_ALPHA} & LinUCB uncertainty weight. \\
 \texttt{CUDASTF\_BANDIT\_AGGR\_}\newline\texttt{BIAS\_ALPHA\_SCALE} & Exploration-scale adjustment for the aggressive profile. \\
 \texttt{CUDASTF\_BANDIT\_AGGR\_}\newline\texttt{BIAS\_SCORE\_PRIOR} & Additive score prior for the aggressive profile. \\
 \texttt{CUDASTF\_BANDIT\_AGGR\_}\newline\texttt{BIAS\_DEFAULT\_MARGIN} & Margin that the default profile must overcome to replace aggressive. \\
-\texttt{CUDASTF\_DVFS\_}\newline\texttt{RULE\_ENABLE} or \texttt{CUDASTF\_DVFS\_ENABLE} & Environment-variable path for enabling the DVFS framework. \\
+\texttt{CUDASTF\_WIN\_DVFS\_ENABLE} & Environment-variable path for enabling the DVFS framework when using a compatible placement scheduler. \\
+\texttt{CUDASTF\_WIN\_DVFS\_LOG} & Emit \texttt{WIN\_DVFS\_*} proposal, frequency-map, window, and commit-summary logs. \\
+\texttt{CUDASTF\_WIN\_DVFS\_ENABLE\_LOW} & Allow the committer to consider the low-frequency level. \\
+\texttt{CUDASTF\_WIN\_DVFS\_MID\_RANK} and \texttt{CUDASTF\_WIN\_DVFS\_LOW\_RANK} & Select the lower graphics-clock ranks used for mid and low levels. \\
+\texttt{CUDASTF\_WIN\_DVFS\_WINDOW\_TASKS} & Number of per-GPU task intents accumulated before a DVFS commit is considered. \\
 \hline\hline
 \end{tabular}
 \end{table}
