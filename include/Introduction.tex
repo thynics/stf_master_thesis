@@ -1,30 +1,64 @@
 % CREATED BY DAVID FRISK, 2016
 \chapter{Introduction}
-This chapter presents the section levels that can be used in the template. 
 
-\section{Section levels}
-\autoref{tab:sections} presents an overview of the section levels that are used in this document. The number of levels that are numbered and included in the table of contents is set in the settings file \texttt{Settings.tex}. The levels are shown in Section \ref{Section_ref}.
+Energy efficiency has become a central constraint in high-performance computing. Modern scientific and data-intensive applications increasingly rely on multi-GPU nodes to obtain high throughput, but the corresponding power consumption, cooling cost, and carbon footprint make performance-oriented execution at maximum frequency difficult to justify in all cases. Dynamic Voltage and Frequency Scaling (DVFS) provides a hardware mechanism for improving energy efficiency by adjusting GPU core and memory frequencies. On contemporary GPUs, this exposes a large energy--performance design space, where different frequency settings may lead to substantially different runtime, power, energy, and energy--delay product (EDP) outcomes~\cite{Mei2017Survey,Ali2022Optimal,Wang2024DSO}.
 
-This is a new paragraph and should have proper parskip or indentation. Don't forget to cite your sources~\cite{Brajnik2008}. % '~' becomes space which cannot line break.
+However, using GPU DVFS effectively is non-trivial. The best frequency setting depends on the computational and memory-access characteristics of each workload. Compute-bound kernels are often sensitive to core frequency, whereas memory-bound or communication-heavy tasks may tolerate lower core frequencies with limited performance loss. Prior work has shown that per-kernel DVFS can improve energy efficiency when supported by performance and power models~\cite{Wang2024DSO}. Nevertheless, making DVFS decisions independently for each kernel ignores the broader execution context. Frequency transitions may introduce non-negligible latency, and excessive switching can offset the energy savings obtained from lower-frequency execution. Moreover, isolated per-kernel decisions do not reason about task dependencies, data movement, device queues, or critical-path slack.
 
-\begin{table}[h]
-\centering
-\caption{Section levels} % Table text above table.
-\begin{tabular}{ll} \hline
-Name & Command\\ \hline
-Chapter & \textbackslash\texttt{chapter\{\emph{Chapter name}\}}\\
-Section & \textbackslash\texttt{section\{\emph{Section name}\}}\\
-Subsection & \textbackslash\texttt{subsection\{\emph{Subsection name}\}}\\
-Subsubsection & \textbackslash\texttt{subsubsection\{\emph{Subsubsection name}\}}\\
-%Paragraph & \textbackslash\texttt{paragraph\{\emph{Paragraph name}\}}\\
-%Subparagraph & \textbackslash\texttt{paragraph\{\emph{Subparagraph name}\}}\\ \hline\hline
-\end{tabular}
-\label{tab:sections}
-\end{table}
+Task-graph runtimes provide a more suitable control point for this problem. In the CUDA Sequential Task Flow (CUDASTF) runtime, applications are represented as directed acyclic graphs (DAGs), where tasks encode computation or data movement and edges encode data-driven dependencies~\cite{Augonnet2024CUDASTF}. This representation gives the runtime explicit information about dependencies, data residency, synchronization, communication cost, and task placement across GPUs. Such information is not visible to an external DVFS controller or to a kernel-level frequency heuristic. A CUDASTF scheduler can therefore reason about both where a task should execute and under which frequency regime execution should proceed.
 
-\section{Section} \label{Section_ref}
-\subsection{Subsection}
-\subsubsection{Subsubsection}
-%\paragraph{Paragraph}
-%\subparagraph{Subparagraph}
+This thesis investigates runtime-level energy-aware scheduling for single-node multi-GPU CUDASTF task graphs. The objective is to reduce energy consumption and EDP while preserving application performance relative to strong fixed-frequency and HEFT-style scheduling baselines. HEFT is a widely used list-scheduling heuristic for heterogeneous systems because it provides a low-complexity approximation of earliest-finish-time task placement~\cite{Topcuoglu2002HEFT}. However, in multi-GPU task graphs, choosing the earliest finish time for the current task can increase future data movement, reduce locality, or create avoidable communication overhead. The central challenge is therefore to improve energy efficiency without discarding the performance robustness of HEFT-style scheduling.
 
+The proposed design adopts a two-level runtime control structure. The first layer performs learning-guided task placement. It uses HEFT as a conservative baseline and permits bounded deviations only when an alternative GPU can reduce data movement while keeping the finish-time penalty within a controlled range. A window-level contextual bandit adapts the aggressiveness of these deviations according to recent task-graph and runtime context, following the general principle of learning actions from contextual feedback~\cite{Li2010ContextualBandit}. The second layer performs guarded DVFS control. Instead of changing frequency directly for every task, each task produces a high-, mid-, or low-frequency intent. These intents are aggregated by a per-device, per-window committer, which selects the actual committed frequency while applying guardrails for critical tasks, heavy computation, backlog pressure, and recent slowdown.
+
+This separation between placement and DVFS is deliberate. Directly combining GPU placement and frequency selection into a single online action space would increase decision complexity and make reward attribution difficult. By contrast, the two-level structure preserves HEFT as a performance anchor, allows the placement policy to focus on locality-aware deviations, and lets the DVFS controller make stable frequency decisions at a coarser granularity than individual kernel invocations. The resulting framework is designed to exploit the task-graph information exposed by CUDASTF while remaining lightweight enough for runtime use.
+
+\section{Problem Statement}
+
+The problem addressed in this thesis is how to design an online runtime scheduler for multi-GPU task graphs that improves energy efficiency without substantially degrading performance. The scheduler must operate under three practical constraints. First, decisions must be lightweight enough to run inside the runtime for fine-grained CUDASTF tasks. Second, task placement must account for data movement and queueing effects, rather than only the earliest finish time of the current task. Third, DVFS control must avoid unstable per-task frequency switching and must protect critical, heavy, or backlogged execution phases from excessive slowdown.
+
+This thesis focuses on the following research questions:
+
+\begin{itemize}
+    \item How can a CUDASTF runtime scheduler preserve the performance advantages of HEFT-style earliest-finish-time placement while exploiting data locality through bounded deviations?
+    \item How can GPU DVFS decisions be integrated into the task scheduler without introducing excessive frequency-transition overhead or unstable per-task control?
+    \item To what extent can a two-level runtime policy improve energy consumption and EDP while keeping runtime degradation within an acceptable bound?
+\end{itemize}
+
+The scope of this work is single-node multi-GPU execution. The focus is on GPU task placement and GPU core/memory frequency control. CPU DVFS, cluster-level scheduling, and offline global DAG optimization are outside the scope of this thesis.
+
+\section{Approach}
+
+The proposed framework decomposes runtime control into two layers. The first layer performs learning-guided residual placement. The second layer performs guarded proposal--commit DVFS control. This separation is designed to retain the stability of a strong scheduling baseline while allowing energy-aware frequency adaptation at a coarser and more robust granularity than individual kernel invocations.
+
+\subsection{Learning-Guided Residual Placement}
+
+The placement layer uses HEFT-style earliest-finish-time scheduling as its performance baseline. For each arriving task, the scheduler estimates the data-ready time, copy time, queueing delay, start time, and finish time on each GPU. The GPU with the earliest estimated finish time is selected as the baseline placement.
+
+The scheduler then searches for a residual alternative: a non-baseline GPU that can reduce data movement while introducing only a bounded finish-time penalty. Such a deviation is accepted only when the expected copy reduction is sufficiently large and the delay relative to the HEFT baseline remains within a configurable threshold. This design treats HEFT as a conservative performance anchor, rather than replacing it with an unconstrained learned policy.
+
+To adapt this residual decision across workloads, the scheduler uses a window-level contextual bandit. Instead of selecting an action independently for every task, the bandit selects a gate profile for a window of tasks. The context summarizes recent runtime behavior, including task criticality, dependency structure, input size, baseline copy cost, task cost, device-load imbalance, and recent deviation rate. The active gate profile determines how aggressively the scheduler may deviate from the HEFT baseline. In the main configuration, the bandit chooses between a default profile and a more aggressive copy-saving profile. The reward balances copy reduction against the finish-time penalty caused by deviation.
+
+\subsection{Guarded Proposal--Commit DVFS Control}
+
+The DVFS layer is applied after placement. Rather than allowing every task to directly change GPU frequency, each task produces only a frequency intent: high, mid, or low. This intent is computed from lightweight runtime features such as task criticality, estimated task cost, backlog pressure, copy/wait ratio, available slack, and whether the task appears heavy or urgent.
+
+Actual frequency changes are made by a per-device, per-window committer. The committer aggregates task-level intents over a window and chooses a committed frequency level for the corresponding GPU. This aggregation reduces unstable per-task switching and allows the controller to reason about the recent execution phase of each device. The committer also applies guardrails. Critical tasks, urgent heavy tasks, high backlog, high critical mass, and recent slowdown signals can force the device back to high frequency. Entering lower-frequency modes requires consecutive eligible windows, whereas leaving them is deliberately conservative and rapid when eligibility disappears.
+
+This proposal--commit structure provides a practical compromise between fine-grained DVFS sensitivity and runtime stability. Task-level proposals retain information about individual tasks, while window-level commits amortize frequency decisions and reduce transition frequency.
+
+\section{Contributions}
+
+This thesis makes the following contributions:
+
+\begin{itemize}
+    \item It presents a runtime-integrated scheduling framework for single-node multi-GPU CUDASTF task graphs, combining task placement and GPU DVFS control inside the scheduler.
+    \item It introduces a copy-aware residual placement policy built on top of HEFT. The policy preserves HEFT as a performance baseline while allowing bounded deviations when they reduce data movement.
+    \item It designs a window-level contextual bandit that adapts the aggressiveness of placement deviations using recent task-graph and runtime context.
+    \item It develops a guarded proposal--commit DVFS controller in which task-level frequency intents are aggregated into stable per-device window decisions.
+    \item It evaluates the framework against fixed-frequency and HEFT-style baselines using runtime, energy, EDP, data-movement behavior, frequency-transition behavior, and scalability metrics.
+\end{itemize}
+
+\section{Thesis Organization}
+
+The rest of this thesis is organized as follows. Chapter 2 reviews GPU DVFS, DAG scheduling, energy-aware runtime systems, and CUDASTF. Chapter 3 describes the proposed two-level scheduling framework, including residual placement, contextual-bandit adaptation, and proposal--commit DVFS control. Chapter 4 presents implementation details in CUDASTF. Chapter 5 evaluates the framework experimentally and compares it with fixed-frequency and HEFT-style baselines. Chapter 6 concludes the thesis and discusses limitations and future work.

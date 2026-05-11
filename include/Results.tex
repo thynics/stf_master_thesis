@@ -1,3 +1,760 @@
-% CREATED BY DAVID FRISK, 2016
+% Source basis: thesis working outline and thesis proposal. :contentReference[oaicite:0]{index=0} :contentReference[oaicite:1]{index=1}
+% Additional result details are taken from the implementation summary embedded in the uploaded working outline. :contentReference[oaicite:2]{index=2}
+% Code review note: checked for closed environments, escaped underscores and percent signs, avoided missing external figures, and used only LaTeX constructs compatible with a standard Overleaf thesis template.
+
 \chapter{Results}
-Describe you results. Use tables, diagrams etc. for illustration.
+\label{chap:results}
+
+This chapter evaluates the proposed scheduler on CUDASTF multi-GPU task graphs. The main goal of the evaluation is to determine whether Locality-Aware Residual HEFT reduces unnecessary logical-data movement relative to HEFT, and whether the observed runtime behavior is consistent with the data-movement mechanism predicted by the method. The chapter also reports standard benchmark sanity checks, a negative result for a naive slack scheduler, explainability-oriented metrics, and historical DVFS results.
+
+The strongest empirical evidence in this thesis is the placement result on locality-sensitive benchmarks. In these experiments, Locality-Aware Residual HEFT improves runtime by reducing owner switches, copy events, copy bytes, and copy time. The DVFS results are reported more conservatively: they validate that the CUDASTF runtime can propagate scheduler-selected frequency decisions to execution, but final energy claims require measured frequency profiles and cleaned long-running energy experiments.
+
+\section{Experimental Methodology}
+\label{sec:results-methodology}
+
+\subsection{Hardware and Software Environment}
+\label{subsec:results-hardware-software}
+
+The final hardware and software configuration should be fixed in the reproducibility package. The current experiments were executed on the node referred to in the logs as \texttt{ganymede}. Table~\ref{tab:results-env} lists the information required for final reporting.
+
+\begin{table}[H]
+\centering
+\caption{Experimental hardware and software environment.}
+\label{tab:results-env}
+\begin{tabular}{l|p{0.62\linewidth}} \hline\hline
+Item & Value \\ \hline
+Node name & \texttt{ganymede} \\
+GPU model & TODO: insert final GPU model, e.g., H100, H20, A100, or V100. \\
+Number of GPUs & TODO: insert final number of GPUs. \\
+GPU interconnect & TODO: insert final interconnect, e.g., NVLink or PCIe. \\
+CPU & TODO: insert final CPU model and core count. \\
+System memory & TODO: insert final memory capacity. \\
+Operating system & TODO: insert Linux distribution and kernel version. \\
+CUDA toolkit & TODO: insert final CUDA version. \\
+NVML version & TODO: insert final NVML version. \\
+CUDASTF version & TODO: insert repository commit hash. \\
+Compiler and flags & TODO: insert compiler version and build flags. \\ \hline\hline
+\end{tabular}
+\end{table}
+
+All placement experiments reported as final placement evidence use DVFS disabled. This isolates the placement effect from frequency-control effects. For each benchmark and scheduler, a fresh process is launched for each repetition, avoiding cross-run scheduler or runtime state carry-over.
+
+\subsection{Benchmarks}
+\label{subsec:results-benchmarks}
+
+The evaluation uses two classes of benchmarks. The first class consists of locality-sensitive benchmarks designed to expose the logical-data movement pathology of local min-EFT placement. The second class consists of standard CUDASTF benchmarks used as compatibility and no-catastrophic-regression checks.
+
+\begin{table}[H]
+\centering
+\caption{Benchmarks used in the results chapter.}
+\label{tab:results-benchmarks}
+\begin{tabular}{l|l|p{0.50\linewidth}} \hline\hline
+Benchmark & Role & Purpose \\ \hline
+Domain Decomposition Halo Exchange & Main placement benchmark & Exposes repeated halo-data ownership movement across GPUs. \\
+Blocked Low-Rank Tile Update & Main placement benchmark & Exposes repeated updates to hot logical data tiles. \\
+Cholesky & Sanity benchmark & Checks compatibility on a standard irregular multi-GPU workload. \\
+CG & Sanity benchmark & Checks behavior on a sparse iterative workload. \\
+FDTD & Sanity benchmark & Checks behavior on a stencil-like workload. \\
+MiniWeather & Sanity benchmark & Checks behavior on a weather-like mini-application. \\
+MixedPCG & Historical DVFS benchmark & Provides early energy-aware runtime evidence. \\ \hline\hline
+\end{tabular}
+\end{table}
+
+\subsection{Schedulers Compared}
+\label{subsec:results-schedulers}
+
+The main placement comparison uses three schedulers:
+\begin{equation}
+\mathcal{S}_{\mathrm{placement}}
+=
+\{
+\mathrm{HEFT},
+\mathrm{Bandit},
+\mathrm{LAR\mbox{-}HEFT}
+\}.
+\end{equation}
+Here, \(\mathrm{Bandit}\) denotes the implemented \texttt{bandit\_scheduler}. The thesis interpretation is that this scheduler still uses HEFT as a baseline and uses a window-level bandit-like controller to choose gate aggressiveness. \(\mathrm{LAR\mbox{-}HEFT}\) denotes Locality-Aware Residual HEFT, corresponding to the certificate-based HEFT-residual implementation referred to in some logs as \texttt{ceg\_heft}.
+
+The negative-result comparison additionally includes a \texttt{slack} scheduler:
+\begin{equation}
+\mathcal{S}_{\mathrm{negative}}
+=
+\{
+\mathrm{HEFT},
+\mathrm{Bandit},
+\mathrm{Slack}
+\}.
+\end{equation}
+
+The historical DVFS comparison uses:
+\begin{equation}
+\mathcal{S}_{\mathrm{dvfs}}
+=
+\{
+\mathrm{HEFT},
+\mathrm{energy\_aware\_v1},
+\mathrm{energy\_aware\_v2}
+\}.
+\end{equation}
+
+\subsection{Metrics}
+\label{subsec:results-metrics}
+
+For placement, the primary runtime metric is mean wall time:
+\begin{equation}
+T_{\mathrm{wall}}(b,s),
+\end{equation}
+where \(b\) is a benchmark and \(s\) is a scheduler. Normalized runtime is computed against HEFT:
+\begin{equation}
+T_{\mathrm{norm}}(b,s)
+=
+\frac{T_{\mathrm{wall}}(b,s)}
+{T_{\mathrm{wall}}(b,\mathrm{HEFT})}.
+\end{equation}
+The relative improvement over HEFT is:
+\begin{equation}
+\Delta T_{\mathrm{rel}}(b,s)
+=
+100
+\left(
+\frac{T_{\mathrm{wall}}(b,s)}
+{T_{\mathrm{wall}}(b,\mathrm{HEFT})}
+-
+1
+\right)\%.
+\end{equation}
+A negative value of \(\Delta T_{\mathrm{rel}}\) indicates a runtime improvement.
+
+The data-movement metrics are:
+\begin{equation}
+\left(
+N_{\mathrm{switch}},
+N_{\mathrm{copy}},
+B_{\mathrm{copy}},
+T_{\mathrm{copy}}
+\right),
+\end{equation}
+where \(N_{\mathrm{switch}}\) is the number of logical-data owner switches, \(N_{\mathrm{copy}}\) is the number of copy events, \(B_{\mathrm{copy}}\) is total copy volume, and \(T_{\mathrm{copy}}\) is total predicted or measured copy time.
+
+For DVFS, the energy metrics are:
+\begin{equation}
+\mathrm{EDP}
+=
+E T,
+\end{equation}
+\begin{equation}
+\mathrm{ED}^{2}\mathrm{P}
+=
+E T^2,
+\end{equation}
+and
+\begin{equation}
+\mathrm{E}^{2}\mathrm{DP}
+=
+E^2 T,
+\end{equation}
+where \(E\) is application-level energy and \(T\) is runtime.
+
+\section{Main Placement Results on Locality-Sensitive Benchmarks}
+\label{sec:results-main-placement}
+
+\subsection{Experiment Setup}
+\label{subsec:results-main-placement-setup}
+
+The main placement experiment uses the following job:
+\begin{equation}
+\texttt{jobs/20260428-134943-ceg-heft-placement-compare-ganymede}.
+\end{equation}
+The compared schedulers are \(\mathrm{HEFT}\), \(\mathrm{Bandit}\), and \(\mathrm{LAR\mbox{-}HEFT}\). The benchmarks are Domain Decomposition Halo Exchange and Blocked Low-Rank Tile Update. Each configuration is repeated five times. DVFS is disabled, and each scheduler--benchmark--run combination is executed in a fresh process.
+
+\begin{table}[H]
+\centering
+\caption{Main placement experiment configuration.}
+\label{tab:results-main-config}
+\begin{tabular}{l|p{0.62\linewidth}} \hline\hline
+Item & Value \\ \hline
+Job directory & \texttt{jobs/20260428-134943-ceg-heft-placement-compare-ganymede} \\
+Schedulers & \(\mathrm{HEFT}\), \(\mathrm{Bandit}\), \(\mathrm{LAR\mbox{-}HEFT}\) \\
+Benchmarks & Domain Decomposition Halo Exchange; Blocked Low-Rank Tile Update \\
+Runs & 5 \\
+DVFS & Disabled \\
+Isolation & Fresh process per scheduler, benchmark, and run \\ \hline\hline
+\end{tabular}
+\end{table}
+
+\subsection{Runtime Results}
+\label{subsec:results-runtime-main}
+
+Table~\ref{tab:results-main-runtime} reports the mean wall time for the main placement benchmarks. Both residual locality-aware schedulers improve runtime relative to HEFT on both locality-sensitive workloads.
+
+\begin{table}[H]
+\centering
+\caption{Main placement runtime results on locality-sensitive benchmarks. Lower is better.}
+\label{tab:results-main-runtime}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|r|r|r} \hline\hline
+Benchmark & HEFT (ms) & Bandit (ms) & Bandit vs HEFT & LAR-HEFT (ms) & LAR-HEFT vs HEFT \\ \hline
+Domain Decomposition Halo Exchange & 20748.580 & 18819.460 & \(-9.298\%\) & 19192.900 & \(-7.498\%\) \\
+Blocked Low-Rank Tile Update & 18640.740 & 16810.940 & \(-9.816\%\) & 16708.080 & \(-10.368\%\) \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+The normalized results are shown in Table~\ref{tab:results-normalized-runtime}. On Domain Decomposition Halo Exchange, Bandit is more aggressive and reaches a normalized runtime of \(0.907\), while LAR-HEFT reaches \(0.925\). On Blocked Low-Rank Tile Update, LAR-HEFT reaches \(0.896\), slightly outperforming Bandit.
+
+\begin{table}[H]
+\centering
+\caption{Normalized runtime relative to HEFT. Lower is better.}
+\label{tab:results-normalized-runtime}
+\begin{tabular}{l|r|r|r} \hline\hline
+Benchmark & HEFT & Bandit & LAR-HEFT \\ \hline
+Domain Decomposition Halo Exchange & 1.000 & 0.907 & 0.925 \\
+Blocked Low-Rank Tile Update & 1.000 & 0.902 & 0.896 \\ \hline\hline
+\end{tabular}
+\end{table}
+
+These results support the main placement claim: on workloads where logical-data ownership matters, a HEFT-residual locality gate can improve runtime while preserving HEFT as the fallback baseline.
+
+\subsection{Data-Movement Results}
+\label{subsec:results-data-movement}
+
+Table~\ref{tab:results-ddhe-movement} reports the data-movement metrics for Domain Decomposition Halo Exchange. HEFT causes \(703\) owner switches and \(959\) copy events. Bandit reduces owner switches by \(92.176\%\), while LAR-HEFT reduces owner switches by \(47.795\%\). The more conservative LAR-HEFT still reduces copy bytes and copy time by approximately \(35\%\).
+
+\begin{table}[H]
+\centering
+\caption{Data movement on Domain Decomposition Halo Exchange. Lower is better.}
+\label{tab:results-ddhe-movement}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|r|r} \hline\hline
+Scheduler & Owner switches & Copy events & Copy bytes & Copy time \\ \hline
+HEFT & 703 & 959 & 6.687 GB & 133.743 ms \\
+Bandit & 55 \((-92.176\%)\) & 311 & 2.169 GB \((-67.570\%)\) & 43.372 ms \((-67.571\%)\) \\
+LAR-HEFT & 367 \((-47.795\%)\) & 623 & 4.344 GB \((-35.036\%)\) & 86.884 ms \((-35.037\%)\) \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+Table~\ref{tab:results-blrtu-movement} reports the data-movement metrics for Blocked Low-Rank Tile Update. Bandit and LAR-HEFT produce the same data-movement result on this benchmark. Both reduce owner switches by \(67.337\%\), copy bytes by \(22.908\%\), and copy time by \(22.908\%\) relative to HEFT.
+
+\begin{table}[H]
+\centering
+\caption{Data movement on Blocked Low-Rank Tile Update. Lower is better.}
+\label{tab:results-blrtu-movement}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|r|r} \hline\hline
+Scheduler & Owner switches & Copy events & Copy bytes & Copy time \\ \hline
+HEFT & 199 & 31592 & 7.470 GB & 149.401 ms \\
+Bandit & 65 \((-67.337\%)\) & 31490 & 5.759 GB \((-22.908\%)\) & 115.176 ms \((-22.908\%)\) \\
+LAR-HEFT & 65 \((-67.337\%)\) & 31490 & 5.759 GB \((-22.908\%)\) & 115.176 ms \((-22.908\%)\) \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+\subsection{Result Mechanism}
+\label{subsec:results-mechanism}
+
+The runtime improvement aligns with the intended mechanism of the method. HEFT optimizes the local earliest finish time:
+\begin{equation}
+g_0(t)
+=
+\mathop{\mathrm{arg\,min}}_{g}
+\mathrm{EFT}(t,g).
+\end{equation}
+However, in a logical-data runtime, this local decision can move a task away from the current logical-data owner. This may produce repeated data movement even when the local EFT advantage is small.
+
+Locality-Aware Residual HEFT accepts a non-HEFT GPU only when:
+\begin{equation}
+\Delta_{\mathrm{copy}}(t,g)
+\geq
+\tau_{\mathrm{abs}}(p,q(t)),
+\end{equation}
+\begin{equation}
+\rho_{\mathrm{copy}}(t,g)
+\geq
+\tau_{\mathrm{rel}}(p,q(t)),
+\end{equation}
+\begin{equation}
+\Delta_{\mathrm{eft}}(t,g)
+\leq
+\varepsilon_{\mathrm{abs}}(p,q(t)),
+\end{equation}
+and
+\begin{equation}
+\rho_{\mathrm{eft}}(t,g)
+\leq
+\varepsilon_{\mathrm{rel}}(p,q(t)).
+\end{equation}
+The data-movement results show that these constraints reduce owner switches and copy traffic. The main result is therefore not only a runtime speedup, but also a mechanism-level explanation for that speedup.
+
+\begin{figure}[H]
+\centering
+\fbox{
+\begin{minipage}{0.92\linewidth}
+\centering
+\textbf{Observed placement mechanism}
+
+\vspace{0.3cm}
+
+\begin{tabular}{c}
+HEFT local min-EFT placement \\
+\(\Downarrow\) \\
+Possible logical-data owner switching \\
+\(\Downarrow\) \\
+Increased copy events, copy bytes, and copy time \\
+\(\Downarrow\) \\
+Runtime overhead on locality-sensitive task graphs
+\end{tabular}
+
+\vspace{0.3cm}
+
+Locality-Aware Residual HEFT interrupts this chain by allowing non-HEFT placement only when copy-saving evidence dominates bounded EFT loss.
+\end{minipage}
+}
+\caption{Mechanism-level interpretation of the main placement results.}
+\label{fig:results-mechanism}
+\end{figure}
+
+For Domain Decomposition Halo Exchange, HEFT repeatedly chooses locally earlier GPUs, which causes halo data to move between devices. The residual schedulers suppress these moves by preserving ownership when the copy-saving certificate passes. Bandit is more aggressive and therefore reduces owner switches more strongly, while LAR-HEFT is more conservative but still improves runtime.
+
+For Blocked Low-Rank Tile Update, repeated updates create hot logical data. HEFT may move update tasks away from the current modified owner. LAR-HEFT and Bandit preserve locality for these updates when the local EFT loss remains bounded, which explains why both produce the same owner-switch and copy-time reductions on this benchmark.
+
+\section{Standard Benchmark Sanity Check}
+\label{sec:results-standard}
+
+\subsection{Experiment Setup}
+\label{subsec:results-standard-setup}
+
+The standard benchmark experiment uses the following job:
+\begin{equation}
+\texttt{jobs/20260428-142523-ceg-heft-standard-4bench-ganymede}.
+\end{equation}
+The compared schedulers are HEFT, Bandit, and LAR-HEFT. The benchmarks are Cholesky, CG, FDTD, and MiniWeather. Each configuration is repeated three times, and DVFS is disabled.
+
+\begin{table}[H]
+\centering
+\caption{Standard benchmark sanity-check configuration.}
+\label{tab:results-standard-config}
+\begin{tabular}{l|p{0.62\linewidth}} \hline\hline
+Item & Value \\ \hline
+Job directory & \texttt{jobs/20260428-142523-ceg-heft-standard-4bench-ganymede} \\
+Schedulers & HEFT, Bandit, LAR-HEFT \\
+Benchmarks & Cholesky, CG, FDTD, MiniWeather \\
+Runs & 3 \\
+DVFS & Disabled \\ \hline\hline
+\end{tabular}
+\end{table}
+
+\subsection{Wall-Time Results}
+\label{subsec:results-standard-walltime}
+
+Table~\ref{tab:results-standard-walltime} reports harness wall time. Cholesky shows a stable improvement for both residual schedulers. CG is nearly neutral. FDTD and MiniWeather show small positive or negative changes, indicating that these benchmarks do not consistently expose the strong logical-data ping-pong behavior observed in the main placement benchmarks.
+
+\begin{table}[H]
+\centering
+\caption{Standard benchmark wall-time sanity check. Lower is better.}
+\label{tab:results-standard-walltime}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|r|p{0.29\linewidth}} \hline\hline
+Benchmark & HEFT (ms) & Bandit (ms) & LAR-HEFT (ms) & Interpretation \\ \hline
+Cholesky & 15359.693 & 14805.137 \((-3.610\%)\) & 14793.343 \((-3.687\%)\) & Stable positive result. \\
+CG & 15412.320 & 15364.705 \((-0.309\%)\) & 15394.864 \((-0.113\%)\) & Approximately neutral. \\
+FDTD & 21236.918 & 21629.416 \((+1.848\%)\) & 21320.690 \((+0.394\%)\) & Approximately neutral or small regression. \\
+MiniWeather & 14629.525 & 14550.235 \((-0.542\%)\) & 14716.207 \((+0.593\%)\) & Within small wall-time variation. \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+\subsection{Internal Kernel-Time Results}
+\label{subsec:results-standard-kernel}
+
+Table~\ref{tab:results-standard-kernel} reports internal kernel time from the same standard benchmark run. These numbers should be interpreted as a secondary diagnostic because harness wall time is the main end-to-end metric.
+
+\begin{table}[H]
+\centering
+\caption{Internal kernel-time sanity check. Lower is better.}
+\label{tab:results-standard-kernel}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|r} \hline\hline
+Benchmark & HEFT (ms) & Bandit (ms) & LAR-HEFT (ms) \\ \hline
+Cholesky & 120.144 & 46.501 \((-61.295\%)\) & 51.468 \((-57.162\%)\) \\
+CG & 1026.333 & 978.333 \((-4.677\%)\) & 986.667 \((-3.865\%)\) \\
+FDTD & 6784.000 & 7012.667 \((+3.371\%)\) & 6755.333 \((-0.423\%)\) \\
+MiniWeather & 135.667 & 98.667 \((-27.273\%)\) & 102.333 \((-24.570\%)\) \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+The standard benchmarks are therefore not used as the main evidence for the locality scheduler. Instead, they serve as compatibility and no-catastrophic-regression evidence. The main performance claim remains tied to the locality-sensitive benchmarks where runtime improvement and data-movement reduction align.
+
+\section{Negative Result: Naive Slack Scheduler}
+\label{sec:results-slack-negative}
+
+An early \texttt{slack} scheduler attempted to use slack directly for placement. The result shows that slack alone is not a stable placement criterion. The experiment uses:
+\begin{equation}
+\texttt{jobs/20260428-110255-three-scheduler-placement-compare-rerun1-ganymede}.
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Negative result for the naive slack scheduler. Lower is better.}
+\label{tab:results-slack-negative}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|r} \hline\hline
+Benchmark & HEFT (ms) & Bandit (ms) & Slack (ms) \\ \hline
+Domain Decomposition Halo Exchange & 20738.860 & 18701.960 \((-9.822\%)\) & 33101.740 \((+59.612\%)\) \\
+Blocked Low-Rank Tile Update & 18648.960 & 16805.720 \((-9.884\%)\) & 18919.420 \((+1.450\%)\) \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+This negative result is important because it motivates the certificate-based design. A scheduler should not deviate from HEFT simply because it observes apparent slack. Instead, it must bind together:
+\begin{equation}
+\mbox{HEFT baseline}
++
+\mbox{copy-saving evidence}
++
+\mbox{bounded EFT-loss condition}.
+\end{equation}
+This is precisely the role of the Locality Dominance Certificate.
+
+\section{Ablation and Sensitivity Status}
+\label{sec:results-ablation-status}
+
+The uploaded documents recommend an ablation study but do not yet provide final ablation numbers. Therefore, this section defines the final ablation table structure without inventing results.
+
+\begin{table}[H]
+\centering
+\caption{Planned gate-adaptation ablation. Values marked TODO require final runs.}
+\label{tab:results-gate-ablation}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|r|r|r} \hline\hline
+Scheduler & Runtime & Copy bytes & Copy time & Owner switches & Certificate pass rate \\ \hline
+HEFT & TODO & TODO & TODO & TODO & N/A \\
+Fixed default gate & TODO & TODO & TODO & TODO & TODO \\
+Fixed aggressive gate & TODO & TODO & TODO & TODO & TODO \\
+Adaptive LAR-HEFT & TODO & TODO & TODO & TODO & TODO \\
+Bandit & TODO & TODO & TODO & TODO & TODO \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+The intended interpretation is as follows. A fixed aggressive gate may perform well on strong bad cases but may be less safe on workloads with high criticality or high EFT penalty. A fixed default gate is safer but may miss locality opportunities. Adaptive LAR-HEFT should balance these cases by selecting the gate profile at the window level.
+
+\begin{table}[H]
+\centering
+\caption{Planned certificate-component ablation. Values marked TODO require final runs.}
+\label{tab:results-certificate-ablation}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|r|r} \hline\hline
+Variant & Runtime & Copy time & Owner switches & Harmful deviations \\ \hline
+Full LAR-HEFT & TODO & TODO & TODO & TODO \\
+Without absolute copy-saving threshold & TODO & TODO & TODO & TODO \\
+Without relative copy-saving threshold & TODO & TODO & TODO & TODO \\
+Without absolute EFT bound & TODO & TODO & TODO & TODO \\
+Without relative EFT bound & TODO & TODO & TODO & TODO \\
+Without criticality-dependent thresholds & TODO & TODO & TODO & TODO \\
+Without owner-switch term & TODO & TODO & TODO & TODO \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+No conclusion is claimed from these ablation tables until the final measurements are available.
+
+\section{Explainability Evaluation}
+\label{sec:results-explainability}
+
+The explainability results are partly structural and partly empirical. The structural guarantee follows from the scheduler design: LAR-HEFT cannot select a non-HEFT GPU unless a Locality Dominance Certificate is satisfied. Therefore, every non-HEFT placement has a faithful certificate by construction.
+
+\subsection{Certificate Coverage}
+\label{subsec:results-certificate-coverage}
+
+Certificate coverage is defined as:
+\begin{equation}
+\mathrm{coverage}
+=
+\frac{
+N_{\mathrm{nonHEFT,cert}}
+}{
+N_{\mathrm{nonHEFT}}
+}.
+\end{equation}
+For LAR-HEFT, the expected value is:
+\begin{equation}
+\mathrm{coverage}=1,
+\end{equation}
+provided that certificate logging is enabled and no log records are dropped.
+
+\begin{table}[H]
+\centering
+\caption{Explainability metrics. Final measured values require certificate-log replay.}
+\label{tab:results-explainability}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|p{0.45\linewidth}|p{0.25\linewidth}} \hline\hline
+Metric & Definition & Current status \\ \hline
+Certificate coverage & Non-HEFT decisions with valid certificate divided by all non-HEFT decisions. & \(100\%\) by construction; TODO: confirm from logs. \\
+Decision fidelity & Replayed decisions matching actual decisions divided by all decisions. & TODO: replay from \texttt{LAR\_HEFT\_TASK\_CERTIFICATE}. \\
+Certificate validity & Fraction of certificates whose stated conditions reproduce pass/fail behavior. & TODO: replay with threshold perturbation. \\
+Explanation sparsity & Average number of active reasons per decision. & TODO: measure from reject-reason logs. \\
+Window attribution consistency & Fraction of windows whose feature signs match monotonic constraints. & TODO: measure from window logs. \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+\subsection{Decision Fidelity}
+\label{subsec:results-decision-fidelity}
+
+Decision fidelity is defined as:
+\begin{equation}
+\mathrm{fidelity}
+=
+\frac{
+N_{\mathrm{replay\ match}}
+}{
+N_{\mathrm{total\ decisions}}
+}.
+\end{equation}
+A replay uses the logged values:
+\begin{equation}
+\left(
+R[g],
+M[s,g],
+\mathrm{EFT}(t,g),
+\mathrm{copy}_{\mathrm{ms}}(t,g),
+q(t),
+p_W,
+\tau_{\mathrm{abs}},
+\tau_{\mathrm{rel}},
+\varepsilon_{\mathrm{abs}},
+\varepsilon_{\mathrm{rel}}
+\right).
+\end{equation}
+The expected value is \(100\%\) up to floating-point tolerance and logging loss. The final thesis should report the measured value after enabling the full certificate log.
+
+\subsection{Window-Level Explanation}
+\label{subsec:results-window-explanation}
+
+For a scheduling window \(W\), the controller prediction decomposes as:
+\begin{equation}
+\widehat{\Delta J}(W)
+=
+\beta^T x(W)
+=
+\sum_i \beta_i x_i(W).
+\end{equation}
+A representative explanation table should report feature contributions. Since final logged examples are not included in the uploaded documents, Table~\ref{tab:results-window-explanation-template} gives the required reporting format.
+
+\begin{table}[H]
+\centering
+\caption{Template for a window-level feature-attribution explanation. Values marked TODO require final logs.}
+\label{tab:results-window-explanation-template}
+\begin{tabular}{l|r|r|r} \hline\hline
+Feature & Value & Coefficient & Contribution \\ \hline
+Mean criticality & TODO & TODO & TODO \\
+High-criticality fraction & TODO & TODO & TODO \\
+Baseline copy pressure & TODO & TODO & TODO \\
+Locality opportunity rate & TODO & TODO & TODO \\
+Mean best copy saving & TODO & TODO & TODO \\
+Mean best EFT penalty & TODO & TODO & TODO \\
+Owner-switch risk & TODO & TODO & TODO \\
+Device load imbalance & TODO & TODO & TODO \\ \hline
+Predicted advantage \(\beta^T x(W)\) & \multicolumn{3}{r}{TODO} \\
+Uncertainty bonus \(U(W)\) & \multicolumn{3}{r}{TODO} \\
+Selected profile & \multicolumn{3}{r}{TODO} \\ \hline\hline
+\end{tabular}
+\end{table}
+
+\section{Historical DVFS and Energy-Aware Results}
+\label{sec:results-dvfs}
+
+The original thesis proposal targets energy, EDP, ED\(^{2}\)P, transition count, and hidden transition fraction. The implementation includes a CUDASTF-integrated DVFS path in which the scheduler attaches GPU and memory frequency decisions to tasks and the runtime applies them asynchronously through NVML. The historical results below should be treated as early evidence rather than final energy claims.
+
+\subsection{MixedPCG Run5}
+\label{subsec:results-mixedpcg-run5}
+
+The MixedPCG 8-GPU run5 experiment uses:
+\begin{equation}
+\texttt{jobs/20260309-175358-mixedpcg-energy-aware-v1-v2-heft-8gpu-compare-run5}.
+\end{equation}
+The HEFT baseline has:
+\begin{equation}
+T_{\mathrm{HEFT}} = 151846\ \mathrm{ms},
+\end{equation}
+and
+\begin{equation}
+E_{\mathrm{HEFT}} = 37296.40\ \mathrm{J}.
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Historical MixedPCG run5 DVFS result summary.}
+\label{tab:results-mixedpcg-run5}
+\begin{tabular}{l|p{0.60\linewidth}} \hline\hline
+Result & Value \\ \hline
+Fastest point & \texttt{energy\_aware\_v2.min\_time}, 149240 ms \((-1.72\%\) vs HEFT) \\
+Lowest energy & \texttt{energy\_aware\_v2.min\_e2dp}, 36438.47 J \((-2.30\%\) vs HEFT) \\
+Best EDP / ED$^{2}$P / E$^{2}$DP & \texttt{energy\_aware\_v2.min\_e2dp}, \(-3.93\%\) / \(-5.54\%\) / \(-6.14\%\) vs HEFT \\ \hline\hline
+\end{tabular}
+\end{table}
+
+This result validates the energy-aware pipeline direction, but it should not be used as a final absolute energy claim because the corresponding profile is described as a script-generated smoke profile rather than a final measured one.
+
+\subsection{MixedPCG Run6}
+\label{subsec:results-mixedpcg-run6}
+
+The MixedPCG run6 anchor objective is \texttt{min\_time}. Table~\ref{tab:results-mixedpcg-run6} shows that \texttt{energy\_aware\_v2} improves runtime, energy, and composite metrics relative to HEFT on this historical run.
+
+\begin{table}[H]
+\centering
+\caption{Historical MixedPCG run6 result for anchor objective \texttt{min\_time}.}
+\label{tab:results-mixedpcg-run6}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|r|r|r} \hline\hline
+Metric & HEFT & v1 & v2 & v2 vs HEFT & v2 vs v1 \\ \hline
+Time (ms) & 153352 & 142455 & 141101 & \(-7.99\%\) & \(-0.95\%\) \\
+Energy (J) & 37066.16 & 34899.04 & 34675.33 & \(-6.45\%\) & \(-0.64\%\) \\
+EDP & 5684170.28 & 4971542.62 & 4892724.13 & \(-13.92\%\) & \(-1.59\%\) \\
+ED$^{2}$P & 871678881.42 & 708221104.18 & 690368266.83 & \(-20.80\%\) & \(-2.52\%\) \\
+E$^{2}$DP & 210690384341.24 & 173502060580.41 & 169656837075.26 & \(-19.48\%\) & \(-2.22\%\) \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+The result suggests that energy-aware control can improve both runtime and energy metrics on some workloads. However, other objectives in the same historical report can be dominated by earlier versions, so the final thesis should frame DVFS as a promising runtime-integrated extension rather than as a fully stable outperforming scheduler.
+
+\subsection{Cholesky Energy Trade-Off}
+\label{subsec:results-cholesky-dvfs}
+
+The Cholesky historical energy-aware experiment uses:
+\begin{equation}
+\texttt{jobs/20260305-173500-cholesky-energy-aware-v1-v2-homoavg-run\_5}.
+\end{equation}
+The main observation is that \texttt{energy\_aware\_v2} is not always the fastest version. Instead, it can behave as an energy-dominant scheduler.
+
+\begin{table}[H]
+\centering
+\caption{Historical Cholesky energy-aware trade-off: v2 relative to v1.}
+\label{tab:results-cholesky-dvfs}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|r|r} \hline\hline
+Objective & v2 vs v1 time & v2 vs v1 energy & v2 vs v1 EDP & v2 vs v1 E$^{2}$DP \\ \hline
+\texttt{min\_time} & \(+12.694\%\) & \(+14.094\%\) & \(+28.577\%\) & \(+46.699\%\) \\
+\texttt{min\_energy} & \(+26.594\%\) & \(-28.571\%\) & \(-9.575\%\) & \(-35.410\%\) \\
+\texttt{min\_edp} & \(+17.671\%\) & \(-32.727\%\) & \(-20.839\%\) & \(-46.746\%\) \\
+\texttt{min\_ed2p} & \(+15.519\%\) & \(-29.553\%\) & \(-18.621\%\) & \(-42.671\%\) \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+This result demonstrates a real energy--runtime trade-off. Some objectives reduce energy and composite metrics at the cost of additional runtime. Because the experiment is historical and uses an earlier implementation path, it should be reported as supporting evidence for the feasibility of runtime-integrated DVFS rather than as a final headline result.
+
+\subsection{Transition-Hiding Metrics}
+\label{subsec:results-transition-hiding}
+
+The proposal emphasizes hiding DVFS transition latency behind communication, synchronization, or non-critical-path slack. The implementation includes a transition-estimation path, but final transition-hiding measurements are not yet available in the uploaded documents. The final evaluation should report:
+\begin{equation}
+\left(
+N_{\mathrm{tr}},
+L_{\mathrm{tr}},
+L_{\mathrm{hidden}},
+L_{\mathrm{visible}},
+\eta_{\mathrm{hidden}}
+\right),
+\end{equation}
+where:
+\begin{equation}
+L_{\mathrm{visible}}
+=
+\max(0,L_{\mathrm{tr}}-L_{\mathrm{hidden}}),
+\end{equation}
+and
+\begin{equation}
+\eta_{\mathrm{hidden}}
+=
+\frac{L_{\mathrm{hidden}}}
+{\max(\epsilon,L_{\mathrm{tr}})}.
+\end{equation}
+
+\begin{table}[H]
+\centering
+\caption{Transition-hiding result template. Values marked TODO require final DVFS logs.}
+\label{tab:results-transition-hiding}
+\begin{tabular}{l|r} \hline\hline
+Metric & Value \\ \hline
+Transition count \(N_{\mathrm{tr}}\) & TODO \\
+Total transition latency \(L_{\mathrm{tr}}\) & TODO \\
+Hidden transition latency \(L_{\mathrm{hidden}}\) & TODO \\
+Visible transition latency \(L_{\mathrm{visible}}\) & TODO \\
+Hidden transition fraction \(\eta_{\mathrm{hidden}}\) & TODO \\ \hline\hline
+\end{tabular}
+\end{table}
+
+\section{Scheduler Overhead}
+\label{sec:results-overhead}
+
+The final thesis should report scheduler overhead to show that explainability and adaptivity do not dominate runtime gains. The uploaded documents define the overhead categories but do not provide final measured overhead values. Therefore, Table~\ref{tab:results-overhead-template} gives the final reporting structure.
+
+\begin{table}[H]
+\centering
+\caption{Scheduler overhead reporting template. Values marked TODO require final profiling.}
+\label{tab:results-overhead-template}
+\resizebox{\linewidth}{!}{
+\begin{tabular}{l|r|r|p{0.34\linewidth}} \hline\hline
+Component & Absolute overhead & Runtime share & Notes \\ \hline
+HEFT candidate evaluation & TODO & TODO & Per-task candidate EFT computation. \\
+MSI residency update & TODO & TODO & Logical-data state maintenance. \\
+Certificate evaluation & TODO & TODO & Locality Dominance Certificate check. \\
+Window controller & TODO & TODO & Gate-profile selection. \\
+Shadow evaluation & TODO & TODO & Paired default/aggressive window simulation. \\
+Logging & TODO & TODO & Certificate and window explanation logs. \\
+DVFS tuner & TODO & TODO & Asynchronous frequency-control overhead. \\ \hline\hline
+\end{tabular}
+}
+\end{table}
+
+\section{Threats to Validity}
+\label{sec:results-threats}
+
+\subsection{Internal Validity}
+\label{subsec:results-internal-validity}
+
+Task cost estimates and copy-bandwidth estimates may be inaccurate. The MSI-style residency model is intentionally lightweight and may not fully capture topology-dependent bandwidth, copy-engine contention, or overlap between communication and computation. Logging may perturb runtime if full detailed logs are enabled. Shadow evaluation approximates paired policy behavior, but it may not perfectly match future runtime ordering under all conditions.
+
+\subsection{External Validity}
+\label{subsec:results-external-validity}
+
+The strongest improvements are observed on locality-sensitive bad cases. Other workloads may show smaller gains or near-neutral behavior, as seen in the standard benchmark sanity check. Results may vary with GPU topology, interconnect bandwidth, GPU count, benchmark scale, and CUDASTF implementation details. The current scope is single-node multi-GPU execution and does not cover multi-node clusters.
+
+\subsection{Construct Validity}
+\label{subsec:results-construct-validity}
+
+Runtime improvement is supported by copy metrics, but copy time alone may not capture all communication effects. Owner-switch reduction is a useful proxy for logical-data locality, but it is not the only determinant of runtime. DVFS results are currently historical and require measured frequency profiles before strong final energy claims can be made.
+
+\subsection{Reproducibility}
+\label{subsec:results-reproducibility}
+
+The final reproducibility package should include the CUDASTF commit hash, benchmark commands, environment variables, hardware details, number of repetitions, warm-up policy, log parsing scripts, and all raw or summarized run tables. The key environment variables include:
+\begin{equation}
+\begin{array}{l}
+\texttt{CUDASTF\_SCHEDULE}, \\
+\texttt{CUDASTF\_TASK\_DAG}, \\
+\texttt{CUDASTF\_HEFT\_V8\_WINDOW\_SIZE}, \\
+\texttt{CUDASTF\_HEFT\_V8\_ALPHA}, \\
+\texttt{CUDASTF\_HEFT\_V8\_LAMBDA}, \\
+\texttt{CUDASTF\_HEFT\_COPY\_LOG}, \\
+\texttt{CUDASTF\_LAR\_HEFT\_LOG}, \\
+\texttt{CUDASTF\_ENERGY\_STATISTICS}, \\
+\texttt{CUDASTF\_ENERGY\_WEIGHT}, \\
+\texttt{CUDASTF\_TIME\_WEIGHT}, \\
+\texttt{CUDASTF\_SLACK\_TOLERANCE}, \\
+\texttt{CUDASTF\_IDLE\_POWER\_PROFILE}.
+\end{array}
+\end{equation}
+
+\section{Results Summary}
+\label{sec:results-summary}
+
+The main placement results show that Locality-Aware Residual HEFT improves runtime on locality-sensitive CUDASTF benchmarks by reducing unnecessary logical-data movement. On Domain Decomposition Halo Exchange, LAR-HEFT improves runtime by \(7.498\%\) relative to HEFT and reduces owner switches by \(47.795\%\). On Blocked Low-Rank Tile Update, LAR-HEFT improves runtime by \(10.368\%\) and reduces owner switches by \(67.337\%\). These results support the thesis claim that HEFT's local min-EFT objective can fragment logical-data flow, and that a certificate-based HEFT-residual locality gate can reduce this pathology.
+
+The standard benchmark results are more mixed and should be interpreted as compatibility evidence rather than as the primary performance claim. Cholesky improves, CG is nearly neutral, and FDTD and MiniWeather show small changes. The negative slack-scheduler result demonstrates that naive slack-aware placement is insufficient and supports the need for a HEFT-relative copy-saving certificate with bounded EFT loss.
+
+The DVFS experiments validate a CUDASTF-integrated energy-control path and show promising historical energy/EDP trade-offs on MixedPCG and Cholesky. However, final energy claims require measured per-GPU frequency profiles, cleaned long-running benchmarks, and explicit transition-hiding metrics. The thesis therefore treats locality-aware placement as the main validated contribution and DVFS as an implemented energy-aware extension.
