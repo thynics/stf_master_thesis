@@ -624,7 +624,8 @@ Algorithm~\ref{alg:proposal_commit_pipeline} formalizes one scheduling step with
 \State $p_v \gets \Call{ProposeLevel}{v,d_{\mathrm{exec}},\kappa(v),\xi(v,d_{\mathrm{base}})}$
 \State $\Call{AccumulateIntent}{W_{d_{\mathrm{exec}}},p_v,v}$
 \State $\ell_v \gets \Call{CommittedLevel}{W_{d_{\mathrm{exec}}}}$
-\State $\Call{AnnotateFrequency}{v,\Call{FrequencyPair}{d_{\mathrm{exec}},\ell_v}}$
+\State $\varphi_v \gets \Call{FrequencyPair}{d_{\mathrm{exec}},\ell_v}$
+\State $\Call{AnnotateFrequency}{v,\varphi_v}$
 \State $\mathcal{S} \gets \Call{UpdatePlacementState}{\mathcal{S},v,d_{\mathrm{exec}}}$
 \If{$\Call{WindowComplete}{W_{d_{\mathrm{exec}}}}$}
     \State $m \gets \Call{AggregateWindowMetrics}{W_{d_{\mathrm{exec}}}}$
