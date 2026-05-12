@@ -116,7 +116,7 @@ Although the hardware may expose many supported clock pairs, the runtime policy 
 L = \{\mathrm{HIGH},\mathrm{MID},\mathrm{LOW}\}.
 \label{eq:dvfs_levels}
 \end{equation}
-The high level represents the fastest available graphics clock, while the mid and low levels are selected by rank among lower supported graphics clocks. The memory clock is treated conservatively and kept at the highest supported level in the main implementation. This discrete-level view keeps the online decision space small enough for a runtime scheduler while still exposing meaningful energy--performance choices.
+The high level represents the fastest available graphics clock, while the mid and low levels are selected by rank among lower supported graphics clocks. The memory clock is treated conservatively and kept at the highest supported level in the thesis design. This discrete-level view keeps the online decision space small enough for a runtime scheduler while still exposing meaningful energy--performance choices.
 
 \subsection{Workload Sensitivity to Frequency Scaling}
 \label{subsec:workload_sensitivity}
@@ -250,7 +250,7 @@ These features are cheap to compute because they are already needed for HEFT-sty
 \subsection{Copy-Wait Ratio and Slack Proxy}
 \label{subsec:copy_wait_slack_proxy}
 
-The implementation uses copy and waiting time as a proxy for how much execution can hide slower core frequency. Let $W(v)$ denote the predicted copy-plus-queue waiting component and let $T(v)$ denote the predicted compute component. A normalized copy-wait ratio is
+The DVFS model uses copy and waiting time as a proxy for how much execution can hide slower core frequency. Let $W(v)$ denote the predicted copy-plus-queue waiting component and let $T(v)$ denote the predicted compute component. A normalized copy-wait ratio is
 \begin{equation}
 \omega(v) =
 \frac{W(v)}{\max(\varepsilon, W(v)+T(v))}.
@@ -266,7 +266,7 @@ where $\kappa(v)$ is the local criticality proxy. This is not an exact critical-
 \subsection{Runtime Suitability}
 \label{subsec:runtime_suitability}
 
-The model must be inexpensive to evaluate and robust to imperfect estimates. For this reason, the thesis uses online proxies and guardrails rather than a large offline table of per-task frequency sensitivities. A task may request lower frequency only when multiple signals agree: it is not critical, not urgently heavy, not on a backlogged device, and has enough copy-wait time or slack to hide the expected slowdown. This conservative characterization matches the implementation goal of exposing an energy-control path without turning every task into a separate profiling problem.
+The model must be inexpensive to evaluate and robust to imperfect estimates. For this reason, the thesis uses online proxies and guardrails rather than a large offline table of per-task frequency sensitivities. A task may request lower frequency only when multiple signals agree: it is not critical, not urgently heavy, not on a backlogged device, and has enough copy-wait time or slack to hide the expected slowdown. This conservative characterization supports the design goal of exposing an energy-control path without turning every task into a separate profiling problem.
 
 \section{HEFT-Based DAG Scheduling}
 \label{sec:theory_heft}
@@ -659,7 +659,7 @@ The runtime simultaneously considers device placement and frequency control, but
 \subsection{Optimization View}
 \label{subsec:optimization_view}
 
-At a high level, the runtime attempts to solve the following constrained optimization problem:
+At a high level, the runtime can be viewed as approximating the following constrained optimization objective:
 \begin{align}
 \min_{\pi,\Phi} \quad & J(E_{\mathrm{app}}, T_{\mathrm{app}}) \\
 \mathrm{s.t.} \quad & T_{\mathrm{app}} \leq (1+\epsilon)T_{\mathrm{base}}, \\
@@ -668,7 +668,7 @@ At a high level, the runtime attempts to solve the following constrained optimiz
 & \text{all DAG dependencies are respected},
 \label{eq:runtime_optimization_problem}
 \end{align}
-where $\pi(v)$ is the placement decision, $\phi(v)$ is the frequency decision, and $J$ may be energy, EDP, ED$^2$P, or another user-selected objective.
+where $\pi(v)$ is the placement decision, $\phi(v)$ is the frequency decision, and $J$ may be energy, EDP, ED$^2$P, or another user-selected objective. This formulation is a conceptual target rather than a claim that the online scheduler solves the constrained problem exactly.
 
 Solving this problem exactly online is impractical. The thesis therefore uses a layered heuristic framework: HEFT-style baseline placement, controlled deviation for data locality, contextual-bandit adaptation of gate profiles, and proposal--commit DVFS for stable frequency control.
 

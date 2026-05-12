@@ -18,7 +18,7 @@ Let
 \begin{equation}
 \mathcal{G}=\{0,1,\ldots,m-1\}
 \end{equation}
-denote the set of GPUs available to the runtime. A task $t$ becomes schedulable when all of its CUDASTF dependencies are known to the scheduler. For each task, the scheduler observes a set of dependency descriptors, their access modes, logical data sizes, and an estimated execution cost. The implementation uses calibrated task statistics when available and falls back to a default task cost otherwise. We denote the estimated cost by
+denote the set of GPUs available to the runtime. A task $t$ becomes schedulable when all of its CUDASTF dependencies are known to the scheduler. For each task, the scheduler observes a set of dependency descriptors, their access modes, logical data sizes, and an estimated execution cost. The method uses calibrated task statistics when available and falls back to a default task cost otherwise. We denote the estimated cost by
 \begin{equation}
 C(t).
 \end{equation}
@@ -105,7 +105,7 @@ g_0(t)
 =
 \mathop{\mathrm{arg\,min}}_{g\in\mathcal{G}} F(t,g).
 \end{equation}
-The implementation uses a deterministic tie-breaker; when two candidates have the same finish time, the lower GPU identifier is selected. We denote the corresponding baseline candidate by
+Ties are resolved deterministically; when two candidates have the same finish time, the lower GPU identifier is selected. We denote the corresponding baseline candidate by
 \begin{equation}
 \xi_0(t)=\xi(t,g_0(t)).
 \end{equation}
@@ -123,7 +123,7 @@ The scheduler does not require an offline critical-path computation. Instead, it
 \qquad
 \widetilde{B}(t)=\frac{\log(1+B_{\mathrm{in}}(t))}{\log(1+B_{\mathrm{ref}})}.
 \end{equation}
-Here $C_{\mathrm{ref}}$, $d_{\mathrm{ref}}$, and $B_{\mathrm{ref}}$ are normalization constants. The implementation defaults are
+Here $C_{\mathrm{ref}}$, $d_{\mathrm{ref}}$, and $B_{\mathrm{ref}}$ are normalization constants. The default values are
 \begin{equation}
 C_{\mathrm{ref}}=500,\qquad d_{\mathrm{ref}}=16,\qquad B_{\mathrm{ref}}=2^{30}.
 \end{equation}
@@ -178,7 +178,7 @@ The gate has two profiles,
 \begin{equation}
 p\in\{\mathrm{default},\mathrm{aggressive}\}.
 \end{equation}
-Each profile defines a maximum normalized finish-time penalty and a minimum normalized copy gain. The implementation uses separate thresholds for critical and non-critical tasks. With the default parameterization,
+Each profile defines a maximum normalized finish-time penalty and a minimum normalized copy gain. The gate uses separate thresholds for critical and non-critical tasks. With the default parameterization,
 \begin{table}[t]
 \centering
 \begin{tabular}{@{}lcccc@{}}
@@ -194,7 +194,9 @@ $\mathrm{aggressive}$ & $0.004$ & $0.020$ & $0.20$ & $0.10$ \\
 \end{table}
 where $\delta$ denotes the allowed value of $\rho_F$ and $\tau$ denotes the required value of $\rho_K$. The aggressive profile is more permissive because it allows a slightly larger finish-time penalty and requires a smaller copy gain.
 
-Let $\theta_q$ be the criticality threshold used by the implementation. For a selected profile $p$, the active thresholds for task $t$ are
+The numeric thresholds in Table~\ref{tab:gate-profiles} are fixed method parameters, not per-benchmark tuning knobs. They encode the intended asymmetry of the policy: latency-sensitive tasks receive a tighter finish-time bound and require stronger copy evidence, while non-critical tasks may accept slightly more predicted delay in exchange for locality. The same parameterization is used across the thesis evaluation, with concrete runtime configuration treated as reproducibility metadata.
+
+Let $\theta_q$ be the criticality threshold used by the gate. For a selected profile $p$, the active thresholds for task $t$ are
 \begin{equation}
 \delta(p,t)
 =
@@ -225,7 +227,7 @@ and
 \rho_K(t,c)\geq\tau(p,t).
 \label{eq:gate-copy}
 \end{equation}
-Equations~\ref{eq:gate-eft} and~\ref{eq:gate-copy} are the locality certificate used by the implementation. They guarantee that every accepted deviation has bounded normalized finish-time loss and sufficient predicted copy reduction.
+Equations~\ref{eq:gate-eft} and~\ref{eq:gate-copy} form the locality certificate used by the placement rule. Within the scheduler's prediction model, every accepted deviation has bounded normalized finish-time loss and sufficient predicted copy reduction.
 
 Among feasible candidates, the scheduler selects the candidate with maximum residual score
 \begin{equation}
@@ -233,7 +235,7 @@ H(t,c)
 =
 \rho_K(t,c)+\lambda_Q\max(0,\rho_Q(t,c)).
 \end{equation}
-In the current bandit implementation, $\lambda_Q=0$, so
+In the evaluated copy-only configuration, $\lambda_Q=0$, so
 \begin{equation}
 H(t,c)=\rho_K(t,c).
 \end{equation}
@@ -254,7 +256,7 @@ where $p_W$ is the profile selected for the current window and $\mathcal{F}(t,p_
 \section{Window-Level Bandit Controller}
 \label{sec:methods-bandit-controller}
 
-The residual gate profile is selected at the granularity of a scheduling window rather than independently for every task. This design reduces oscillation and lets the scheduler adapt to phases of the task graph. A window contains up to $N_W$ scheduled tasks, where $N_W$ is controlled by \texttt{CUDASTF\_BANDIT\_WINDOW\_SIZE}.
+The residual gate profile is selected at the granularity of a scheduling window rather than independently for every task. This design reduces oscillation and lets the scheduler adapt to phases of the task graph. A window contains up to $N_W$ scheduled tasks; $N_W$ is fixed for a run and reported as part of the evaluation metadata.
 
 \subsection{Context Features}
 \label{subsec:methods-context-features}
@@ -303,7 +305,7 @@ The nominal score of profile $p$ is
 \mathrm{score}(p,W)=\mu_p+u_p.
 \end{equation}
 
-The default configuration adds an implementation bias toward the aggressive profile. This bias is expressed as an exploration-scale adjustment and an additive score prior for the aggressive arm. The first window is also initialized with the aggressive profile. After that, the controller chooses the profile with larger score, subject to a guardrail: the scheduler switches from aggressive back to default only when the default score exceeds the aggressive score by a configured margin. This rule reflects the empirical goal of retaining locality-preserving deviations unless there is clear evidence that the more conservative gate is preferable.
+The default configuration favors the aggressive profile through an exploration-scale adjustment and an additive score prior for the aggressive arm. The first window is also initialized with the aggressive profile. After that, the controller chooses the profile with larger score, subject to a guardrail: the scheduler switches from aggressive back to default only when the default score exceeds the aggressive score by a configured margin. This rule reflects the empirical goal of retaining locality-preserving deviations unless there is clear evidence that the more conservative gate is preferable.
 
 \subsection{Reward and Update}
 \label{subsec:methods-bandit-reward}
@@ -328,7 +330,7 @@ where
 \end{equation}
 The default values are $\kappa_{\mathrm{crit}}=4.0$ and $\kappa_{\mathrm{noncrit}}=2.0$. If no alternative candidate is accepted, the task reward is zero.
 
-The implementation uses a relative reward. For each scheduled task, it also evaluates what reward the default profile would have obtained on the same candidate set. The reward credited to the active profile is therefore
+The controller uses a relative reward. For each scheduled task, it also evaluates what reward the default profile would have obtained on the same candidate set. The reward credited to the active profile is therefore
 \begin{equation}
 r_t^{\mathrm{rel}}
 =
@@ -430,13 +432,13 @@ The state update after placement is essential because the next ready task observ
 \section{DVFS Framework}
 \label{sec:methods-dvfs-framework}
 
-The DVFS layer is implemented as a conservative proposer and per-GPU window committer. It is separate from the placement bandit: placement chooses the GPU, and DVFS chooses the frequency level to use on that GPU. The stable scheduler alias \texttt{CUDASTF\_SCHEDULE=win\_dvfs} selects the bandit placement path with DVFS enabled. Equivalently, \texttt{CUDASTF\_WIN\_DVFS\_ENABLE=1} enables the same DVFS layer when a compatible bandit placement scheduler is selected.
+The DVFS layer is implemented as a conservative proposer and per-GPU window committer. It is separate from the placement bandit: placement chooses the GPU, and DVFS chooses the frequency level to use on that GPU. In the thesis experiments, the DVFS configuration is treated as a method variant that reuses the same HEFT-relative placement path and adds only the proposal--commit frequency controller.
 
-When DVFS is active, the runtime first checks that the selected placement scheduler supports per-task frequency annotations and that valid graphics-clock levels can be obtained for all GPUs. The implementation defines three abstract levels,
+When DVFS is active, the runtime first checks that the selected placement scheduler supports per-task frequency annotations and that valid graphics-clock levels can be obtained for all GPUs. The method defines three abstract levels,
 \begin{equation}
 \ell\in\{\mathrm{HIGH},\mathrm{MID},\mathrm{LOW}\}.
 \end{equation}
-The high level is the highest supported graphics clock. The mid level is a lower supported clock chosen by rank, with rank two as the default. The low level is the next lower rank when low-frequency operation is globally allowed. On the default probed path, the memory clock is kept at the highest supported memory clock. If the tuner cannot probe frequency levels, the implementation uses explicit frequency-pair fallbacks only when sufficient high and mid frequencies are provided.
+The high level is the highest supported graphics clock. The mid level is a lower supported clock chosen by rank, with rank two as the default. The low level is the next lower rank when low-frequency operation is globally allowed. On the default probed path, the memory clock is kept at the highest supported memory clock. If automatic probing is unavailable, the method can use explicit frequency-pair fallbacks only when sufficient high and mid frequencies are provided.
 
 \subsection{DVFS Control Flow}
 \label{subsec:methods-dvfs-control-flow}
@@ -500,7 +502,7 @@ z_{\mathrm{dvfs}}(t)
 -\gamma_s s_{\mathrm{norm}}(t)
 +\gamma_h\mathbf{1}\{\mathrm{heavy}(t)\},
 \end{equation}
-where the default weights are $0.35$, $0.20$, $0.15$, $0.20$, $0.10$, and $0.15$, respectively. This score is recorded only as a diagnostic quantity for evaluation; the actual proposal is governed by the threshold rules below.
+where the default weights are $\gamma_q=0.35$, $\gamma_C=0.20$, $\gamma_b=0.15$, $\gamma_{\omega}=0.20$, $\gamma_s=0.10$, and $\gamma_h=0.15$. These coefficients are fixed across experiments and serve only as diagnostic attribution weights; the actual proposal is governed by the threshold rules below.
 
 The deterministic proposal rule is conservative. It returns $\mathrm{HIGH}$ if the mid frequency is not meaningfully below high, if
 \begin{equation}
@@ -556,7 +558,7 @@ Each GPU owns an independent DVFS window state. For every task placed on GPU $g$
 \end{equation}
 where $W_g$ is the subset of window tasks placed on GPU $g$.
 
-For a lower frequency level $\ell$, the implementation estimates the extra runtime as
+For a lower frequency level $\ell$, the committer estimates the extra runtime as
 \begin{equation}
 \Delta T_{\ell}(t)
 =
@@ -665,11 +667,11 @@ Frequency application is also delayed by design. The committed level $\ell_g$ fo
 where $f_{\mathrm{mem}}$ remains at the highest supported memory clock on the probed path. The stream-side runtime submits an asynchronous application-clock request before task execution, and a background tuner applies the requested clocks through NVML. DVFS-marked tasks require fresh streams so that a task is not launched on a reused stream whose execution context may correspond to a previous frequency level. The result is a window-level control loop: tasks generate intents, the committer chooses the next level, and the guardrail restores high frequency when measured behavior suggests performance risk.
 
 \section{Implementation and Instrumentation}
-\label{sec:methods-implementation-interface}
+\label{sec:methods-implementation-instrumentation}
 
 The method is implemented inside the CUDASTF scheduler rather than as an external controller. The placement-only configuration uses the HEFT-relative residual gate described above. The DVFS configuration reuses the same placement path and enables the per-device proposal--commit frequency controller. This keeps the experimental configurations comparable: the DVFS experiments evaluate the additional frequency-control layer on top of the same placement mechanism, rather than mixing placement changes with frequency changes.
 
-The runtime also records structured diagnostic information used by the evaluation. For placement, the records include HEFT baseline choices, accepted residual deviations, copy estimates, window rewards, and selected gate profiles. For DVFS, they include task-level frequency intents, per-window vote summaries, committed frequency levels, and guardrail events. The exact environment-variable names, log identifiers, and parsing scripts are reproducibility artifacts; they are not part of the scheduling method itself. In the thesis, these records are used only to connect observed performance differences to concrete mechanisms: baseline HEFT placement, copy-saving deviations, window-level profile selection, and DVFS frequency commits.
+The runtime also records structured diagnostic information used by the evaluation. For placement, the records include HEFT baseline choices, accepted residual deviations, copy estimates, window rewards, and selected gate profiles. For DVFS, they include task-level frequency intents, per-window vote summaries, committed frequency levels, and guardrail events. The concrete encoding of these records is treated as reproducibility metadata rather than as part of the scheduling method itself. In the thesis, these records are used only to connect observed performance differences to concrete mechanisms: baseline HEFT placement, copy-saving deviations, window-level profile selection, and DVFS frequency commits.
 
 \section{Method Summary}
 \label{sec:methods-summary}
