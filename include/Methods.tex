@@ -367,7 +367,7 @@ Only the active profile is updated for the completed window.
 Algorithms~\ref{alg:placement-decision} and~\ref{alg:state-update} summarize the placement procedure and the corresponding scheduler-state update. The first algorithm describes the HEFT-relative decision rule, while the second algorithm describes how the selected placement is made visible to subsequent tasks through the ready-time and residency states.
 
 \begin{algorithm}[t]
-\caption{HEFT-relative copy-only placement decision}
+\caption{HEFT-relative placement decision}
 \label{alg:placement-decision}
 \begin{algorithmic}[1]
 \Require Ready task $t$, GPU set $\mathcal{G}$, ready times $R$, residency model $M$, active window state $W$
@@ -399,7 +399,7 @@ Algorithms~\ref{alg:placement-decision} and~\ref{alg:state-update} summarize the
 \If{the placement window is complete}
     \State update the LinUCB state of the active profile using the window reward
 \EndIf
-\Return $g^{*}$
+\State \Return $g^{*}$
 \end{algorithmic}
 \end{algorithm}
 
@@ -421,7 +421,7 @@ Algorithms~\ref{alg:placement-decision} and~\ref{alg:state-update} summarize the
     \EndIf
 \EndFor
 \State $R[g^{*}]\gets F(t,g^{*})$
-\Return $(R,M)$
+\State \Return $(R,M)$
 \end{algorithmic}
 \end{algorithm}
 
@@ -629,7 +629,7 @@ To avoid oscillation, the committer requires consecutive eligible windows before
 \State accumulate $u_t$, $w_{\mathrm{dvfs}}(t)$, $q(t)$, $\omega(t)$, backlog, slack, heavy flags, and slowdown estimates into $W_{g^{*}}$
 \State annotate $t$ with $\mathrm{freq}(\ell_{g^{*}})$
 \If{$W_{g^{*}}$ has fewer than $N_{\mathrm{dvfs}}$ intents}
-    \Return
+    \State \Return
 \EndIf
 \State compute vote shares, criticality mass, urgent-heavy mass, wait share, backlog, and slack budget for $W_{g^{*}}$
 \State evaluate forced-high, mid-eligible, and low-eligible predicates
