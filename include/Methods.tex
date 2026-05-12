@@ -1,4 +1,4 @@
-% Methods chapter rewritten to match the current implementation.
+% Methods chapter for the proposed scheduling framework.
 % This source uses the standard algorithm/algpseudocode environments for pseudocode.
 % Add the following packages to the main preamble if they are not already loaded:
 % \usepackage{algorithm}
@@ -9,7 +9,7 @@
 
 This chapter describes the runtime scheduling method implemented in this thesis. The system targets single-node multi-GPU CUDASTF task graphs and is organized as two cooperating layers. The first layer is a placement scheduler. It uses HEFT as a deterministic earliest-finish-time baseline and then applies a residual locality gate that may redirect a task to a non-HEFT GPU only when the predicted data-movement saving is sufficiently large and the normalized finish-time penalty is bounded. The second layer is an optional DVFS extension. It does not change the placement decision directly; instead, it assigns frequency intents to scheduled tasks, aggregates those intents over per-GPU windows, and commits stable GPU frequency levels with guardrails against slowdown.
 
-The default placement configuration studied in this work is the CUDASTF bandit scheduler. In the current implementation this corresponds to the two-arm, copy-only, HEFT-relative gate with relative reward and an aggressive-profile bias. The term ``bandit'' should therefore be interpreted carefully: the bandit layer does not select a GPU for each task. GPU selection remains a HEFT-relative deterministic decision. The bandit layer selects the gate profile used over a scheduling window, thereby controlling how permissive the residual deviation from HEFT should be.
+The placement policy studied in this work is a two-profile, copy-only, HEFT-relative residual gate with relative reward and an aggressive-profile bias. The term ``bandit'' should therefore be interpreted carefully: the bandit layer does not select a GPU for each task. GPU selection remains a HEFT-relative deterministic decision. The bandit layer selects the gate profile used over a scheduling window, thereby controlling how permissive the residual deviation from HEFT should be.
 
 \section{Runtime Model and Scheduler State}
 \label{sec:methods-runtime-model}
@@ -189,7 +189,7 @@ $\mathrm{default}$ & $0.003$ & $0.015$ & $0.25$ & $0.15$ \\
 $\mathrm{aggressive}$ & $0.004$ & $0.020$ & $0.20$ & $0.10$ \\
 \bottomrule
 \end{tabular}
-\caption{Default residual-gate profiles in the current implementation.}
+\caption{Default residual-gate profiles used in the evaluation.}
 \label{tab:gate-profiles}
 \end{table}
 where $\delta$ denotes the allowed value of $\rho_F$ and $\tau$ denotes the required value of $\rho_K$. The aggressive profile is more permissive because it allows a slightly larger finish-time penalty and requires a smaller copy gain.
@@ -489,7 +489,7 @@ The proposal weight accumulated by the window committer is
 \begin{equation}
 w_{\mathrm{dvfs}}(t)=1+1.5q(t)+c_{\mathrm{norm}}(t).
 \end{equation}
-The implementation also records a diagnostic DVFS risk score,
+The method also defines a diagnostic DVFS risk score,
 \begin{equation}
 z_{\mathrm{dvfs}}(t)
 =
@@ -500,7 +500,7 @@ z_{\mathrm{dvfs}}(t)
 -\gamma_s s_{\mathrm{norm}}(t)
 +\gamma_h\mathbf{1}\{\mathrm{heavy}(t)\},
 \end{equation}
-where the default weights are $0.35$, $0.20$, $0.15$, $0.20$, $0.10$, and $0.15$, respectively. This score is emitted in the task-level DVFS log for diagnostics; the actual proposal is governed by the threshold rules below.
+where the default weights are $0.35$, $0.20$, $0.15$, $0.20$, $0.10$, and $0.15$, respectively. This score is recorded only as a diagnostic quantity for evaluation; the actual proposal is governed by the threshold rules below.
 
 The deterministic proposal rule is conservative. It returns $\mathrm{HIGH}$ if the mid frequency is not meaningfully below high, if
 \begin{equation}
@@ -625,27 +625,25 @@ To avoid oscillation, the committer requires consecutive eligible windows before
 \begin{algorithmic}[1]
 \Require Scheduled task $t$, selected GPU $g^{*}$, current committed level $\ell_{g^{*}}$, per-GPU DVFS window $W_{g^{*}}$
 \Ensure Frequency annotation for $t$ and updated committed level for future tasks
-\State $u_t\gets\Call{MakeProposal}{t,g^{*}}$ \Comment{$u_t\in\{\mathrm{HIGH},\mathrm{MID},\mathrm{LOW}\}$}
+\State $(\ell_H,\ell_M,\ell_L)\gets(\mathrm{HIGH},\mathrm{MID},\mathrm{LOW})$
+\State $\mathcal{L}_{\downarrow}\gets\{\ell_M,\ell_L\}$ \Comment{levels below high frequency}
+\State $u_t\gets\Call{MakeProposal}{t,g^{*}}$ \Comment{$u_t\in\{\ell_H,\ell_M,\ell_L\}$}
 \State accumulate $u_t$, $w_{\mathrm{dvfs}}(t)$, $q(t)$, $\omega(t)$, backlog, slack, heavy flags, and slowdown estimates into $W_{g^{*}}$
 \State annotate $t$ with $\mathrm{freq}(\ell_{g^{*}})$
 \If{$W_{g^{*}}$ has fewer than $N_{\mathrm{dvfs}}$ intents}
     \State \Return
 \EndIf
 \State compute vote shares, criticality mass, urgent-heavy mass, wait share, backlog, and slack budget for $W_{g^{*}}$
-\State evaluate forced-high, mid-eligible, and low-eligible predicates
-\State update consecutive eligibility counters for $\mathrm{MID}$ and $\mathrm{LOW}$
-\If{forced-high predicate holds}
-    \State $\ell_{g^{*}}\gets\mathrm{HIGH}$
-\ElsIf{$\ell_{g^{*}}=\mathrm{LOW}$ and low is not eligible}
-    \State $\ell_{g^{*}}\gets\mathrm{HIGH}$
-\ElsIf{$\ell_{g^{*}}=\mathrm{MID}$ and mid is not eligible}
-    \State $\ell_{g^{*}}\gets\mathrm{HIGH}$
-\ElsIf{low is eligible for the required number of consecutive windows}
-    \State $\ell_{g^{*}}\gets\mathrm{LOW}$
-\ElsIf{mid is eligible for the required number of consecutive windows}
-    \State $\ell_{g^{*}}\gets\mathrm{MID}$
+\State $h\gets\Call{ForceHigh}{W_{g^{*}}}$ \Comment{critical, heavy, backlog, cooldown, or slowdown guardrail}
+\State $\mathcal{E}\gets\Call{EligibleLowerLevels}{W_{g^{*}},\mathcal{L}_{\downarrow}}$
+\State update consecutive-window counters for each $\ell\in\mathcal{L}_{\downarrow}$
+\State $\mathcal{E}\gets\{\ell\in\mathcal{E}:\Call{HysteresisSatisfied}{\ell}\}$
+\If{$h$ or $(\ell_{g^{*}}\in\mathcal{L}_{\downarrow}$ and $\ell_{g^{*}}\notin\mathcal{E})$}
+    \State $\ell_{g^{*}}\gets\ell_H$
+\ElsIf{$\mathcal{E}\neq\emptyset$}
+    \State $\ell_{g^{*}}\gets\Call{LowestFrequency}{\mathcal{E}}$ \Comment{prefer $\ell_L$ over $\ell_M$ when both are safe}
 \Else
-    \State $\ell_{g^{*}}\gets\mathrm{HIGH}$
+    \State $\ell_{g^{*}}\gets\ell_H$
 \EndIf
 \State update slowdown guardrail state and reset $W_{g^{*}}$
 \end{algorithmic}
@@ -666,12 +664,12 @@ Frequency application is also delayed by design. The committed level $\ell_g$ fo
 \end{equation}
 where $f_{\mathrm{mem}}$ remains at the highest supported memory clock on the probed path. The stream-side runtime submits an asynchronous application-clock request before task execution, and a background tuner applies the requested clocks through NVML. DVFS-marked tasks require fresh streams so that a task is not launched on a reused stream whose execution context may correspond to a previous frequency level. The result is a window-level control loop: tasks generate intents, the committer chooses the next level, and the guardrail restores high frequency when measured behavior suggests performance risk.
 
-\section{Implementation Interface}
+\section{Implementation and Instrumentation}
 \label{sec:methods-implementation-interface}
 
-The implementation exposes the placement method through the stable scheduler name \texttt{bandit\_scheduler}. The guarded DVFS extension is exposed as \texttt{win\_dvfs}, which selects the same HEFT-relative bandit placement path and enables the windowed proposal--commit frequency controller. Detailed environment variables are treated as reproducibility metadata rather than as part of the method itself.
+The method is implemented inside the CUDASTF scheduler rather than as an external controller. The placement-only configuration uses the HEFT-relative residual gate described above. The DVFS configuration reuses the same placement path and enables the per-device proposal--commit frequency controller. This keeps the experimental configurations comparable: the DVFS experiments evaluate the additional frequency-control layer on top of the same placement mechanism, rather than mixing placement changes with frequency changes.
 
-The runtime logs task-level placement information, residual-gate decisions, window rewards, profile scores, copy statistics, and DVFS proposal and commit summaries. The main placement log prefixes are \texttt{BANDIT\_SCHEDULER\_TASK}, \texttt{BANDIT\_SCHEDULER\_WINDOW\_START}, \texttt{BANDIT\_SCHEDULER\_WINDOW\_END}, and \texttt{BANDIT\_SCHEDULER\_BANDIT\_SCORE}. The DVFS log prefixes are \texttt{WIN\_DVFS\_CONFIG}, \texttt{WIN\_DVFS\_FREQ\_MAP}, \texttt{WIN\_DVFS\_TASK}, \texttt{WIN\_DVFS\_WINDOW}, and \texttt{WIN\_DVFS\_COMMIT\_STATS}. These records are used to connect observed performance differences to concrete scheduling mechanisms: baseline HEFT placement, copy-saving deviations, window-level profile selection, and DVFS frequency commits.
+The runtime also records structured diagnostic information used by the evaluation. For placement, the records include HEFT baseline choices, accepted residual deviations, copy estimates, window rewards, and selected gate profiles. For DVFS, they include task-level frequency intents, per-window vote summaries, committed frequency levels, and guardrail events. The exact environment-variable names, log identifiers, and parsing scripts are reproducibility artifacts; they are not part of the scheduling method itself. In the thesis, these records are used only to connect observed performance differences to concrete mechanisms: baseline HEFT placement, copy-saving deviations, window-level profile selection, and DVFS frequency commits.
 
 \section{Method Summary}
 \label{sec:methods-summary}

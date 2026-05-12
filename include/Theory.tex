@@ -340,7 +340,7 @@ where
 \qquad
 \beta_C+\beta_d+\beta_B=1.
 \end{equation}
-The weights describe how much the proxy should trust each signal. A larger $\beta_C$ makes long-running tasks more critical; a larger $\beta_d$ emphasizes tasks with many dependencies, which often occur near synchronization points; and a larger $\beta_B$ emphasizes data-heavy tasks, where poor placement can amplify communication cost. In the implementation evaluated in this thesis, the default values are
+The weights describe how much the proxy should trust each signal. A larger $\beta_C$ makes long-running tasks more critical; a larger $\beta_d$ emphasizes tasks with many dependencies, which often occur near synchronization points; and a larger $\beta_B$ emphasizes data-heavy tasks, where poor placement can amplify communication cost. In the parameterization used in this thesis, the default values are
 \begin{equation}
 \beta_C=0.55,\qquad \beta_d=0.30,\qquad \beta_B=0.15.
 \end{equation}
@@ -514,7 +514,7 @@ This is one of the main reasons to integrate DVFS with task-graph scheduling. A 
 \section{Windowed Proposal--Commit DVFS Control}
 \label{sec:theory_proposal_commit}
 
-The DVFS design in this thesis separates task-level frequency intent from device-level frequency commitment. This avoids making the placement bandit responsible for a very large joint action space of devices and frequencies. Instead, placement is the first layer, and DVFS is the second layer. The implementation exposes this design as \texttt{win\_dvfs}, emphasizing that the committed frequency is selected at a per-device window granularity rather than independently for every task.
+The DVFS design in this thesis separates task-level frequency intent from device-level frequency commitment. This avoids making the placement bandit responsible for a very large joint action space of devices and frequencies. Instead, placement is the first layer, and DVFS is the second layer, with committed frequency selected at a per-device window granularity rather than independently for every task.
 
 \subsection{Two-Layer Runtime Control}
 \label{subsec:two_layer_control}
@@ -525,7 +525,7 @@ The runtime control problem is separated into two decisions:
     \item \textbf{DVFS layer}: choose the frequency level for the selected GPU, using proposal--commit control.
 \end{enumerate}
 
-This separation simplifies learning and attribution. The placement layer reasons about data locality, queue delay, and finish time. The DVFS layer reasons about criticality, slack, backlog, and frequency risk after the device has been selected. It also makes the implementation more debuggable: placement decisions can be explained relative to HEFT, while frequency decisions can be explained through proposal shares and commit guardrails.
+This separation simplifies learning and attribution. The placement layer reasons about data locality, queue delay, and finish time. The DVFS layer reasons about criticality, slack, backlog, and frequency risk after the device has been selected. It also makes the decisions easier to audit: placement decisions can be explained relative to HEFT, while frequency decisions can be explained through proposal shares and commit guardrails.
 
 \subsection{Task-Level Proposer}
 \label{subsec:task_level_proposer}
@@ -612,7 +612,7 @@ Low-level cooldown & A slowdown is observed after a low-frequency commit & Tempo
 \label{tab:dvfs_guardrails}
 \end{table}
 
-The purpose of these guardrails is not to maximize energy savings for every local window. Instead, they protect the global runtime objective and make DVFS behaviour stable. In the implementation, recent slowdown is detected from window-level runtime and busy-tail measurements maintained as moving averages. If enough recent windows exceed the allowed slowdown ratios, the committer forces recovery to high frequency. This turns the lower-frequency levels into optimistic choices that must continue to earn their place.
+The purpose of these guardrails is not to maximize energy savings for every local window. Instead, they protect the global runtime objective and make DVFS behaviour stable. Recent slowdown is detected from window-level runtime and busy-tail measurements maintained as moving averages. If enough recent windows exceed the allowed slowdown ratios, the committer forces recovery to high frequency. This turns the lower-frequency levels into optimistic choices that must continue to earn their place.
 
 \subsection{Algorithm}
 \label{subsec:algorithm_proposal_commit}
