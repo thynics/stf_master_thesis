@@ -36,11 +36,11 @@ LU decomposition reduces copy bytes by \(23.905\%\). The neutral
 benchmarks have zero deviation rate and zero copy-byte reduction, which
 explains why they remain close to HEFT.
 
-The sensitivity analysis strengthens this result by showing that it is not only a
-single fortunate parameter setting. The default placement configuration gives
-the best four-benchmark geometric-mean speedup in the robustness check. This
-matters for a runtime scheduler because a method that requires per-benchmark
-manual adjustment would be less useful in practice.
+The placement result should therefore be read as a workload-dependent locality
+result rather than as a uniform scheduler replacement. This matters for a
+runtime scheduler because a method that improves copy-sensitive workloads while
+preserving near-neutral behavior on low-opportunity workloads is more useful
+than one that pursues aggressive deviations everywhere.
 
 \section{Interpreting the DVFS Result}
 \label{sec:discussion-dvfs}
@@ -80,7 +80,7 @@ the performance advantages of HEFT while exploiting data locality. The answer
 in this thesis is a HEFT-relative residual gate. HEFT provides the baseline GPU
 choice, and the scheduler deviates only when the predicted copy saving is large
 enough and the finish-time penalty is bounded. The placement performance and
-sensitivity results show that this design improves latency on copy-sensitive
+locality results show that this design improves latency on copy-sensitive
 workloads while remaining close to HEFT on neutral workloads.
 
 The second research question asks whether observed latency changes can be
@@ -147,7 +147,7 @@ copy traffic, and queueing. A topology with different peer bandwidth or copy
 engine behavior may change the magnitude of the placement gains.
 
 The workload set is also limited. The six benchmarks cover several useful
-cases, including strong locality winners, neutral controls, and DVFS-positive
+cases, including strong locality cases, neutral controls, and DVFS-positive
 rows, but they do not exhaust the range of CUDASTF applications. The
 FDTD results also show that benchmark-level noise can affect median
 and mean conclusions differently. This is why the thesis treats

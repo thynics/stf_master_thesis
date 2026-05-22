@@ -55,9 +55,12 @@ evaluated DVFS policy changes the SM clock level but keeps the memory clock at
 path rather than a combined core-and-memory frequency policy.
 
 Table~\ref{tab:results-benchmark-characteristics} summarizes the benchmark
-inputs and observed task-graph scale. The classification column is not used as
-a result by itself; it records the expected opportunity before looking at the
-final placement and DVFS outcomes. The suite intentionally includes both
+inputs and observed task-graph scale. The opportunity label refers to the
+expected opportunity for residual placement to find useful non-HEFT
+alternatives. It is not simply the absolute amount of baseline copy traffic. A
+benchmark may have large copy volume but little residual-placement opportunity
+if the copy pattern is structurally fixed or if the HEFT baseline already
+preserves the relevant locality. The suite intentionally includes both
 copy-sensitive task graphs and near-neutral task graphs so that the evaluation
 can test whether the scheduler improves favorable cases without forcing
 changes where there is little opportunity.
@@ -68,7 +71,7 @@ changes where there is little opportunity.
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{@{}llrrl@{}}
 \toprule
-Benchmark & Problem size / input & Tasks & Baseline copy bytes & Expected placement opportunity \\
+Benchmark & Problem size / input & Tasks & Baseline copy bytes & Expected residual-placement opportunity \\
 \midrule
 FDTD & 3840, 288, 288, 288 & 491712 & 353009664 & medium \\
 CG & 16777216, 64, 4, 1e-10 & 34 & 654311738 & medium \\
@@ -155,6 +158,16 @@ Blocked N-body & 14910.283 & 0.064\% & 14902.487 & 0.046\% \\
 \label{tab:results-placement-variability}
 \end{table}
 
+The measurements in this chapter have different evidential roles. The
+placement headline is the strongest statistical result because it is computed
+from five measured runs per scheduler and is accompanied by coefficient of
+variation data. The locality-attribution rows are diagnostic and are used to
+explain the direction of the placement effect rather than to recompute the
+headline speedup. The DVFS rows are final kernel-window measurements and are
+interpreted as energy--performance evidence under the evaluated configuration.
+The overhead table is a single-run diagnostic snapshot and is not used as a
+production-overhead estimate.
+
 \section{Evaluation Plan}
 \label{sec:results-plan}
 
@@ -191,7 +204,7 @@ Overhead diagnostic & selected scheduler/control rows & mixed diagnostic rows & 
 \label{tab:results-eval-configs}
 \end{table}
 
-The evaluation is organized around four questions:
+The evaluation is organized around five questions:
 
 \begin{enumerate}
 \item Does the bandit scheduler improve suite-level kernel latency relative to
@@ -202,6 +215,9 @@ rather than only measurement noise?
 cost small?
 \item Do the clock and power measurements support the DVFS energy result, and
 does the controller avoid forcing changes on low-opportunity workloads?
+\item What overheads are introduced by compact placement logging and compact
+WinDVFS control, and why are these diagnostic rows separated from the final
+performance claims?
 \end{enumerate}
 
 The following sections answer these questions in the same order. The placement
@@ -209,9 +225,9 @@ section first reports the latency and energy deltas relative to HEFT. The
 data-movement section then checks whether those deltas align with copy-volume
 reductions. The DVFS section reports the energy result relative to no-DVFS
 execution, while the clock and power section explains why the energy reductions
-appear on some workloads but not on all of them. The chapter ends with
-overheads and limitations, rather than mixing diagnostic details into the main
-result tables.
+appear on some workloads but not on all of them. The chapter ends with an
+overhead diagnostic and an explicit statement of the boundaries of the claims,
+rather than mixing diagnostic details into the main result tables.
 
 \figResultsOverview
 
@@ -264,6 +280,10 @@ also explains why FDTD is treated carefully: its five-run coefficient of
 variation is much larger than the other placement benchmarks, so the thesis
 uses it as a modest locality case rather than as the strongest placement
 example.
+Because the FDTD latency delta is small relative to its run-to-run variation,
+FDTD is used only as a weak positive placement case. The stronger placement
+evidence comes from CG, Cholesky, and LU decomposition, where the effect sizes
+are much larger than the reported CVs.
 
 The energy column is included to show that the placement-only runs do not
 hide a performance--energy reversal. CG and LU decomposition reduce both
@@ -293,16 +313,16 @@ rate.
 \centering
 \small
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrrc@{}}
+\begin{tabular}{@{}lrrrrcl@{}}
 \toprule
-Benchmark & Kernel latency \(\Delta\) & Speedup & Copy bytes \(\Delta\) & Copy time \(\Delta\) & Deviation rate \\
+Benchmark & Kernel latency \(\Delta\) & Speedup & Copy bytes \(\Delta\) & Copy time \(\Delta\) & Deviation rate & Source \\
 \midrule
-FDTD & \(-3.135\%\) & \(1.0324\times\) & \(-12.030\%\) & \(-12.025\%\) & 0.249902 \\
-CG & \(-12.693\%\) & \(1.1454\times\) & \(-7.692\%\) & \(-7.688\%\) & -- \\
-MiniWeather & \(-0.0066\%\) & \(1.0001\times\) & \(0.000\%\) & \(0.000\%\) & 0.000000 \\
-Cholesky & \(-9.269\%\) & \(1.1022\times\) & \(-38.220\%\) & \(-38.220\%\) & 0.281154 \\
-LU decomposition & \(-15.891\%\) & \(1.1889\times\) & \(-23.905\%\) & \(-23.905\%\) & 0.619305 \\
-Blocked N-body & \(+0.019\%\) & \(0.9998\times\) & \(0.000\%\) & \(0.000\%\) & 0.000000 \\
+FDTD & \(-3.135\%\) & \(1.0324\times\) & \(-12.030\%\) & \(-12.025\%\) & 0.249902 & Diagnostic \\
+CG & \(-12.693\%\) & \(1.1454\times\) & \(-7.692\%\) & \(-7.688\%\) & -- & Placement batch \\
+MiniWeather & \(-0.0066\%\) & \(1.0001\times\) & \(0.000\%\) & \(0.000\%\) & 0.000000 & Diagnostic \\
+Cholesky & \(-9.269\%\) & \(1.1022\times\) & \(-38.220\%\) & \(-38.220\%\) & 0.281154 & Diagnostic \\
+LU decomposition & \(-15.891\%\) & \(1.1889\times\) & \(-23.905\%\) & \(-23.905\%\) & 0.619305 & Diagnostic \\
+Blocked N-body & \(+0.019\%\) & \(0.9998\times\) & \(0.000\%\) & \(0.000\%\) & 0.000000 & Diagnostic \\
 \bottomrule
 \end{tabular}%
 }
@@ -315,11 +335,14 @@ Blocked N-body & \(+0.019\%\) & \(0.9998\times\) & \(0.000\%\) & \(0.000\%\) & 0
 \figDeviationLatencyScatter
 
 The locality data separates the benchmarks into two groups. For LU
-decomposition, Cholesky, CG, and FDTD, the latency improvements coincide with
-lower copy volume and lower measured copy time. Figure~\ref{fig:results-copy-latency}
-shows this relationship directly. The zero-copy-reduction workloads cluster
-near zero latency change, while the copy-reducing workloads move into the
-latency-improvement region.
+decomposition, Cholesky, and FDTD, the diagnostic rows show that latency
+improvements coincide with lower copy volume and lower measured copy time. CG
+shows the same direction in the placement-batch copy counters, but because it
+lacks a diagnostic deviation-rate row, it is treated as placement-performance
+evidence rather than as one of the cleanest locality-attribution cases.
+Figure~\ref{fig:results-copy-latency} shows this relationship directly. The
+zero-copy-reduction workloads cluster near zero latency change, while the
+copy-reducing workloads move into the latency-improvement region.
 
 Figure~\ref{fig:results-deviation-latency} shows that the residual scheduler is
 selective, but the deviation rate should be interpreted as the frequency of
@@ -329,26 +352,25 @@ deviates most often and has the strongest locality-driven speedup, while
 Cholesky obtains a large copy reduction from a smaller deviation rate. FDTD is
 the weaker copy-saving case, but still follows the same direction.
 
-CG is the important mixed case in this analysis. It has a strong placement
-latency reduction and its copy counters decrease, but the current locality
-diagnostic set does not provide a deviation-rate row for it. The thesis
-therefore uses CG as a strong placement-performance result, while Cholesky and
-LU decomposition remain the cleanest copy-attribution examples.
-
-MiniWeather and Blocked N-body provide the counterexample that makes the
-placement result credible. Their deviation rates are zero, copy traffic is
-unchanged, and latency remains effectively at the HEFT baseline. The residual
-policy is therefore selective: it changes placements when copy-saving
-opportunities are visible and otherwise collapses back to HEFT-like behavior.
+MiniWeather and Blocked N-body provide the contrast case. Their deviation
+rates are zero, copy traffic is unchanged, and latency remains effectively at
+the HEFT baseline. This contrast supports the interpretation that the residual
+policy is selective: it changes placements when copy-saving opportunities are
+visible and otherwise collapses back to HEFT-like behavior.
 
 \section{DVFS Energy--Performance Trade-off}
 \label{sec:results-dvfs-energy}
 
 DVFS is evaluated as an energy--performance trade-off rather than as a pure
 power-reduction objective. Lower average power does not necessarily imply lower
-energy if runtime increases too much. Figure~\ref{fig:results-dvfs-deltas}
-therefore reports latency, energy, and power together, and
-Table~\ref{tab:results-dvfs-energy} gives the exact values.
+energy if runtime increases too much. Unlike the placement headline, the DVFS
+result is interpreted as a final-configuration energy--performance measurement
+rather than as a repeated-run statistical comparison. The analysis therefore
+emphasizes multi-percent energy changes and treats sub-percent changes as
+near-neutral unless they are supported by the broader power, clock, or
+trade-off evidence. Figure~\ref{fig:results-dvfs-deltas} therefore reports
+latency, energy, and power together, and Table~\ref{tab:results-dvfs-energy}
+gives the exact values.
 
 \figDvfsDeltas
 
@@ -416,7 +438,7 @@ latency overhead is large enough to dominate the modest energy saving. This
 marks Cholesky as a latency-sensitive trade-off case rather than a headline
 DVFS win.
 
-\section{Clock and Power Evidence}
+\section{Clock, Power, and Guardrail Evidence}
 \label{sec:results-dvfs-clock-guardrail}
 
 Table~\ref{tab:results-dvfs-clock} reports the clock and power data behind the
@@ -462,7 +484,41 @@ rather than sustained residence at the nominal middle clock. For this reason,
 MiniWeather is treated as a measured energy-saving case, but not as the
 strongest evidence of sustained middle-clock execution.
 
-Blocked N-body acts as a negative-control workload. In the placement
+Table~\ref{tab:results-dvfs-guardrail} reports the realized commit and
+guardrail counters for the final-source DVFS rows. These counters are not
+additional performance metrics; they show whether the clock outcome in
+Table~\ref{tab:results-dvfs-clock} came from sustained MID commits, no committed
+clock change, or guardrail recovery to higher clocks.
+
+\begin{table}[H]
+\centering
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Benchmark & Effective MID share & MID samples & Commit switches & Force-HIGH events & Slowdown events \\
+\midrule
+FDTD & 1.000 & 91.903\% & 8 & 0 & 0 \\
+MiniWeather & 0.000 & 0.000\% & 0 & 0 & 0 \\
+CG & 0.333 & 98.912\% & 512 & 0 & 0 \\
+LU decomposition & 0.697 & 58.685\% & 290 & 127 & 127 \\
+Cholesky & 0.637 & 58.654\% & 57 & 23 & 23 \\
+Blocked N-body & 0.000 & 0.000\% & 0 & 0 & 0 \\
+\bottomrule
+\end{tabular}%
+}
+\caption{DVFS commit and guardrail counters for the final-source rows. Effective MID share is the committed-time share reported by the controller; MID samples are measured from kernel-window clock samples.}
+\label{tab:results-dvfs-guardrail}
+\end{table}
+
+The guardrail counters refine the clock interpretation. FDTD and CG have high
+measured middle-clock exposure without slowdown recovery events. LU
+decomposition and Cholesky show partial MID exposure together with force-HIGH
+and slowdown events, so their rows are better read as guarded trade-offs than
+as unconstrained down-clocking. MiniWeather and Blocked N-body have no committed
+MID share in these final-source rows.
+
+Blocked N-body serves as a near-neutral control case. In the placement
 experiment, its copy-byte reduction and deviation rate are both zero, and its
 latency remains essentially unchanged. In the DVFS experiment, its SM clock
 remains at 2040 MHz and its kernel power changes by only \(-0.023\%\). These
@@ -470,13 +526,12 @@ observations suggest that both the placement layer and the DVFS layer avoid
 unnecessary intervention when the workload does not expose useful locality or
 frequency-scaling opportunity.
 
-\section{Overheads and Limitations}
+\section{Diagnostic Overheads and Claim Boundaries}
 \label{sec:results-overhead}
 
 Table~\ref{tab:results-overhead} reports the compact logging/control overhead
-snapshot. This diagnostic run is intentionally not used for the final placement
-or DVFS claims. It is included to bound the cost of instrumentation and to show
-why diagnostic rows should be separated from the headline performance rows.
+snapshot. It should be read as a diagnostic stress check rather than as a
+production-overhead estimate.
 
 \begin{table}[H]
 \centering
@@ -492,16 +547,18 @@ Blocked N-body & \(+0.000\%\) & \(+4.369\%\) & \(+0.722\%\) \\
 \bottomrule
 \end{tabular}%
 }
-\caption{Single-run diagnostic overhead snapshot. The compact placement-log row compares compact logging against a no-log bandit baseline. The WinDVFS control row mixes policy behavior, clock changes, and compact control logging.}
+\caption{Single-run diagnostic overhead snapshot. The compact placement-log row compares compact logging against a no-log bandit baseline. The WinDVFS control row mixes policy behavior, clock changes, and compact control logging. These rows are not production-overhead estimates and are not used to compute the headline placement or DVFS results.}
 \label{tab:results-overhead}
 \end{table}
 
-The compact placement-log overhead is close to noise-scale for FDTD and
-Blocked N-body in this snapshot, while LU decomposition shows a visible
-single-run cost. The compact WinDVFS control row is not a pure logging-only
-measurement because it also includes policy behavior and frequency changes. For
-this reason, final timing and energy claims rely on the no-log placement rows
-and the DVFS validation rows above, not on the overhead diagnostic row.
+The compact placement-log row isolates compact logging more directly, whereas
+the WinDVFS control row combines policy behavior, frequency changes, and
+compact control logging. These rows therefore do not contradict the final DVFS
+validation rows; they show that detailed diagnostic control paths can become
+visible in runtime and should be separated from the no-log or validation rows
+used for final claims. In this snapshot, compact placement logging is close to
+noise-scale for FDTD and Blocked N-body, while LU decomposition shows a visible
+single-run cost.
 
 The evaluation has four main limitations. First, all results are measured on a
 single eight-GPU node, so the magnitude of the results may change with GPU
@@ -532,7 +589,8 @@ near the no-DVFS baseline.
 The boundary of the claim is therefore explicit. The placement result is a
 locality-sensitive latency improvement, not a claim that every task graph
 benefits equally. The DVFS result is a kernel-window energy result on one
-eight-GPU L4 node, not a full-system energy study. Within those boundaries, the
-data supports the thesis claim that guarded placement and guarded frequency
-control can improve CUDASTF execution without forcing large changes on
-low-opportunity workloads.
+eight-GPU L4 node, not a full-system energy study. Within these boundaries,
+this chapter shows two measured outcomes: the placement layer improves
+suite-level kernel latency while preserving near-baseline behavior on
+low-opportunity workloads, and the DVFS layer reduces suite-level kernel energy
+while keeping the geometric-mean latency overhead below one percent.

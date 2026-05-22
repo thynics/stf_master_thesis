@@ -34,7 +34,7 @@
 \node[font=\scriptsize, align=center] at (axis cs:Optimized,0.895) {2.904\% lower\\energy};
 \end{groupplot}
 \end{tikzpicture}
-\caption{Overview of the two main evaluation outcomes. The placement result reports normalized kernel latency relative to HEFT. The DVFS result reports normalized kernel energy relative to no-DVFS execution.}
+\caption{Overview of the two main evaluation outcomes. The placement result reports normalized kernel latency relative to HEFT. The DVFS result reports normalized kernel energy relative to no-DVFS execution. The normalized y-axis is truncated for readability.}
 \label{fig:results-overview}
 \end{figure}
 }
@@ -70,7 +70,7 @@
 \legend{Kernel latency, Kernel energy}
 \end{axis}
 \end{tikzpicture}
-\caption{Per-benchmark placement latency and kernel-energy deltas relative to HEFT. Negative values indicate reductions.}
+\caption{Per-benchmark placement latency and kernel-energy deltas relative to HEFT. Negative values indicate reductions. Error bars are omitted for readability; Table~\ref{tab:results-placement-variability} reports run-to-run CV for the placement headline runs.}
 \label{fig:results-placement-deltas}
 \end{figure}
 }
@@ -147,7 +147,7 @@
 \node[font=\scriptsize, anchor=north east] at (axis cs:0.000000,0.019) {N-body};
 \end{axis}
 \end{tikzpicture}
-\caption{Scheduler deviation rate and placement latency improvement in the locality diagnostic runs. Deviation frequency is explanatory, not a direct linear predictor of speedup.}
+\caption{Scheduler deviation rate and placement latency improvement in the locality diagnostic runs. Deviation frequency is explanatory, not a direct linear predictor of speedup. CG is omitted because the diagnostic run set does not contain its deviation-rate row.}
 \label{fig:results-deviation-latency}
 \end{figure}
 }
