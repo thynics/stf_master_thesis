@@ -38,15 +38,32 @@ relative to that baseline.
 
 The evaluation separates placement from frequency control. The placement
 experiments compare HEFT with the bandit scheduler while DVFS is disabled. The
-data-movement analysis then checks whether the latency reductions align with
-copy-volume reductions and accepted non-HEFT placements. The DVFS experiments
-hold the placement layer fixed and compare WinDVFS against a no-DVFS baseline
-using kernel energy as the main metric.
+DVFS experiments hold the placement layer fixed and compare WinDVFS against a
+no-DVFS baseline using kernel energy as the main metric. This isolation is
+important because placement changes where work runs, whereas DVFS changes the
+frequency at which the selected GPUs execute that work.
 
-This organization keeps the two contributions distinct. Placement results
-answer whether the scheduler improves task placement and locality. DVFS results
-answer whether guarded frequency control can reduce kernel energy with a small
-latency cost.
+The evaluation is organized around four questions:
+
+\begin{enumerate}
+\item Does the bandit scheduler improve suite-level kernel latency relative to
+HEFT on the benchmark suite?
+\item Are the placement improvements consistent with reduced data movement,
+rather than only measurement noise?
+\item Does WinDVFS reduce kernel energy while keeping the aggregate latency
+cost small?
+\item Do the clock and power measurements support the DVFS energy result, and
+does the controller avoid forcing changes on low-opportunity workloads?
+\end{enumerate}
+
+The following sections answer these questions in the same order. The key
+results are reported first to give the reader the overall effect size. The
+placement section then shows the per-benchmark latency and energy deltas, and
+the data-movement section checks whether those deltas align with copy-volume
+reductions. The DVFS section reports the final energy result, while the clock
+and power section explains why the energy reductions appear on some workloads
+but not on all of them. The chapter ends with overheads and limitations, rather
+than mixing diagnostic details into the main result tables.
 
 \section{Key Results}
 \label{sec:results-key}
