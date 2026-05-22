@@ -4,13 +4,13 @@
 \definecolor{ResultNeutral}{HTML}{666666}
 
 \newcommand{\figResultsOverview}{%
-\begin{figure}[H]
+\begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}
 \begin{groupplot}[
     group style={group size=2 by 1, horizontal sep=1.4cm},
     width=0.43\linewidth,
-    height=5.1cm,
+    height=4.6cm,
     ybar,
     ymin=0.88,
     ymax=1.04,
@@ -40,12 +40,12 @@
 }
 
 \newcommand{\figPlacementDeltas}{%
-\begin{figure}[H]
+\begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
     width=\linewidth,
-    height=7cm,
+    height=6.1cm,
     ybar,
     bar width=5pt,
     ymin=-21,
@@ -76,12 +76,12 @@
 }
 
 \newcommand{\figCopyLatencyScatter}{%
-\begin{figure}[H]
+\begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
     width=0.82\linewidth,
-    height=7cm,
+    height=6.1cm,
     xlabel={Copy bytes \(\Delta\) (\%)},
     ylabel={Kernel latency \(\Delta\) (\%)},
     xmin=-42,
@@ -116,12 +116,12 @@
 }
 
 \newcommand{\figDeviationLatencyScatter}{%
-\begin{figure}[H]
+\begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
     width=0.82\linewidth,
-    height=7cm,
+    height=6.1cm,
     xlabel={Non-HEFT deviation rate},
     ylabel={Kernel latency \(\Delta\) (\%)},
     xmin=-0.05,
@@ -153,12 +153,12 @@
 }
 
 \newcommand{\figDvfsDeltas}{%
-\begin{figure}[H]
+\begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
     width=\linewidth,
-    height=7cm,
+    height=6.1cm,
     ybar,
     bar width=4.2pt,
     ymin=-7.5,
@@ -192,12 +192,12 @@
 }
 
 \newcommand{\figDvfsTradeoff}{%
-\begin{figure}[H]
+\begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
     width=0.82\linewidth,
-    height=7cm,
+    height=6.1cm,
     xlabel={Kernel latency \(\Delta\) (\%)},
     ylabel={Kernel energy \(\Delta\) (\%)},
     xmin=-1.0,
@@ -234,12 +234,12 @@
 }
 
 \newcommand{\figMidEnergyScatter}{%
-\begin{figure}[H]
+\begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
     width=0.82\linewidth,
-    height=7cm,
+    height=6.1cm,
     xlabel={Middle-clock samples (\%)},
     ylabel={Kernel energy \(\Delta\) (\%)},
     xmin=-5,

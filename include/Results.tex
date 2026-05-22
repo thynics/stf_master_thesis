@@ -23,7 +23,7 @@ configuration. The benchmark executable and the power-sampling process run
 inside the same Apptainer environment, which keeps the compiler, CUDA runtime,
 and library configuration fixed across all measurements.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \small
 \begin{tabular}{@{}ll@{}}
@@ -67,7 +67,7 @@ copy-sensitive task graphs and near-neutral task graphs, allowing the
 evaluation to test whether the scheduler improves favorable cases while
 leaving low-opportunity cases close to the baseline.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \small
 \resizebox{\linewidth}{!}{%
@@ -168,7 +168,7 @@ improves latency. The data-movement diagnostics examine whether the latency
 changes are consistent with locality. The DVFS measurements are reported
 separately, with no-DVFS execution as the energy baseline.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \small
 \resizebox{\linewidth}{!}{%
@@ -212,7 +212,7 @@ only when the task graph exposes useful placement alternatives.
 
 \figPlacementDeltas
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \small
 \begin{tabular}{@{}lrrr@{}}
@@ -270,7 +270,7 @@ was not included in the locality diagnostic set; its row therefore uses copy
 counters from the placement measurements and omits the diagnostic deviation
 rate.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \small
 \resizebox{\linewidth}{!}{%
@@ -334,7 +334,7 @@ together, and Table~\ref{tab:results-dvfs-energy} gives the exact values.
 
 \figDvfsDeltas
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \small
 \begin{tabular}{@{}lrrr@{}}
@@ -371,7 +371,7 @@ latency increase offsets much of the power saving, leaving a \(1.411\%\)
 kernel-energy reduction. Blocked N-body stays close to the origin and is
 therefore treated as near-neutral.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \small
 \begin{tabular}{@{}lrr@{}}
@@ -406,7 +406,7 @@ DVFS result. Larger energy reductions coincide with lower average kernel power
 and visible exposure to the middle SM clock. The near-neutral Blocked N-body
 row shows almost no change in clock or power.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \small
 \resizebox{\linewidth}{!}{%
@@ -450,7 +450,7 @@ performance metrics. They show whether the clock outcome in
 Table~\ref{tab:results-dvfs-clock} comes from sustained MID commits, no
 committed clock change, or guardrail recovery to higher clocks.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \small
 \resizebox{\linewidth}{!}{%
@@ -493,7 +493,7 @@ Table~\ref{tab:results-overhead} reports the compact logging and control
 overhead snapshot. It should be read as a diagnostic stress test rather than
 as a production-overhead estimate.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \small
 \resizebox{\linewidth}{!}{%

@@ -23,6 +23,7 @@
 \usepackage{chemfig}								% Chemical structures
 \usepackage[top=3cm, bottom=3cm,
 			inner=3cm, outer=3cm]{geometry}			% Page margin lengths			
+\raggedbottom										% Avoid stretching paragraph and float spacing to force equal page heights
 \usepackage{eso-pic}								% Create cover page background
 \newcommand{\backgroundpic}[3]{
 	\put(#1,#2){
@@ -30,9 +31,15 @@
 	\centering
 	\includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{#3}}}}
 \usepackage{float} 									% Enables object position enforcement using [H]
+\usepackage[section]{placeins}						% Keeps floats within their section while allowing LaTeX to reduce whitespace
 \usepackage{parskip}								% Enables vertical spaces correctly 
 \usepackage{datetime2} % date formatting tools - ISO-date YYYY-MM-DD
 \usepackage{microtype} % Microtypography - improves readability and appearance of text.
+\setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{4pt}
+\setlength{\belowcaptionskip}{2pt}
 
 % Allows clickable links for references, in table of content, autoref, etc.  	
 \usepackage{hyperref}								
