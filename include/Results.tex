@@ -89,36 +89,64 @@ Blocked N-body & 49152, 512, 14 & 131712 & 8659968 & low \\
 \section{Metrics and Measurement Methodology}
 \label{sec:results-metrics}
 
+\textbf{Kernel latency:}
 Kernel latency is the primary performance metric. It measures the benchmark's
 GPU kernel-window duration and is used for both placement and DVFS performance
-comparisons. Placement speedup is computed as HEFT kernel latency divided by
-the scheduler kernel latency. Suite-level summaries use geometric means so
-that each benchmark contributes multiplicatively rather than allowing one large
-absolute runtime to dominate the aggregate.
+comparisons. This metric excludes unrelated process startup, final output, and
+host-side bookkeeping, so it focuses on the execution interval affected by the
+runtime scheduler.
 
+\textbf{Kernel energy:}
 Kernel energy is the primary energy metric for DVFS. At each NVML sampling
 timestamp, the result scripts record power readings for the eight visible GPUs.
 Kernel energy is computed by trapezoidal integration over the kernel-window
 samples. The final-source rows have an observed sampling interval of
 approximately 100 ms, so the estimate is limited by NVML sampling resolution,
 especially when clock transitions are short relative to the sampling period.
-Kernel power is the average NVML power over the same kernel window and is used
-only to explain energy changes.
 
+\textbf{Kernel power:}
+Kernel power is the average NVML power over the kernel window. It is reported
+to explain energy changes, not as the headline objective by itself. A lower
+average power only improves energy if the corresponding runtime increase is
+small enough.
+
+\textbf{Whole-process energy:}
 Whole-process energy is measured as an auxiliary diagnostic but is not used for
-the main claims, because both the placement scheduler and the DVFS controller
-act on the GPU kernel execution window. Energy--delay product is reported for
-DVFS as \(E \times T\), and ED\(^2\)P as \(E \times T^2\), to show whether
-energy savings still hold after accounting for runtime changes.
+the main claims. It includes startup, initialization, host-side work, and final
+output handling, whereas both the placement scheduler and the DVFS controller
+act on the GPU kernel execution window.
 
+\textbf{Speedup and geometric means:}
+Placement speedup is computed as HEFT kernel latency divided by scheduler
+kernel latency. Suite-level summaries use geometric means so that each
+benchmark contributes multiplicatively rather than allowing one large absolute
+runtime to dominate the aggregate.
+
+\textbf{Relative deltas:}
+Relative deltas are computed against the baseline named in the corresponding
+section. For placement, the baseline is HEFT with DVFS disabled. For DVFS, the
+baseline is no-DVFS execution under the same placement layer. Negative deltas
+in latency, energy, power, and copy traffic indicate reductions relative to
+that baseline.
+
+\textbf{EDP and ED\(^2\)P:}
+Energy--delay product is reported for DVFS as \(E \times T\), and ED\(^2\)P as
+\(E \times T^2\). These ratios show whether energy savings still hold after
+accounting for runtime changes, especially for latency-sensitive workloads.
+
+\textbf{Data-movement and DVFS evidence:}
 Copy-byte reduction, copy-time reduction, and non-HEFT deviation rate are used
 as placement locality evidence. Average SM clock, middle-clock sample share,
-and commit or guardrail counters are used as DVFS evidence. These measurements
-have different evidential roles: placement performance is the headline latency
-result; locality rows are diagnostic attribution; DVFS rows are final
-energy--performance measurements under the evaluated configuration; and the
-overhead table is a diagnostic stress check rather than a production-overhead
-estimate.
+and commit or guardrail counters are used as DVFS evidence. These supporting
+measurements explain the observed latency and energy changes, but the headline
+claims are based on kernel latency and kernel energy.
+
+\textbf{Evidence roles:}
+The measurements in this chapter have different evidential roles. Placement
+performance is the headline latency result; locality rows are diagnostic
+attribution; DVFS rows are final energy--performance measurements under the
+evaluated configuration; and the overhead table is a diagnostic stress check
+rather than a production-overhead estimate.
 
 \section{Evaluation Plan}
 \label{sec:results-plan}
