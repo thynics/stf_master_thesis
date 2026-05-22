@@ -27,12 +27,12 @@ high frequency when performance risk appears.
 
 The experimental results support the value of this layered design. With DVFS
 disabled, \texttt{bandit\_scheduler} improves geometric-mean kernel latency by
-\(7.146\%\) across six benchmarks using mean E1 latencies. The mechanism is
+\(7.146\%\) across six benchmarks using mean placement latencies. The mechanism is
 visible in the locality-attribution experiment: the strongest wins coincide
 with large reductions in copy bytes, while neutral workloads show zero
 deviation and remain close to HEFT. Sensitivity validation shows that the
-default placement configuration is the best cross-workload choice among the
-tested variants.
+default placement configuration is the best cross-workload choice in the
+robustness check.
 
 The final DVFS evaluation shows a smaller but meaningful energy result.
 \texttt{win\_dvfs} reduces geometric-mean kernel energy by \(2.904\%\) with a

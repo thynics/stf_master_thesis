@@ -90,20 +90,21 @@ where transitions become visible in the CUDASTF execution timeline. If the
 runtime can schedule transitions during communication, synchronization, or
 other slack periods, the visible latency cost of DVFS could be reduced.
 
-Instrumentation overhead should also be reduced. E7 shows that compact
-placement logging is usually small but that diagnostic DVFS/control rows can
-be costly in some cases. A production-oriented implementation should separate
-low-overhead counters used during normal execution from detailed trace logging
-used only for debugging and thesis-style attribution. This would keep the
-scheduler explainable without making detailed logs part of the critical path.
+Instrumentation overhead should also be reduced. The overhead diagnostics show
+that compact placement logging is usually small but that diagnostic
+DVFS-control rows can be costly in some cases. A production-oriented
+implementation should separate low-overhead counters used during normal
+execution from detailed trace logging used only for debugging and thesis-style
+attribution. This would keep the scheduler explainable without making detailed
+logs part of the critical path.
 
 \section{Reproducibility and Deployment}
 \label{sec:future-reproducibility}
 
 The final direction is reproducibility and deployment. Future versions should
-standardize the result artifacts produced by each experiment, including raw
-runs, scheduler configuration, device metadata, power samples, and copyback
-manifests. A stable artifact format would make it easier to compare results
+standardize the experiment records produced by each run, including benchmark
+summaries, scheduler configuration, device metadata, and power-sampling
+summaries. A stable record format would make it easier to compare results
 across hardware and to regenerate thesis figures without relying on ad hoc log
 parsing.
 

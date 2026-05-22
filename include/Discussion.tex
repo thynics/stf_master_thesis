@@ -17,7 +17,8 @@ Chapter~\ref{ch:theory}.
 
 The placement results support the main design choice of this thesis: HEFT
 should remain the performance anchor, while locality-aware deviations should be
-admitted only when there is sufficient copy-saving evidence. In E1,
+admitted only when there is sufficient copy-saving evidence. In the placement
+performance experiment,
 \texttt{bandit\_scheduler} improves geometric-mean kernel latency by
 \(7.146\%\) across six benchmarks using mean latencies. The improvement is not
 uniform. \texttt{cg}, \texttt{cholesky}, and \texttt{lu\_decomposition} show
@@ -27,20 +28,19 @@ near neutral and \texttt{fdtd} is more fragile.
 This non-uniformity is expected for a residual placement policy. The scheduler
 does not try to replace HEFT with a globally different placement strategy.
 Instead, it asks whether a non-HEFT GPU can reduce predicted copy cost while
-keeping the local finish-time penalty bounded. E2 confirms that this mechanism
-is visible in the measurements. The strongest wins coincide with large copy
+keeping the local finish-time penalty bounded. The locality-attribution
+analysis confirms that this mechanism is visible in the measurements. The
+strongest wins coincide with large copy
 byte reductions: \texttt{cholesky} reduces copy bytes by \(38.220\%\), and
 \texttt{lu\_decomposition} reduces copy bytes by \(23.905\%\). The neutral
 benchmarks have zero deviation rate and zero copy-byte reduction, which
 explains why they remain close to HEFT.
 
-E3 strengthens this interpretation by showing that the result is not only a
+The sensitivity analysis strengthens this interpretation by showing that the result is not only a
 single fortunate parameter setting. The default placement configuration gives
-the best four-benchmark geometric-mean speedup among the tested sensitivity
-variants. Some individual benchmarks prefer a different window size, but the
-default configuration is the most stable cross-workload choice. This matters
-for a runtime scheduler because a method that requires per-benchmark retuning
-would be less useful in practice.
+the best four-benchmark geometric-mean speedup in the robustness check. This
+matters for a runtime scheduler because a method that requires per-benchmark
+manual adjustment would be less useful in practice.
 
 \section{Interpreting the DVFS Result}
 \label{sec:discussion-dvfs}
@@ -56,9 +56,10 @@ a smaller reduction with a larger latency trade-off, and
 This outcome is consistent with the proposal--commit design. The DVFS layer
 does not directly optimize each task in isolation. It accumulates task-level
 frequency intents into per-GPU windows and commits a lower frequency only when
-guardrails indicate that the performance risk is acceptable. E6 shows that the
-stronger energy wins are associated with lower kernel average power and, in
-most cases, lower active SM clock exposure. At the same time, the
+guardrails indicate that the performance risk is acceptable. The DVFS mechanism
+analysis shows that the stronger energy wins are associated with lower kernel
+average power and, in most cases, lower active SM clock exposure. At the same
+time, the
 \texttt{nbody\_blocked} row shows why the guardrails are necessary: when the
 benchmark offers little useful DVFS opportunity, the final behavior remains
 near the no-DVFS baseline instead of forcing an aggressive lower-frequency
@@ -78,14 +79,15 @@ The first research question asks how a CUDASTF runtime scheduler can preserve
 the performance advantages of HEFT while exploiting data locality. The answer
 in this thesis is a HEFT-relative residual gate. HEFT provides the baseline GPU
 choice, and the scheduler deviates only when the predicted copy saving is large
-enough and the finish-time penalty is bounded. The E1 and E3 results show that
-this design improves latency on copy-sensitive workloads while remaining close
-to HEFT on neutral workloads.
+enough and the finish-time penalty is bounded. The placement performance and
+sensitivity results show that this design improves latency on copy-sensitive
+workloads while remaining close to HEFT on neutral workloads.
 
 The second research question asks whether observed latency changes can be
-attributed to concrete locality mechanisms. E2 provides the strongest evidence
-for this question. The benchmarks with the largest latency improvements also
-show substantial copy-byte reductions and non-zero deviation rates. Conversely,
+attributed to concrete locality mechanisms. The locality-attribution experiment
+provides the strongest evidence for this question. The benchmarks with the
+largest latency improvements also show substantial copy-byte reductions and
+non-zero deviation rates. Conversely,
 the neutral benchmarks show no copy-byte reduction and no deviation. This
 alignment does not prove that copy traffic explains every millisecond of
 runtime variation, but it gives a clear mechanism-level explanation for the
@@ -106,12 +108,12 @@ mean. The result is workload dependent, so the correct conclusion is that the
 runtime can extract energy savings on several benchmarks without large
 aggregate slowdown, not that DVFS is always beneficial.
 
-The fifth research question concerns overhead. E7 shows that compact placement
-logging is close to noise-scale for two of the three diagnostic benchmarks, but
-that instrumentation and compact DVFS control are not free. This supports the
-experimental choice to use no-log or validation rows for final performance
-claims and to treat diagnostic rows as mechanism evidence rather than as final
-timing results.
+The fifth research question concerns overhead. The overhead diagnostics show
+that compact placement logging is close to noise-scale for two of the three
+diagnostic benchmarks, but that instrumentation and compact DVFS control are
+not free. This supports the experimental choice to use no-log or validation
+rows for final performance claims and to treat diagnostic rows as mechanism
+evidence rather than as final timing results.
 
 \section{Practical Implications}
 \label{sec:discussion-practical-implications}

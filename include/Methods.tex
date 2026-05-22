@@ -194,7 +194,7 @@ $\mathrm{aggressive}$ & $0.004$ & $0.020$ & $0.20$ & $0.10$ \\
 \end{table}
 where $\delta$ denotes the allowed value of $\rho_F$ and $\tau$ denotes the required value of $\rho_K$. The aggressive profile is more permissive because it allows a slightly larger finish-time penalty and requires a smaller copy gain.
 
-The numeric thresholds in Table~\ref{tab:gate-profiles} are fixed method parameters, not per-benchmark tuning knobs. They encode the intended asymmetry of the policy: latency-sensitive tasks receive a tighter finish-time bound and require stronger copy evidence, while non-critical tasks may accept slightly more predicted delay in exchange for locality. The same parameterization is used across the thesis evaluation, with concrete runtime configuration treated as reproducibility metadata.
+The numeric thresholds in Table~\ref{tab:gate-profiles} are fixed method parameters, not per-benchmark adjustment points. They encode the intended asymmetry of the policy: latency-sensitive tasks receive a tighter finish-time bound and require stronger copy evidence, while non-critical tasks may accept slightly more predicted delay in exchange for locality. The same parameterization is used across the thesis evaluation, with concrete runtime configuration treated as reproducibility metadata.
 
 Let $\theta_q$ be the criticality threshold used by the gate. For a selected profile $p$, the active thresholds for task $t$ are
 \begin{equation}
@@ -432,7 +432,7 @@ The state update after placement is essential because the next ready task observ
 \section{DVFS Framework}
 \label{sec:methods-dvfs-framework}
 
-The DVFS layer is implemented as a conservative proposer and per-GPU window committer. It is separate from the placement bandit: placement chooses the GPU, and DVFS chooses the frequency level to use on that GPU. In the thesis experiments, the DVFS configuration is treated as a method variant that reuses the same HEFT-relative placement path and adds only the proposal--commit frequency controller.
+The DVFS layer is implemented as a conservative proposer and per-GPU window committer. It is separate from the placement bandit: placement chooses the GPU, and DVFS chooses the frequency level to use on that GPU. In the thesis experiments, the DVFS configuration reuses the same HEFT-relative placement path and adds only the proposal--commit frequency controller.
 
 When DVFS is active, the runtime first checks that the selected placement scheduler supports per-task frequency annotations and that valid graphics-clock levels can be obtained for all GPUs. The method defines three abstract levels,
 \begin{equation}

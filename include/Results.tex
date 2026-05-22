@@ -1,114 +1,107 @@
 \chapter{Results}
 \label{chap:results}
 
-This chapter evaluates the proposed CUDASTF runtime scheduler as a sequence of
-controlled experiments. The first part isolates the placement scheduler by
-disabling DVFS and comparing \texttt{bandit\_scheduler} against HEFT. The
-second part evaluates the \texttt{win\_dvfs} extension by comparing kernel
-latency, kernel energy, and kernel power against a no-DVFS baseline. This
-separation is intentional: placement changes the GPU selected for a task,
-whereas DVFS changes the frequency level used after placement. Mixing the two
-effects in the same headline metric would make the mechanism difficult to
-interpret.
+This chapter evaluates the proposed CUDASTF runtime scheduler using a set of
+controlled placement and DVFS experiments. The evaluation is organized around
+the research questions introduced in Chapter~\ref{chap:methods}: whether a
+HEFT-relative placement policy can improve locality without sacrificing the
+stability of HEFT, whether the observed speedups can be attributed to concrete
+data-movement mechanisms, and whether a guarded window-level DVFS controller
+can reduce energy while keeping latency overhead small.
+
+The chapter deliberately separates placement evidence from DVFS evidence. In
+the placement experiments, DVFS is disabled and the comparison is between HEFT
+and \texttt{bandit\_scheduler}. In the DVFS experiments, the placement
+framework is held fixed and the comparison is between a no-DVFS baseline and
+\texttt{win\_dvfs}. This separation makes the results easier to interpret:
+placement changes where a task executes, while DVFS changes the frequency at
+which the selected GPU runs.
 
 The main placement result is that \texttt{bandit\_scheduler} improves
 geometric-mean kernel latency by \(7.146\%\) across six benchmarks when the
-mean of each five-run batch is used. The strongest improvements occur on
-\texttt{cg}, \texttt{cholesky}, and \texttt{lu\_decomposition}, and the
-locality-attribution experiment shows that these wins coincide with large
-reductions in copy traffic. The DVFS result is more modest but consistent:
-\texttt{win\_dvfs} reduces geometric-mean kernel energy by \(2.904\%\) with a
-geometric-mean kernel-latency overhead of \(0.626\%\). Four benchmarks show
-clear kernel-energy reductions, one benchmark shows a smaller energy reduction
-with a visible latency trade-off, and one benchmark remains near neutral.
+mean of each five-run benchmark batch is used. The strongest placement gains
+occur on \texttt{cg}, \texttt{cholesky}, and \texttt{lu\_decomposition}, and
+the locality analysis shows that these gains coincide with large reductions in
+copy traffic. The main DVFS result is that \texttt{win\_dvfs} reduces
+geometric-mean kernel energy by \(2.904\%\) with a geometric-mean kernel
+latency overhead of \(0.626\%\). The DVFS effect is therefore useful but
+workload dependent: four benchmarks show clear kernel-energy reductions, one
+benchmark shows a smaller energy reduction with a visible latency trade-off,
+and one benchmark remains near neutral.
 
-\section{Experimental Protocol and Evidence Map}
+\section{Experimental Protocol}
 \label{sec:results-protocol}
 
 All final experiments target single-node, eight-GPU CUDASTF execution. The
-application-visible GPU set is \(\{0,1,2,3,4,5,6,7\}\), and every row used in
-the final tables sampled all eight GPUs. Each benchmark row is launched as a
-fresh process so that runtime scheduler state, CUDA context state, and DVFS
-state do not intentionally carry over between measured runs.
+application-visible GPU set contains eight GPUs, and every row used in the
+final tables sampled all eight allocated devices. Each benchmark row is
+launched as a fresh process so that CUDA context state, scheduler state, and
+DVFS state do not intentionally carry over between measured rows.
 
-The evaluation uses six benchmarks: \texttt{fdtd}, \texttt{cg},
+The evaluation uses six CUDASTF benchmarks: \texttt{fdtd}, \texttt{cg},
 \texttt{miniweather}, \texttt{cholesky}, \texttt{lu\_decomposition}, and
-\texttt{nbody\_blocked}. The placement experiments use HEFT and
-\texttt{bandit\_scheduler} with DVFS disabled. The DVFS experiments use a
-no-DVFS baseline and the \texttt{win\_dvfs} configuration. For DVFS, kernel
-energy is the primary energy metric because it measures the energy integrated
-over the benchmark kernel window. Whole-process energy is useful as auxiliary
-context, but it is not used for the headline decisions in this chapter.
-
-Table~\ref{tab:results-evidence-map} summarizes the evidence chain. The source
-artifacts listed in the table are the experiment-repository result documents
-that retain the raw job directories, raw CSV files, configuration files, and
-copyback manifests used for plotting and audit.
+\texttt{nbody\_blocked}. Table~\ref{tab:results-public-protocol} summarizes
+the public experimental structure. The table reports what each experiment is
+intended to establish, the number of measured repetitions used for the main
+rows, and whether DVFS is enabled.
 
 \begin{table}[t]
 \centering
 \small
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}llllp{0.30\linewidth}@{}}
+\begin{tabular}{@{}lp{0.41\linewidth}cc@{}}
 \toprule
-Stage & Question & Runs & DVFS & Source artifact \\
+Experiment & Purpose & Repetitions & DVFS \\
 \midrule
-E0 & Measurement gate & 1 per scheduler & Off &
-\texttt{result/20260522-thesis-e0-fresh-baseline.md} \\
-E1 & Placement latency & 5 per scheduler & Off &
-\texttt{result/20260522-thesis-e1-placement-aggregate.md} \\
-E2 & Locality mechanism & 3 per scheduler & Off &
-\texttt{result/20260522-thesis-e2-locality-aggregate.md} \\
-E3 & Placement sensitivity & 3 per variant & Off &
-\texttt{result/20260522-thesis-e3-sensitivity-validation-aggregate.md} \\
-E4/E5 & Final DVFS energy & Final rows & On &
-\texttt{result/20260522-thesis-e5-dvfs-validation-fdtd-lu-current.md} \\
-E6 & DVFS mechanism & Same as E4/E5 & On &
-\texttt{result/20260522-thesis-e6-dvfs-guardrail-lu.md} \\
-E7 & Instrumentation overhead & 1 per row & Mixed &
-\texttt{result/20260522-thesis-e7-overhead-fdtd-lu-nbody.md} \\
+Measurement validation & Confirm that all benchmarks produce valid kernel latency and kernel-energy measurements on eight GPUs. & 1 & Off \\
+Placement performance & Compare HEFT and \texttt{bandit\_scheduler} latency across the benchmark suite. & 5 & Off \\
+Locality attribution & Relate placement latency changes to copy-volume reduction and non-HEFT deviation rate. & 3 & Off \\
+Placement robustness & Check that the selected placement configuration is not a single-run anomaly. & 3 & Off \\
+DVFS energy evaluation & Compare no-DVFS execution with \texttt{win\_dvfs} using kernel energy as the primary metric. & 1 per benchmark & On \\
+DVFS mechanism analysis & Explain the energy result using kernel power and observed SM-clock exposure. & Same rows & On \\
+Overhead diagnostics & Estimate the cost of compact logging and compact DVFS-control diagnostics. & 1 & Mixed \\
 \bottomrule
-\end{tabular}%
-}
-\caption{Evidence map for the results chapter.}
-\label{tab:results-evidence-map}
+\end{tabular}
+\caption{Public experimental structure used in the results chapter.}
+\label{tab:results-public-protocol}
 \end{table}
 
-\section{E0: Baseline and Measurement Gate}
-\label{sec:results-e0}
+Kernel latency is the primary performance metric throughout the chapter. For
+DVFS, kernel energy is the primary energy metric because it integrates NVML
+power samples over the benchmark kernel window. Whole-process energy is useful
+as auxiliary context, but it is not used for the headline DVFS decisions in
+this chapter.
 
-E0 is an infrastructure check rather than a final performance result. It
-verifies that all six benchmarks run under both HEFT and
-\texttt{bandit\_scheduler}, that kernel timestamps and NVML kernel-energy
-measurements are present, and that all rows use the intended eight-GPU
-configuration with DVFS disabled. This gate is important because later
-experiments rely on kernel-window energy and kernel-window latency rather than
-only process-level elapsed time.
+\section{Measurement Validation}
+\label{sec:results-measurement-validation}
 
-The single E0 run already shows the qualitative shape expected from the
+Before using the benchmark data for placement or DVFS conclusions, the
+measurement setup was validated on all six benchmarks. This validation checks
+that both HEFT and \texttt{bandit\_scheduler} execute successfully with DVFS
+disabled, that kernel timestamps are present, that NVML kernel-energy samples
+are available, and that every row uses the intended eight-GPU configuration.
+
+The validation run already shows the qualitative behavior expected from the
 placement scheduler: \texttt{cg}, \texttt{cholesky}, and
-\texttt{lu\_decomposition} improve substantially, while \texttt{miniweather}
-and \texttt{nbody\_blocked} are almost unchanged. However, E0 uses only one
-measured run per row, so the final placement conclusions are taken from E1,
-E2, and E3.
+\texttt{lu\_decomposition} improve substantially, whereas
+\texttt{miniweather} and \texttt{nbody\_blocked} remain almost unchanged.
+Because this validation uses only one measured run per row, it is not used as
+the final performance evidence. The placement conclusions below use repeated
+benchmark batches.
 
-\section{E1: Placement Performance}
-\label{sec:results-e1}
+\section{Placement Performance}
+\label{sec:results-placement-performance}
 
-E1 measures placement latency with DVFS disabled. The experiment is split into
-three five-run batches so that no single job becomes too large: one batch for
-\texttt{fdtd} and \texttt{miniweather}, one for \texttt{cg} and
-\texttt{lu\_decomposition}, and one for \texttt{cholesky} and
-\texttt{nbody\_blocked}. The comparison is HEFT versus
-\texttt{bandit\_scheduler}. Because DVFS is disabled, any latency difference
-in this section comes from placement and runtime scheduling behavior, not from
-frequency changes.
+The main placement experiment compares HEFT against
+\texttt{bandit\_scheduler} with DVFS disabled. The six benchmarks are measured
+in five-run batches. Since frequency control is disabled, the latency
+differences in this section are attributed to placement and scheduling
+behavior rather than to clock changes.
 
 Using the mean latency for each benchmark, \texttt{bandit\_scheduler} obtains
 a six-benchmark geometric-mean speedup of \(1.076965\times\), equivalent to a
 normalized runtime reduction of \(7.146\%\) relative to HEFT. Using medians,
 the geometric-mean speedup is \(1.063759\times\), equivalent to a normalized
-runtime reduction of \(5.994\%\). Table~\ref{tab:results-e1-placement}
+runtime reduction of \(5.994\%\). Table~\ref{tab:results-placement-main}
 summarizes the per-benchmark results.
 
 \begin{table}[t]
@@ -128,27 +121,27 @@ Benchmark & Mean \(\Delta T\) & Median \(\Delta T\) & Wins & Kernel energy \(\De
 \bottomrule
 \end{tabular}%
 }
-\caption{E1 placement-only latency and kernel-energy trace. Negative deltas are improvements relative to HEFT.}
-\label{tab:results-e1-placement}
+\caption{Placement-only latency and kernel-energy trace. Negative deltas are improvements relative to HEFT.}
+\label{tab:results-placement-main}
 \end{table}
 
-The key observation is that the placement scheduler does not create a uniform
-speedup across all workloads. It is effective when the task graph exposes
-useful copy-saving placement alternatives, and it stays close to HEFT when
-such alternatives are absent. This behavior is desirable: the scheduler is
-designed as a HEFT-relative residual policy, not as an unconstrained learned
-placement rule.
+The result is intentionally not interpreted as a uniform speedup across all
+workloads. The scheduler is effective when the task graph exposes useful
+copy-saving alternatives, and it stays close to HEFT when such alternatives
+are absent. This behavior is consistent with the method design: the scheduler
+is a HEFT-relative residual policy, not an unconstrained learned placement
+rule.
 
-\section{E2: Locality Attribution}
-\label{sec:results-e2}
+\section{Locality Attribution}
+\label{sec:results-locality-attribution}
 
-E2 explains the E1 latency behavior by measuring copy traffic and non-HEFT
-deviation rate. DVFS remains disabled. The experiment focuses on three
-classes: strong locality winners, a modest or noisy case, and neutral
-workloads. The central question is whether speedups correspond to measurable
-locality improvements rather than accidental runtime variation.
+The locality-attribution experiment explains the placement result by measuring
+copy traffic and non-HEFT deviation rate. DVFS remains disabled. The central
+question is whether the speedups in Table~\ref{tab:results-placement-main}
+correspond to measurable locality improvements rather than accidental runtime
+variation.
 
-Table~\ref{tab:results-e2-locality} shows that the largest latency
+Table~\ref{tab:results-locality-attribution} shows that the largest latency
 improvements align with copy-byte reductions. \texttt{cholesky} reduces median
 latency by \(9.269\%\) while reducing copy bytes by \(38.220\%\), and
 \texttt{lu\_decomposition} reduces median latency by \(15.891\%\) while
@@ -171,89 +164,45 @@ Benchmark & Median \(\Delta T\) & Copy bytes \(\Delta\) & Deviation rate & Mecha
 \texttt{nbody\_blocked} & \(+0.019\%\) & \(0.000\%\) & 0.000000 & HEFT-like neutral behavior. \\
 \bottomrule
 \end{tabular}
-\caption{E2 locality attribution. Negative latency and copy-byte deltas are improvements relative to HEFT.}
-\label{tab:results-e2-locality}
+\caption{Locality attribution for the placement scheduler. Negative latency and copy-byte deltas are improvements relative to HEFT.}
+\label{tab:results-locality-attribution}
 \end{table}
 
-These results support the intended mechanism of the placement layer. When the
-runtime observes a non-HEFT placement that can reduce copy traffic while
-keeping the predicted finish-time penalty bounded, the residual gate accepts
-the deviation. When no such opportunity exists, the scheduler naturally
-collapses back to HEFT-like behavior. This explains both the strong wins and
-the neutral controls without requiring a separate benchmark-specific policy.
+These results support the intended placement mechanism. When the runtime
+observes a non-HEFT placement that can reduce copy traffic while keeping the
+predicted finish-time penalty bounded, the residual gate accepts the
+deviation. When no such opportunity exists, the scheduler naturally collapses
+back to HEFT-like behavior. This explains both the strong wins and the neutral
+controls without requiring a separate benchmark-specific policy.
 
-\section{E3: Placement Sensitivity}
-\label{sec:results-e3}
+\section{Robustness of the Placement Configuration}
+\label{sec:results-placement-sensitivity}
 
-E3 tests whether the placement result depends on one lucky window size or bias
-setting. The validation uses four benchmarks and five variants: HEFT,
-\texttt{bandit\_default\_w32}, \texttt{bandit\_w16}, \texttt{bandit\_w64},
-and \texttt{bandit\_weak\_bias\_w32}. Each non-HEFT variant is run three times
-per benchmark with DVFS disabled.
+The placement result should not depend on a single lucky run or on a narrowly
+chosen control setting. To check this, the default placement configuration was
+evaluated against nearby scheduler settings that change the adaptation window
+and gate-selection bias. These checks were run with DVFS disabled and used the
+same benchmark methodology as the placement experiments above.
 
-Table~\ref{tab:results-e3-geomean} shows the four-benchmark geometric-mean
-speedup against HEFT. The default configuration,
-\texttt{bandit\_default\_w32}, remains the best cross-workload choice.
+The default configuration remained the strongest aggregate choice across the
+robustness check, with a four-benchmark geometric-mean speedup of
+\(1.076371\times\) relative to HEFT. It also preserved the qualitative
+mechanism observed in the main placement results: neutral workloads remained
+close to HEFT, while the stronger linear-algebra workloads continued to show
+large gains. The robustness check therefore supports using the default
+\texttt{bandit\_scheduler} configuration as the thesis configuration.
 
-\begin{table}[t]
-\centering
-\small
-\begin{tabular}{@{}lr@{}}
-\toprule
-Variant & Geometric-mean speedup vs HEFT \\
-\midrule
-\texttt{bandit\_default\_w32} & 1.076371 \\
-\texttt{bandit\_w64} & 1.070170 \\
-\texttt{bandit\_weak\_bias\_w32} & 1.067818 \\
-\texttt{bandit\_w16} & 1.063685 \\
-\bottomrule
-\end{tabular}
-\caption{E3 sensitivity validation across \texttt{fdtd}, \texttt{miniweather}, \texttt{cholesky}, and \texttt{lu\_decomposition}.}
-\label{tab:results-e3-geomean}
-\end{table}
+\section{DVFS Energy Evaluation}
+\label{sec:results-dvfs-energy}
 
-The per-benchmark sensitivity result in
-Table~\ref{tab:results-e3-benchmark} gives a more detailed view. The default
-configuration wins \texttt{miniweather} and \texttt{cholesky}, is effectively
-tied with the best variant on \texttt{lu\_decomposition}, and is weaker on
-\texttt{fdtd}. This is a useful outcome rather than a contradiction:
-\texttt{fdtd} is the fragile case already identified in E1, while the strong
-linear-algebra cases continue to support the default setting.
+The final DVFS experiment evaluates \texttt{win\_dvfs}. Unlike the placement
+experiments above, DVFS is enabled in the \texttt{win\_dvfs} rows. The
+comparison is against a no-DVFS baseline, and the primary metric is kernel
+energy. The result should therefore be read as an energy-control result, not
+as additional placement evidence.
 
-\begin{table}[t]
-\centering
-\small
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}llrrrr@{}}
-\toprule
-Benchmark & Best variant & Best \(\Delta T\) & Default \(\Delta T\) & Default speedup & Default deviation rate \\
-\midrule
-\texttt{fdtd} & \texttt{bandit\_w64} & \(-2.338\%\) & \(+1.403\%\) & 0.986167 & 0.249902 \\
-\texttt{miniweather} & \texttt{bandit\_default\_w32} & \(-0.060\%\) & \(-0.060\%\) & 1.000596 & 0.000000 \\
-\texttt{cholesky} & \texttt{bandit\_default\_w32} & \(-9.992\%\) & \(-9.992\%\) & 1.111008 & 0.281154 \\
-\texttt{lu\_decomposition} & \texttt{bandit\_w16} & \(-18.423\%\) & \(-18.327\%\) & 1.224394 & 0.619305 \\
-\bottomrule
-\end{tabular}%
-}
-\caption{E3 best variant by benchmark. Negative deltas are improvements relative to HEFT.}
-\label{tab:results-e3-benchmark}
-\end{table}
-
-E3 therefore supports using \texttt{bandit\_default\_w32} as the thesis
-placement default. The alternatives are useful sensitivity rows, but they do
-not justify replacing the default across workloads.
-
-\section{E4 and E5: Final DVFS Energy Results}
-\label{sec:results-e4-e5}
-
-E4 and E5 evaluate the final \texttt{win\_dvfs} configuration. Unlike E1--E3,
-DVFS is enabled in the \texttt{win\_dvfs} rows. The comparison is against a
-no-DVFS baseline, and the primary metric is kernel energy. The result should
-therefore be read as an energy-control result, not as additional placement
-evidence.
-
-Table~\ref{tab:results-e5-dvfs} reports the final six-benchmark DVFS table.
-\texttt{fdtd}, \texttt{miniweather}, \texttt{cg}, and
+Table~\ref{tab:results-dvfs-energy} reports the final six-benchmark DVFS
+table. \texttt{fdtd}, \texttt{miniweather}, \texttt{cg}, and
 \texttt{lu\_decomposition} show clear kernel-energy reductions.
 \texttt{cholesky} also reduces kernel energy, but with a larger latency cost.
 \texttt{nbody\_blocked} is near neutral, which is consistent with the
@@ -277,8 +226,8 @@ Benchmark & Base ms & DVFS ms & \(\Delta T\) & Base J & DVFS J & \(\Delta E\) & 
 \bottomrule
 \end{tabular}%
 }
-\caption{E5 final \texttt{win\_dvfs} results. Energy and power are kernel-window NVML metrics; negative deltas are improvements relative to the no-DVFS baseline.}
-\label{tab:results-e5-dvfs}
+\caption{Final \texttt{win\_dvfs} results. Energy and power are kernel-window NVML metrics; negative deltas are improvements relative to the no-DVFS baseline.}
+\label{tab:results-dvfs-energy}
 \end{table}
 
 Across the six final rows, the geometric-mean kernel-energy ratio is
@@ -288,15 +237,16 @@ latency overhead. This is the main DVFS conclusion of the thesis: the
 windowed, guarded DVFS layer can reduce kernel energy on the evaluated
 benchmark set while keeping the aggregate latency penalty below one percent.
 
-\section{E6: DVFS Mechanism and Guardrail Evidence}
-\label{sec:results-e6}
+\section{DVFS Mechanism and Guardrail Evidence}
+\label{sec:results-dvfs-mechanism}
 
-E6 explains why the final DVFS rows reduce energy. The most important
-mechanism is lower average kernel power. In most winning rows, the lower power
-is accompanied by visible exposure to a lower active SM clock. The guardrail
-behavior is also visible in the near-neutral case: \texttt{nbody\_blocked}
-does not show meaningful clock or power movement, so the final outcome remains
-near the no-DVFS baseline rather than forcing an energy claim.
+The mechanism analysis explains why the final DVFS rows reduce energy. The
+most important mechanism is lower average kernel power. In most winning rows,
+the lower power is accompanied by visible exposure to a lower active SM clock.
+The guardrail behavior is also visible in the near-neutral case:
+\texttt{nbody\_blocked} does not show meaningful clock or power movement, so
+the final outcome remains near the no-DVFS baseline rather than forcing an
+energy claim.
 
 \begin{table}[t]
 \centering
@@ -315,8 +265,8 @@ Benchmark & \(\Delta E\) & \(\Delta P\) & \(\Delta T\) & Base SM MHz & DVFS SM M
 \bottomrule
 \end{tabular}%
 }
-\caption{E6 DVFS mechanism evidence. MID samples report the fraction of kernel-window samples at the middle clock level; MID time reports the effective middle-clock time share.}
-\label{tab:results-e6-mechanism}
+\caption{DVFS mechanism evidence. MID samples report the fraction of kernel-window samples at the middle clock level; MID time reports the effective middle-clock time share.}
+\label{tab:results-dvfs-mechanism}
 \end{table}
 
 The strongest evidence comes from \texttt{fdtd}, \texttt{cg}, and
@@ -329,15 +279,16 @@ Finally, \texttt{nbody\_blocked} acts as a negative control. Its clock and
 power metrics remain almost unchanged, and its energy result is correspondingly
 near neutral.
 
-\section{E7: Scheduler and Logging Overhead}
-\label{sec:results-e7}
+\section{Runtime and Instrumentation Overhead}
+\label{sec:results-overhead}
 
-E7 is a diagnostic overhead snapshot, not a replacement for the E1 placement
-or E5 DVFS validation results. It compares a no-log \texttt{bandit\_scheduler}
-row with a compact placement-log row and a compact \texttt{win\_dvfs} control
-row on \texttt{fdtd}, \texttt{lu\_decomposition}, and
-\texttt{nbody\_blocked}. Since E7 uses one measured run per row, it should be
-interpreted conservatively.
+The overhead experiment is a diagnostic snapshot, not a replacement for the
+placement or DVFS validation results above. It compares a no-log
+\texttt{bandit\_scheduler} row with a compact placement-log row and a compact
+\texttt{win\_dvfs} control row on \texttt{fdtd},
+\texttt{lu\_decomposition}, and \texttt{nbody\_blocked}. Since this diagnostic
+experiment uses one measured run per row, it should be interpreted
+conservatively.
 
 \begin{table}[t]
 \centering
@@ -353,11 +304,11 @@ Benchmark & Log \(\Delta T\) & Log \(\Delta E\) & Process \(\Delta\) & DVFS-cont
 \bottomrule
 \end{tabular}%
 }
-\caption{E7 single-run diagnostic overhead. Log deltas compare compact placement logging against no-log placement; DVFS-control deltas compare compact \texttt{win\_dvfs} control against no-log placement.}
-\label{tab:results-e7-overhead}
+\caption{Single-run diagnostic overhead. Log deltas compare compact placement logging against no-log placement; DVFS-control deltas compare compact \texttt{win\_dvfs} control against no-log placement.}
+\label{tab:results-overhead}
 \end{table}
 
-The compact placement log is close to noise-scale for \texttt{fdtd} and
+Compact placement logging is close to noise-scale for \texttt{fdtd} and
 \texttt{nbody\_blocked}. \texttt{lu\_decomposition} shows a visible single-run
 cost, so final timing claims should use the no-log validation rows. The compact
 \texttt{win\_dvfs} control row is not a pure logging-only measurement because
@@ -370,11 +321,11 @@ execution.
 
 The placement results are measured on a single eight-GPU node and may vary with
 GPU topology, interconnect bandwidth, CUDA driver behavior, and benchmark
-scale. The evaluation uses several repeated runs for E1--E3, but some
-benchmarks still show noise. \texttt{fdtd} is the clearest example: the mean
-and median E1 results point in different directions because the per-run order
-contains mixed outcomes. The thesis therefore treats \texttt{fdtd} as a
-fragile or modest locality case rather than as a headline placement win.
+scale. The placement evaluation uses repeated runs, but some benchmarks still
+show noise. \texttt{fdtd} is the clearest example: the mean and median results
+point in different directions because the per-run order contains mixed
+outcomes. The thesis therefore treats \texttt{fdtd} as a fragile or modest
+locality case rather than as a headline placement win.
 
 The locality attribution uses runtime copy metrics as mechanism evidence.
 Copy-byte reductions explain the observed wins well for
@@ -389,22 +340,23 @@ This is the right metric for the energy-control question studied here, but it
 does not replace a full-system power study. The final DVFS rows show a
 consistent aggregate energy reduction with small aggregate latency overhead,
 yet larger run counts and additional hardware platforms would be needed before
-claiming universal behavior. E7 also shows that diagnostic logging and compact
-DVFS control are not free, so final timing and energy claims should rely on the
-validation rows rather than on instrumentation-heavy diagnostic rows.
+claiming universal behavior. The diagnostic overhead results also show that
+instrumentation and compact DVFS control are not free, so final timing and
+energy claims should rely on the validation rows rather than on
+instrumentation-heavy diagnostic rows.
 
 \section{Results Summary}
 \label{sec:results-summary}
 
 The experimental evidence supports both layers of the proposed design. For
 placement, \texttt{bandit\_scheduler} improves geometric-mean kernel latency
-by \(7.146\%\) using mean E1 latencies across six benchmarks, while the E2
-locality experiment shows that the strongest wins coincide with large copy-byte
+by \(7.146\%\) using mean latencies across six benchmarks, while the locality
+analysis shows that the strongest wins coincide with large copy-byte
 reductions. The neutral controls show the complementary behavior: when no
 copy-saving opportunity is present, the scheduler stays close to HEFT rather
-than forcing arbitrary deviations. E3 confirms that the selected default
-configuration is the best cross-workload choice among the tested sensitivity
-variants.
+than forcing arbitrary deviations. The sensitivity analysis confirms that the
+selected default configuration is the best cross-workload choice among the
+tested alternatives.
 
 For DVFS, \texttt{win\_dvfs} reduces geometric-mean kernel energy by
 \(2.904\%\) with \(0.626\%\) geometric-mean kernel-latency overhead. The
