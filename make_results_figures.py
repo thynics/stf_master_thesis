@@ -55,13 +55,14 @@ CONTROL_ENERGY = np.array([-1.196, 7.233, 0.722])
 
 COLORS = {
     "latency": "#2F5F98",
+    "latency_light": "#84A9CF",
     "energy": "#3A8C6E",
     "power": "#B5682D",
     "baseline": "#A7A9AC",
     "optimized": "#3A8C6E",
-    "copy": "#4E6E81",
+    "copy": "#6F7782",
     "mid": "#6A4C93",
-    "guard": "#8A6F2A",
+    "guard": "#6A4C93",
     "grid": "#D7DCE2",
     "text": "#202124",
 }
@@ -354,7 +355,7 @@ def dvfs_edp_ratios() -> None:
 
 def mid_energy_scatter() -> None:
     fig, ax = plt.subplots(figsize=(4.25, 2.9))
-    ax.scatter(MID_SAMPLES, ENERGY_DELTA, s=36, color=COLORS["power"], edgecolor="white", linewidth=0.45, zorder=3)
+    ax.scatter(MID_SAMPLES, ENERGY_DELTA, s=36, color=COLORS["energy"], edgecolor="white", linewidth=0.45, zorder=3)
     ax.axhline(0, color="#333333", linewidth=0.7, linestyle="--")
     ax.axvline(0, color="#333333", linewidth=0.7, linestyle="--")
     offsets = {
@@ -428,15 +429,15 @@ def overhead_snapshot() -> None:
         "overhead_snapshot.pdf",
         OVER_BENCH,
         [
-            ("Placement log latency", COMPACT_LOG, COLORS["latency"]),
-            ("WinDVFS diagnostic latency", CONTROL_LAT, COLORS["power"]),
-            ("WinDVFS diagnostic energy", CONTROL_ENERGY, COLORS["energy"]),
+            ("Placement log", COMPACT_LOG, COLORS["latency_light"]),
+            ("WinDVFS latency", CONTROL_LAT, COLORS["latency"]),
+            ("WinDVFS energy", CONTROL_ENERGY, COLORS["energy"]),
         ],
         "Delta vs baseline (%)",
         ylim=(-2.2, 10.4),
         width=5.0,
         height=2.5,
-        legend_cols=1,
+        legend_cols=3,
     )
 
 
