@@ -7,7 +7,7 @@ benchmark benefits equally from the proposed scheduler. The results show a
 more specific and more defensible pattern: the placement layer improves runtime
 when the CUDASTF task graph exposes copy-saving alternatives to HEFT, and it
 falls back to HEFT-like behavior when such alternatives are absent. The DVFS
-layer then provides a conservative energy-control mechanism on top of the same
+layer then provides conservative energy control on top of the same
 placement framework. Its effect is measurable but workload dependent, which is
 consistent with the energy--performance trade-offs described in
 Chapter~\ref{ch:theory}.
@@ -29,14 +29,14 @@ This non-uniformity is expected for a residual placement policy. The scheduler
 does not try to replace HEFT with a globally different placement strategy.
 Instead, it asks whether a non-HEFT GPU can reduce predicted copy cost while
 keeping the local finish-time penalty bounded. The locality-attribution
-analysis confirms that this mechanism is visible in the measurements. The
+analysis confirms that this behavior is visible in the measurements. The
 largest improvements coincide with large copy
 byte reductions: \texttt{cholesky} reduces copy bytes by \(38.220\%\), and
 \texttt{lu\_decomposition} reduces copy bytes by \(23.905\%\). The neutral
 benchmarks have zero deviation rate and zero copy-byte reduction, which
 explains why they remain close to HEFT.
 
-The sensitivity analysis strengthens this interpretation by showing that the result is not only a
+The sensitivity analysis strengthens this result by showing that it is not only a
 single fortunate parameter setting. The default placement configuration gives
 the best four-benchmark geometric-mean speedup in the robustness check. This
 matters for a runtime scheduler because a method that requires per-benchmark
@@ -56,7 +56,7 @@ a smaller reduction with a larger latency trade-off, and
 This outcome is consistent with the proposal--commit design. The DVFS layer
 does not directly optimize each task in isolation. It accumulates task-level
 frequency intents into per-GPU windows and commits a lower frequency only when
-guardrails indicate that the performance risk is acceptable. The DVFS mechanism
+guardrails indicate that the performance risk is acceptable. The DVFS clock and power
 analysis shows that the larger energy reductions are associated with lower kernel
 average power and, in most cases, lower active SM clock exposure. At the same
 time, the
@@ -84,13 +84,13 @@ sensitivity results show that this design improves latency on copy-sensitive
 workloads while remaining close to HEFT on neutral workloads.
 
 The second research question asks whether observed latency changes can be
-attributed to concrete locality mechanisms. The locality-attribution experiment
+attributed to concrete locality behavior. The locality-attribution experiment
 provides the strongest evidence for this question. The benchmarks with the
 largest latency improvements also show substantial copy-byte reductions and
 non-zero deviation rates. Conversely,
 the neutral benchmarks show no copy-byte reduction and no deviation. This
 alignment does not prove that copy traffic explains every millisecond of
-runtime variation, but it gives a clear mechanism-level explanation for the
+runtime variation, but it gives a clear data-movement account of the
 main placement improvements.
 
 The third research question asks how GPU DVFS decisions can be integrated into
@@ -112,7 +112,7 @@ The fifth research question concerns overhead. The overhead diagnostics show
 that compact placement logging is close to noise-scale for two of the three
 diagnostic benchmarks, but that instrumentation and compact DVFS control are
 not free. This supports the experimental choice to use no-log or validation
-rows for final performance claims and to treat diagnostic rows as mechanism
+rows for final performance claims and to treat diagnostic rows as supporting
 evidence rather than as final timing results.
 
 \section{Practical Implications}

@@ -6,7 +6,7 @@ controlled placement and DVFS experiments. The evaluation is organized around
 the research questions introduced in Chapter~\ref{chap:methods}: whether a
 HEFT-relative placement policy can improve locality without sacrificing the
 stability of HEFT, whether the observed speedups can be attributed to concrete
-data-movement mechanisms, and whether a guarded window-level DVFS controller
+data-movement behavior, and whether a guarded window-level DVFS controller
 can reduce energy while keeping latency overhead small.
 
 The chapter deliberately separates placement evidence from DVFS evidence. In
@@ -57,7 +57,7 @@ Placement performance & Compare HEFT and \texttt{bandit\_scheduler} latency acro
 Locality attribution & Relate placement latency changes to copy-volume reduction and non-HEFT deviation rate. & 3 & Off \\
 Placement robustness & Check that the selected placement configuration is not a single-run anomaly. & 3 & Off \\
 DVFS energy evaluation & Compare no-DVFS execution with \texttt{win\_dvfs} using kernel energy as the primary metric. & 1 per benchmark & On \\
-DVFS mechanism analysis & Explain the energy result using kernel power and observed SM-clock exposure. & Same rows & On \\
+DVFS clock analysis & Report kernel power and observed SM-clock exposure for the same DVFS rows. & Same rows & On \\
 Overhead diagnostics & Estimate the cost of compact logging and compact DVFS-control diagnostics. & 1 & Mixed \\
 \bottomrule
 \end{tabular}
@@ -169,7 +169,7 @@ Benchmark & Median \(\Delta T\) & Copy bytes \(\Delta\) & Deviation rate \\
 \label{tab:results-locality-attribution}
 \end{table}
 
-These results support the intended placement mechanism. When the runtime
+These results support the intended placement behavior. When the runtime
 observes a non-HEFT placement that can reduce copy traffic while keeping the
 predicted finish-time penalty bounded, the residual gate accepts the
 deviation. When no such opportunity exists, the scheduler naturally collapses
@@ -188,7 +188,7 @@ same benchmark methodology as the placement experiments above.
 The default configuration remained the strongest aggregate choice across the
 robustness check, with a four-benchmark geometric-mean speedup of
 \(1.076371\times\) relative to HEFT. It also preserved the qualitative
-mechanism observed in the main placement results: neutral workloads remained
+pattern observed in the main placement results: neutral workloads remained
 close to HEFT, while the stronger linear-algebra workloads continued to show
 large gains. The robustness check therefore supports using the default
 \texttt{bandit\_scheduler} configuration as the thesis configuration.
@@ -238,11 +238,11 @@ latency overhead. This is the main DVFS conclusion of the thesis: the
 windowed, guarded DVFS layer can reduce kernel energy on the evaluated
 benchmark set while keeping the aggregate latency penalty below one percent.
 
-\section{DVFS Mechanism and Guardrail Evidence}
-\label{sec:results-dvfs-mechanism}
+\section{DVFS Clock and Guardrail Evidence}
+\label{sec:results-dvfs-clock-guardrail}
 
-The mechanism analysis explains why the final DVFS rows reduce energy. The
-most important mechanism is lower average kernel power. In most energy-reduction rows,
+The clock and power analysis explains why the final DVFS rows reduce energy. The
+most important signal is lower average kernel power. In most energy-reduction rows,
 the lower power is accompanied by visible exposure to a lower active SM clock.
 The guardrail behavior is also visible in the near-neutral case:
 \texttt{nbody\_blocked} does not show meaningful clock or power movement, so
@@ -266,8 +266,8 @@ Benchmark & \(\Delta E\) & \(\Delta P\) & \(\Delta T\) & Base SM MHz & DVFS SM M
 \bottomrule
 \end{tabular}%
 }
-\caption{DVFS mechanism evidence. MID samples report the fraction of kernel-window samples at the middle clock level; MID time reports the effective middle-clock time share.}
-\label{tab:results-dvfs-mechanism}
+\caption{DVFS clock and power evidence. MID samples report the fraction of kernel-window samples at the middle clock level; MID time reports the effective middle-clock time share.}
+\label{tab:results-dvfs-clock}
 \end{table}
 
 The strongest evidence comes from \texttt{fdtd}, \texttt{cg}, and
@@ -328,12 +328,12 @@ point in different directions because the per-run order contains mixed
 outcomes. The thesis therefore treats \texttt{fdtd} as a fragile or modest
 locality case rather than as a headline placement improvement.
 
-The locality attribution uses runtime copy metrics as mechanism evidence.
+The locality attribution uses runtime copy metrics as supporting evidence.
 Copy-byte reductions explain the observed improvements well for
 \texttt{cholesky} and \texttt{lu\_decomposition}, but they do not capture every
 possible source of runtime variation, such as queueing effects, kernel launch
 overheads, or overlap between computation and communication. The claim is
-therefore mechanism-aligned rather than a complete causal decomposition of all
+therefore consistent with the measured data movement rather than a complete causal decomposition of all
 runtime effects.
 
 The DVFS conclusion is based on kernel-window energy and kernel-window latency.
@@ -361,7 +361,7 @@ tested alternatives.
 
 For DVFS, \texttt{win\_dvfs} reduces geometric-mean kernel energy by
 \(2.904\%\) with \(0.626\%\) geometric-mean kernel-latency overhead. The
-mechanism evidence shows that the largest energy reductions are associated with
+clock and power evidence shows that the largest energy reductions are associated with
 lower kernel average power and, in most cases, visible exposure to lower SM
 clock levels. The final result is therefore not a universal claim that every
 benchmark benefits from DVFS. Instead, it is a controlled result showing that a

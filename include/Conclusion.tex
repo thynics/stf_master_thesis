@@ -27,7 +27,7 @@ high frequency when performance risk appears.
 
 The experimental results support the value of this layered design. With DVFS
 disabled, \texttt{bandit\_scheduler} improves geometric-mean kernel latency by
-\(7.146\%\) across six benchmarks using mean placement latencies. The mechanism is
+\(7.146\%\) across six benchmarks using mean placement latencies. The behavior is
 visible in the locality-attribution experiment: the largest improvements coincide
 with large reductions in copy bytes, while neutral workloads show zero
 deviation and remain close to HEFT. Sensitivity validation shows that the
@@ -36,7 +36,7 @@ robustness check.
 
 The final DVFS evaluation shows a smaller but meaningful energy result.
 \texttt{win\_dvfs} reduces geometric-mean kernel energy by \(2.904\%\) with a
-geometric-mean kernel-latency overhead of \(0.626\%\). The mechanism evidence
+geometric-mean kernel-latency overhead of \(0.626\%\). The clock and power evidence
 shows that the largest energy reductions are associated with lower kernel average
 power and, in most cases, lower active SM clock exposure. The neutral
 \texttt{nbody\_blocked} result is also important: it shows that the final
