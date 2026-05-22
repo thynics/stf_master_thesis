@@ -1,162 +1,130 @@
 \chapter{Results}
 \label{chap:results}
 
-This chapter evaluates the proposed CUDASTF runtime scheduler using a set of
-controlled placement and DVFS experiments. The evaluation is organized around
-the research questions introduced in Chapter~\ref{chap:methods}: whether a
-HEFT-relative placement policy can improve locality without sacrificing the
-stability of HEFT, whether the observed speedups can be attributed to concrete
-data-movement behavior, and whether a guarded window-level DVFS controller
-can reduce energy while keeping latency overhead small.
+This chapter evaluates the CUDASTF runtime scheduler on a single-node
+multi-GPU platform. It first defines the experimental platform and metrics,
+then states the evaluation plan, reports the headline results, and finally
+explains the main placement and DVFS outcomes in more detail.
 
-The chapter deliberately separates placement evidence from DVFS evidence. In
-the placement experiments, DVFS is disabled and the comparison is between HEFT
-and the bandit scheduler. In the DVFS experiments, the placement
-framework is held fixed and the comparison is between a no-DVFS baseline and
-WinDVFS. This separation makes the results easier to interpret:
-placement changes where a task executes, while DVFS changes the frequency at
-which the selected GPU runs.
+\section{Experimental Setup and Metrics}
+\label{sec:results-setup}
 
-The main placement result is that the bandit scheduler improves
-geometric-mean kernel latency by \(7.146\%\) across six benchmarks when the
-mean of each five-run benchmark batch is used. The strongest placement gains
-occur on CG, Cholesky, and LU decomposition, and
-the locality analysis shows that these gains coincide with large reductions in
-copy traffic. The main DVFS result is that WinDVFS reduces
-geometric-mean kernel energy by \(2.904\%\) with a geometric-mean kernel
-latency overhead of \(0.626\%\). The DVFS effect is therefore useful but
-workload dependent: four benchmarks show clear kernel-energy reductions, one
-benchmark shows a smaller energy reduction with a visible latency trade-off,
-and one benchmark remains near neutral.
+All experiments run on a single Slurm-managed node with eight NVIDIA L4 GPUs.
+The application-visible GPU set contains all eight GPUs, and power sampling is
+also performed across the same eight devices. The code is built in Release mode
+inside an Apptainer container based on CUDA 12.4.1. The CUDA compiler is NVIDIA
+12.4.131, the host compiler is GCC 11.4, and CUDA architecture 89 is used for
+the generated device code.
 
-\section{Experimental Protocol}
-\label{sec:results-protocol}
+The evaluation uses six CUDASTF benchmarks: FDTD, CG, MiniWeather, Cholesky,
+LU decomposition, and Blocked N-body. These benchmarks cover both
+copy-sensitive task graphs and near-neutral task graphs, which is important for
+evaluating whether a residual scheduler improves favorable cases without
+forcing changes where there is little opportunity.
 
-All final experiments target single-node, eight-GPU CUDASTF execution. The
-application-visible GPU set contains eight GPUs, and every row used in the
-final tables sampled all eight allocated devices. Each benchmark row is
-launched as a fresh process so that CUDA context state, scheduler state, and
-DVFS state do not intentionally carry over between measured rows.
+Kernel latency is the primary performance metric. For DVFS, kernel energy is
+the primary energy metric. Kernel energy is computed by sampling NVML power on
+all visible GPUs and trapezoid-integrating the samples over the benchmark
+kernel window. Kernel power is reported as supporting evidence for the energy
+result. Whole-process energy is treated as auxiliary context and is not used
+for the headline DVFS claim.
 
-The evaluation uses six CUDASTF benchmarks: FDTD, CG,
-MiniWeather, Cholesky, LU decomposition, and
-Blocked N-body. Table~\ref{tab:results-public-protocol} summarizes
-the public experimental structure. The table reports what each experiment is
-intended to establish, the number of measured repetitions used for the main
-rows, and whether DVFS is enabled.
+All relative results use the baseline named in the corresponding section.
+Negative deltas in latency, energy, power, and copy traffic indicate reductions
+relative to that baseline.
+
+\section{Evaluation Plan}
+\label{sec:results-plan}
+
+The evaluation separates placement from frequency control. The placement
+experiments compare HEFT with the bandit scheduler while DVFS is disabled. The
+data-movement analysis then checks whether the latency reductions align with
+copy-volume reductions and accepted non-HEFT placements. The DVFS experiments
+hold the placement layer fixed and compare WinDVFS against a no-DVFS baseline
+using kernel energy as the main metric.
+
+This organization keeps the two contributions distinct. Placement results
+answer whether the scheduler improves task placement and locality. DVFS results
+answer whether guarded frequency control can reduce kernel energy with a small
+latency cost.
+
+\section{Key Results}
+\label{sec:results-key}
+
+Table~\ref{tab:results-headline} summarizes the main results. The bandit
+scheduler reduces geometric-mean kernel latency by \(7.146\%\) relative to
+HEFT. WinDVFS reduces geometric-mean kernel energy by \(2.904\%\) with a
+\(0.626\%\) geometric-mean kernel-latency overhead.
 
 \begin{table}[t]
 \centering
 \small
-\begin{tabular}{@{}lp{0.41\linewidth}cc@{}}
+\begin{tabular}{@{}lr@{}}
 \toprule
-Experiment & Purpose & Repetitions & DVFS \\
+Metric & Value \\
 \midrule
-Measurement validation & Confirm that all benchmarks produce valid kernel latency and kernel-energy measurements on eight GPUs. & 1 & Off \\
-Placement performance & Compare HEFT with the bandit scheduler across the benchmark suite. & 5 & Off \\
-Locality attribution & Relate placement latency changes to copy-volume reduction and non-HEFT deviation rate. & 3 & Off \\
-Placement robustness & Check that the selected placement configuration is not a single-run anomaly. & 3 & Off \\
-DVFS energy evaluation & Compare no-DVFS execution with WinDVFS using kernel energy as the primary metric. & 1 per benchmark & On \\
-DVFS clock analysis & Report kernel power and observed SM-clock exposure for the same DVFS rows. & Same rows & On \\
-Overhead diagnostics & Estimate the cost of compact logging and compact DVFS-control diagnostics. & 1 & Mixed \\
+Placement geometric-mean kernel-latency reduction & \(7.146\%\) \\
+Placement geometric-mean speedup & \(1.076965\times\) \\
+Largest placement latency reduction & \(18.539\%\) \\
+DVFS geometric-mean kernel-energy reduction & \(2.904\%\) \\
+DVFS geometric-mean kernel-latency overhead & \(0.626\%\) \\
+Largest single-benchmark DVFS energy reduction & \(5.587\%\) \\
 \bottomrule
 \end{tabular}
-\caption{Public experimental structure used in the results chapter.}
-\label{tab:results-public-protocol}
+\caption{Headline results across the benchmark suite. Placement is compared with HEFT; DVFS is compared with no-DVFS execution.}
+\label{tab:results-headline}
 \end{table}
 
-Kernel latency is the primary performance metric throughout the chapter. For
-DVFS, kernel energy is the primary energy metric because it integrates NVML
-power samples over the benchmark kernel window. Whole-process energy is useful
-as auxiliary context, but it is not used for the headline DVFS decisions in
-this chapter.
-
-\section{Measurement Validation}
-\label{sec:results-measurement-validation}
-
-Before using the benchmark data for placement or DVFS conclusions, the
-measurement setup was validated on all six benchmarks. This validation checks
-that both HEFT and the bandit scheduler execute successfully with DVFS
-disabled, that kernel timestamps are present, that NVML kernel-energy samples
-are available, and that every row uses the intended eight-GPU configuration.
-
-The validation run already shows the qualitative behavior expected from the
-placement scheduler: CG, Cholesky, and
-LU decomposition improve substantially, whereas
-MiniWeather and Blocked N-body remain almost unchanged.
-Because this validation uses only one measured run per row, it is not used as
-the final performance evidence. The placement conclusions below use repeated
-benchmark batches.
-
-\section{Placement Performance}
+\section{Placement Results}
 \label{sec:results-placement-performance}
 
-The main placement experiment compares HEFT against
-the bandit scheduler with DVFS disabled. The six benchmarks are measured
-in five-run batches. Since frequency control is disabled, the latency
-differences in this section are attributed to placement and scheduling
-behavior rather than to clock changes.
-
-Using the mean latency for each benchmark, the bandit scheduler obtains
-a six-benchmark geometric-mean speedup of \(1.076965\times\), equivalent to a
-normalized runtime reduction of \(7.146\%\) relative to HEFT. Using medians,
-the geometric-mean speedup is \(1.063759\times\), equivalent to a normalized
-runtime reduction of \(5.994\%\). Table~\ref{tab:results-placement-main}
-summarizes the per-benchmark results.
+Table~\ref{tab:results-placement-main} reports the per-benchmark placement
+results. The strongest improvements appear on CG, Cholesky, and LU
+decomposition. MiniWeather and Blocked N-body remain near the HEFT baseline,
+which is the desired behavior for workloads with little useful placement
+freedom. FDTD improves in the aggregate but is less stable than the
+linear-algebra workloads.
 
 \begin{table}[t]
 \centering
 \small
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrr@{}}
+\begin{tabular}{@{}lrr@{}}
 \toprule
-Benchmark & Mean \(\Delta T\) & Median \(\Delta T\) & Kernel energy \(\Delta\) \\
+Benchmark & Kernel latency \(\Delta\) & Kernel energy \(\Delta\) \\
 \midrule
-FDTD & \(-1.333\%\) & \(+5.629\%\) & \(-0.597\%\) \\
-CG & \(-12.693\%\) & \(-12.468\%\) & \(-12.316\%\) \\
-MiniWeather & \(+0.019\%\) & \(+0.040\%\) & \(-0.062\%\) \\
-Cholesky & \(-8.638\%\) & \(-8.257\%\) & \(-2.441\%\) \\
-LU decomposition & \(-18.539\%\) & \(-18.585\%\) & \(-17.872\%\) \\
-Blocked N-body & \(-0.052\%\) & \(-0.106\%\) & \(-0.580\%\) \\
+FDTD & \(-1.333\%\) & \(-0.597\%\) \\
+CG & \(-12.693\%\) & \(-12.316\%\) \\
+MiniWeather & \(+0.019\%\) & \(-0.062\%\) \\
+Cholesky & \(-8.638\%\) & \(-2.441\%\) \\
+LU decomposition & \(-18.539\%\) & \(-17.872\%\) \\
+Blocked N-body & \(-0.052\%\) & \(-0.580\%\) \\
 \bottomrule
-\end{tabular}%
-}
-\caption{Placement-only latency and kernel-energy trace. Negative deltas are improvements relative to HEFT.}
+\end{tabular}
+\caption{Placement-only results relative to HEFT. DVFS is disabled.}
 \label{tab:results-placement-main}
 \end{table}
 
-The result is intentionally not interpreted as a uniform speedup across all
-workloads. The largest reductions appear on CG,
-Cholesky, and LU decomposition; FDTD is noisier,
-with an improved mean but worse median; and MiniWeather and
-Blocked N-body remain close to neutral. This behavior is consistent
-with the method design: the scheduler is a HEFT-relative residual policy, not
-an unconstrained learned placement rule.
+The result is not a claim that every benchmark accelerates equally. Instead,
+the placement layer behaves selectively. It extracts large gains when the task
+graph exposes useful copy-saving alternatives, and it stays close to HEFT when
+those alternatives are absent.
 
-\section{Locality Attribution}
+\section{Data-Movement Evidence}
 \label{sec:results-locality-attribution}
 
-The locality-attribution experiment explains the placement result by measuring
-copy traffic and non-HEFT deviation rate. DVFS remains disabled. The central
-question is whether the speedups in Table~\ref{tab:results-placement-main}
-correspond to measurable locality improvements rather than accidental runtime
-variation.
-
-Table~\ref{tab:results-locality-attribution} shows that the largest latency
-improvements align with copy-byte reductions. Cholesky reduces median
-latency by \(9.269\%\) while reducing copy bytes by \(38.220\%\), and
-LU decomposition reduces median latency by \(15.891\%\) while
-reducing copy bytes by \(23.905\%\). FDTD shows a smaller but still
-consistent locality improvement. By contrast, MiniWeather and
-Blocked N-body have zero deviation rate and zero copy-byte reduction,
-which explains their near-neutral latency behavior.
+Table~\ref{tab:results-locality-attribution} connects the placement result to
+copy traffic. Cholesky and LU decomposition show the largest latency reductions
+and also large copy-byte reductions. FDTD shows a smaller but still visible
+copy reduction. MiniWeather and Blocked N-body show zero copy-byte reduction
+and zero non-HEFT deviation rate, matching their near-neutral placement
+results.
 
 \begin{table}[t]
 \centering
 \small
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-Benchmark & Median \(\Delta T\) & Copy bytes \(\Delta\) & Deviation rate \\
+Benchmark & Latency \(\Delta\) & Copy bytes \(\Delta\) & Deviation rate \\
 \midrule
 FDTD & \(-3.135\%\) & \(-12.030\%\) & 0.249902 \\
 MiniWeather & \(-0.0066\%\) & \(0.000\%\) & 0.000000 \\
@@ -165,206 +133,123 @@ LU decomposition & \(-15.891\%\) & \(-23.905\%\) & 0.619305 \\
 Blocked N-body & \(+0.019\%\) & \(0.000\%\) & 0.000000 \\
 \bottomrule
 \end{tabular}
-\caption{Locality attribution for the placement scheduler. Negative latency and copy-byte deltas are improvements relative to HEFT.}
+\caption{Data-movement evidence for the placement result. Negative latency and copy-byte deltas are reductions relative to HEFT.}
 \label{tab:results-locality-attribution}
 \end{table}
 
-These results support the intended placement behavior. When the runtime
-observes a non-HEFT placement that can reduce copy traffic while keeping the
-predicted finish-time penalty bounded, the residual gate accepts the
-deviation. When no such opportunity exists, the scheduler naturally collapses
-back to HEFT-like behavior. This explains both the strong improvements and the neutral
-controls without requiring a separate benchmark-specific policy.
+The locality data supports the design of the residual placement gate. When a
+non-HEFT placement can reduce copy traffic while keeping the predicted local
+penalty bounded, the scheduler accepts the deviation. When that opportunity is
+not present, the scheduler naturally falls back to HEFT-like behavior.
 
-\section{Robustness of the Placement Configuration}
-\label{sec:results-placement-sensitivity}
+The placement setting was also checked against nearby scheduler settings. The
+selected bandit-scheduler setting remained the best aggregate choice in that
+check, with a four-benchmark geometric-mean speedup of \(1.076371\times\)
+relative to HEFT. This supports using it as the thesis placement setting.
 
-The placement result should not depend on a single lucky run or on a narrowly
-chosen control setting. To check this, the default placement configuration was
-evaluated against nearby scheduler settings that change the adaptation window
-and gate-selection bias. These checks were run with DVFS disabled and used the
-same benchmark methodology as the placement experiments above.
-
-The default configuration remained the strongest aggregate choice across the
-robustness check, with a four-benchmark geometric-mean speedup of
-\(1.076371\times\) relative to HEFT. It also preserved the qualitative
-pattern observed in the main placement results: neutral workloads remained
-close to HEFT, while the stronger linear-algebra workloads continued to show
-large gains. The robustness check therefore supports using the default
-bandit-scheduler configuration as the thesis configuration.
-
-\section{DVFS Energy Evaluation}
+\section{DVFS Energy Results}
 \label{sec:results-dvfs-energy}
 
-The final DVFS experiment evaluates WinDVFS. Unlike the placement
-experiments above, DVFS is enabled in the WinDVFS rows. The
-comparison is against a no-DVFS baseline, and the primary metric is kernel
-energy. The result should therefore be read as an energy-control result, not
-as additional placement evidence.
-
-Table~\ref{tab:results-dvfs-energy} reports the final six-benchmark DVFS
-table. FDTD, MiniWeather, CG, and
-LU decomposition show clear kernel-energy reductions.
-Cholesky also reduces kernel energy, but with a larger latency cost.
-Blocked N-body is near neutral, which is consistent with the
-placement evidence that this workload offers little useful control
-opportunity.
+Table~\ref{tab:results-dvfs-energy} reports the final DVFS result. FDTD,
+MiniWeather, CG, and LU decomposition reduce kernel energy by roughly
+\(3\%\)--\(6\%\) with less than one percent latency overhead. Cholesky also
+reduces kernel energy, but pays a larger latency cost. Blocked N-body remains
+near neutral, which matches the placement evidence that this workload offers
+little useful control opportunity.
 
 \begin{table}[t]
 \centering
 \small
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrrrrr@{}}
+\begin{tabular}{@{}lrrr@{}}
 \toprule
-Benchmark & Base ms & DVFS ms & \(\Delta T\) & Base J & DVFS J & \(\Delta E\) & \(\Delta P\) \\
+Benchmark & Kernel latency \(\Delta\) & Kernel energy \(\Delta\) & Kernel power \(\Delta\) \\
 \midrule
-FDTD & 6296.000 & 6258.000 & \(-0.604\%\) & 3126.321 & 3006.605 & \(-3.829\%\) & \(-3.230\%\) \\
-MiniWeather & 15127.000 & 15138.000 & \(+0.073\%\) & 4871.344 & 4721.346 & \(-3.079\%\) & \(-3.150\%\) \\
-CG & 12484.000 & 12603.000 & \(+0.953\%\) & 3091.629 & 2918.909 & \(-5.587\%\) & \(-6.478\%\) \\
-LU decomposition & 15399.100 & 15501.100 & \(+0.662\%\) & 4071.342 & 3937.518 & \(-3.287\%\) & \(-3.968\%\) \\
-Cholesky & 18620.000 & 19144.500 & \(+2.817\%\) & 5303.507 & 5228.698 & \(-1.411\%\) & \(-4.389\%\) \\
-Blocked N-body & 14916.379 & 14899.927 & \(-0.110\%\) & 3876.692 & 3871.392 & \(-0.137\%\) & \(-0.023\%\) \\
+FDTD & \(-0.604\%\) & \(-3.829\%\) & \(-3.230\%\) \\
+MiniWeather & \(+0.073\%\) & \(-3.079\%\) & \(-3.150\%\) \\
+CG & \(+0.953\%\) & \(-5.587\%\) & \(-6.478\%\) \\
+LU decomposition & \(+0.662\%\) & \(-3.287\%\) & \(-3.968\%\) \\
+Cholesky & \(+2.817\%\) & \(-1.411\%\) & \(-4.389\%\) \\
+Blocked N-body & \(-0.110\%\) & \(-0.137\%\) & \(-0.023\%\) \\
 \bottomrule
-\end{tabular}%
-}
-\caption{Final WinDVFS results. Energy and power are kernel-window NVML metrics; negative deltas are improvements relative to the no-DVFS baseline.}
+\end{tabular}
+\caption{Final WinDVFS result relative to no-DVFS execution. Energy and power are kernel-window NVML metrics.}
 \label{tab:results-dvfs-energy}
 \end{table}
 
-Across the six final rows, the geometric-mean kernel-energy ratio is
+Across the six benchmarks, the geometric-mean kernel-energy ratio is
 0.970962, corresponding to \(2.904\%\) lower normalized kernel energy. The
-geometric-mean kernel-latency ratio is 1.006259, corresponding to a \(0.626\%\)
-latency overhead. This is the main DVFS conclusion of the thesis: the
-windowed, guarded DVFS layer can reduce kernel energy on the evaluated
-benchmark set while keeping the aggregate latency penalty below one percent.
+geometric-mean latency ratio is 1.006259, corresponding to a \(0.626\%\)
+latency overhead. This is the main DVFS result: guarded window-level frequency
+control reduces kernel energy on this benchmark set while keeping aggregate
+latency cost below one percent.
 
-\section{DVFS Clock and Guardrail Evidence}
+\section{Clock and Power Evidence}
 \label{sec:results-dvfs-clock-guardrail}
 
-The clock and power analysis explains why the final DVFS rows reduce energy. The
-most important signal is lower average kernel power. In most energy-reduction rows,
-the lower power is accompanied by visible exposure to a lower active SM clock.
-The guardrail behavior is also visible in the near-neutral case:
-Blocked N-body does not show meaningful clock or power movement, so
-the final outcome remains near the no-DVFS baseline rather than forcing an
-energy claim.
+Table~\ref{tab:results-dvfs-clock} reports the clock and power data behind the
+DVFS result. The larger energy reductions coincide with lower average kernel
+power and visible exposure to the middle SM clock. The neutral Blocked N-body
+row shows almost no movement in clock or power, so the controller does not
+force an energy claim where the workload provides little opportunity.
 
 \begin{table}[t]
 \centering
 \small
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrrrrr@{}}
+\begin{tabular}{@{}lrrrr@{}}
 \toprule
-Benchmark & \(\Delta E\) & \(\Delta P\) & \(\Delta T\) & Base SM MHz & DVFS SM MHz & MID samples & MID time \\
+Benchmark & Base SM MHz & WinDVFS SM MHz & MID samples & Kernel energy \(\Delta\) \\
 \midrule
-FDTD & \(-3.829\%\) & \(-3.230\%\) & \(-0.604\%\) & 1931.442 & 1852.530 & 91.903\% & 1.000 \\
-MiniWeather & \(-3.079\%\) & \(-3.150\%\) & \(+0.073\%\) & 2040.000 & 2028.091 & 0.000\% & 0.000 \\
-CG & \(-5.587\%\) & \(-6.478\%\) & \(+0.953\%\) & 2032.581 & 1876.795 & 98.912\% & 0.333 \\
-LU decomposition & \(-3.287\%\) & \(-3.968\%\) & \(+0.662\%\) & 2040.000 & 1943.170 & 58.685\% & 0.697 \\
-Cholesky & \(-1.411\%\) & \(-4.389\%\) & \(+2.817\%\) & 2040.000 & 1943.222 & 58.654\% & 0.637 \\
-Blocked N-body & \(-0.137\%\) & \(-0.023\%\) & \(-0.110\%\) & 2040.000 & 2040.000 & 0.000\% & 0.000 \\
+FDTD & 1931.442 & 1852.530 & 91.903\% & \(-3.829\%\) \\
+MiniWeather & 2040.000 & 2028.091 & 0.000\% & \(-3.079\%\) \\
+CG & 2032.581 & 1876.795 & 98.912\% & \(-5.587\%\) \\
+LU decomposition & 2040.000 & 1943.170 & 58.685\% & \(-3.287\%\) \\
+Cholesky & 2040.000 & 1943.222 & 58.654\% & \(-1.411\%\) \\
+Blocked N-body & 2040.000 & 2040.000 & 0.000\% & \(-0.137\%\) \\
 \bottomrule
 \end{tabular}%
 }
-\caption{DVFS clock and power evidence. MID samples report the fraction of kernel-window samples at the middle clock level; MID time reports the effective middle-clock time share.}
+\caption{Clock and energy data for the WinDVFS rows. MID samples report the fraction of kernel-window samples at the middle SM clock level.}
 \label{tab:results-dvfs-clock}
 \end{table}
 
-The strongest evidence comes from FDTD, CG, and
-LU decomposition. These rows combine lower kernel energy, lower
-kernel power, and visible lower-clock exposure. MiniWeather is also a
-useful supporting example because its latency remains essentially unchanged while
-kernel power decreases. Cholesky demonstrates the expected trade-off:
-DVFS lowers power, but the latency increase absorbs part of the energy benefit.
-Finally, Blocked N-body acts as a neutral control. Its clock and
-power metrics remain almost unchanged, and its energy result is correspondingly
-near neutral.
+The clock data also explains why the DVFS result is workload dependent. CG and
+FDTD have high middle-clock exposure and clear energy reductions. LU
+decomposition and Cholesky show partial middle-clock exposure; LU
+decomposition keeps the latency cost small, while Cholesky exposes the
+expected trade-off between lower power and longer runtime. Blocked N-body
+remains close to the no-DVFS baseline.
 
-\section{Runtime and Instrumentation Overhead}
+\section{Overheads and Limitations}
 \label{sec:results-overhead}
 
-The overhead experiment is a diagnostic snapshot, not a replacement for the
-placement or DVFS validation results above. It compares a no-log
-bandit-scheduler row with a compact placement-log row and a compact
-WinDVFS control row on FDTD,
-LU decomposition, and Blocked N-body. Since this diagnostic
-experiment uses one measured run per row, it should be interpreted
-conservatively.
+The diagnostic overhead experiment indicates that compact placement logging is
+close to noise-scale for FDTD and Blocked N-body, while LU decomposition shows
+a visible logging cost. Compact WinDVFS control is not a pure
+logging-only measurement because it also includes policy behavior and frequency
+changes. For this reason, final timing and energy claims rely on the placement
+and DVFS rows above rather than on diagnostic rows.
 
-\begin{table}[t]
-\centering
-\small
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrrr@{}}
-\toprule
-Benchmark & Log \(\Delta T\) & Log \(\Delta E\) & Process \(\Delta\) & DVFS-control \(\Delta T\) & DVFS-control \(\Delta E\) \\
-\midrule
-FDTD & \(-0.159\%\) & \(+0.324\%\) & \(-0.907\%\) & \(+0.953\%\) & \(-1.196\%\) \\
-LU decomposition & \(+1.559\%\) & \(+2.072\%\) & \(+4.733\%\) & \(+9.331\%\) & \(+7.233\%\) \\
-Blocked N-body & \(+0.000\%\) & \(-0.624\%\) & \(+0.004\%\) & \(+4.369\%\) & \(+0.722\%\) \\
-\bottomrule
-\end{tabular}%
-}
-\caption{Single-run diagnostic overhead. Log deltas compare compact placement logging against no-log placement; DVFS-control deltas compare compact WinDVFS control against no-log placement.}
-\label{tab:results-overhead}
-\end{table}
-
-Compact placement logging is close to noise-scale for FDTD and
-Blocked N-body. LU decomposition shows a visible single-run
-cost, so final timing claims should use the no-log validation rows. The compact
-WinDVFS control row is not a pure logging-only measurement because
-it includes policy behavior and frequency changes. Its overhead reinforces the
-need for guarded, selective DVFS rather than unconditional lower-frequency
-execution.
-
-\section{Threats to Validity}
-\label{sec:results-threats}
-
-The placement results are measured on a single eight-GPU node and may vary with
-GPU topology, interconnect bandwidth, CUDA driver behavior, and benchmark
-scale. The placement evaluation uses repeated runs, but some benchmarks still
-show noise. FDTD is the clearest example: the mean and median results
-point in different directions because the per-run order contains mixed
-outcomes. The thesis therefore treats FDTD as a fragile or modest
-locality case rather than as a headline placement improvement.
-
-The locality attribution uses runtime copy metrics as supporting evidence.
-Copy-byte reductions explain the observed improvements well for
-Cholesky and LU decomposition, but they do not capture every
-possible source of runtime variation, such as queueing effects, kernel launch
-overheads, or overlap between computation and communication. The claim is
-therefore consistent with the measured data movement rather than a complete causal decomposition of all
-runtime effects.
-
-The DVFS conclusion is based on kernel-window energy and kernel-window latency.
-This is the right metric for the energy-control question studied here, but it
-does not replace a full-system power study. The final DVFS rows show a
-consistent aggregate energy reduction with small aggregate latency overhead,
-yet larger run counts and additional hardware platforms would be needed before
-claiming universal behavior. The diagnostic overhead results also show that
-instrumentation and compact DVFS control are not free, so final timing and
-energy claims should rely on the validation rows rather than on
-instrumentation-heavy diagnostic rows.
+The evaluation has three main limitations. First, all results are measured on a
+single eight-GPU node, so the magnitude of the results may change with GPU
+generation, interconnect topology, driver behavior, and benchmark scale.
+Second, FDTD is noisier than the linear-algebra workloads and should be read as
+a modest locality case rather than as the strongest placement example. Third,
+the DVFS conclusion is based on kernel-window energy and latency; it does not
+replace a full-system power study.
 
 \section{Results Summary}
 \label{sec:results-summary}
 
-The experimental evidence supports both layers of the proposed design. For
-placement, the bandit scheduler improves geometric-mean kernel latency
-by \(7.146\%\) using mean latencies across six benchmarks, while the locality
-analysis shows that the largest improvements coincide with large copy-byte
-reductions. The neutral controls show the complementary behavior: when no
-copy-saving opportunity is present, the scheduler stays close to HEFT rather
-than forcing arbitrary deviations. The sensitivity analysis confirms that the
-selected default configuration is the best cross-workload choice among the
-tested alternatives.
+The experimental evidence supports both layers of the proposed design. The
+bandit scheduler improves geometric-mean kernel latency by \(7.146\%\) relative
+to HEFT, with the largest gains appearing on copy-sensitive workloads. The
+data-movement results show that these gains align with reduced copy traffic,
+while neutral workloads remain close to HEFT.
 
-For DVFS, WinDVFS reduces geometric-mean kernel energy by
-\(2.904\%\) with \(0.626\%\) geometric-mean kernel-latency overhead. The
-clock and power evidence shows that the largest energy reductions are associated with
-lower kernel average power and, in most cases, visible exposure to lower SM
-clock levels. The final result is therefore not a universal claim that every
-benchmark benefits from DVFS. Instead, it is a controlled result showing that a
-guarded proposal--commit DVFS layer can extract energy savings from several
-CUDASTF workloads while keeping the aggregate latency cost small and leaving
+WinDVFS reduces geometric-mean kernel energy by \(2.904\%\) with \(0.626\%\)
+geometric-mean latency overhead. The result is not a universal claim that every
+benchmark benefits from DVFS. It is a controlled result showing that a guarded
+window-level DVFS layer can extract energy savings from several CUDASTF
+workloads while keeping aggregate latency cost small and leaving
 low-opportunity workloads near the baseline.
