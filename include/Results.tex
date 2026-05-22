@@ -6,15 +6,28 @@ multi-GPU platform. It first defines the experimental platform and metrics,
 then states the evaluation plan, reports the headline results, and finally
 explains the main placement and DVFS outcomes in more detail.
 
-\section{Experimental Setup and Metrics}
+\section{Experimental Setup}
 \label{sec:results-setup}
 
 All experiments run on a single Slurm-managed node with eight NVIDIA L4 GPUs.
 The application-visible GPU set contains all eight GPUs, and power sampling is
-also performed across the same eight devices. The code is built in Release mode
-inside an Apptainer container based on CUDA 12.4.1. The CUDA compiler is NVIDIA
-12.4.131, the host compiler is GCC 11.4, and CUDA architecture 89 is used for
-the generated device code.
+also performed across the same eight devices. This keeps the placement and
+energy measurements aligned: the scheduler can place work on any of the eight
+GPUs, and the energy measurement covers the same device set.
+
+The software environment is containerized with Apptainer. The code is built in
+Release mode using CUDA 12.4.1, NVIDIA CUDA compiler 12.4.131, GCC 11.4, and
+CUDA architecture 89. The benchmark executable and the power-sampling process
+run inside the same containerized environment so that compiler, CUDA runtime,
+and library versions remain fixed across the evaluation.
+
+The NVIDIA L4 platform exposes application-clock control through NVML. In the
+evaluated DVFS configuration, the high graphics-clock level corresponds to the
+default high-performance clock observed near 2040 MHz during the kernel window.
+The nominal middle graphics-clock target is 1875 MHz, and the memory clock is
+kept at 6251 MHz. Each GPU has a 72 W power limit in the measured environment.
+The results therefore evaluate a conservative core-frequency control path: the
+runtime changes the SM clock level but does not lower the memory clock.
 
 The evaluation uses six CUDASTF benchmarks: FDTD, CG, MiniWeather, Cholesky,
 LU decomposition, and Blocked N-body. These benchmarks cover both
@@ -22,16 +35,64 @@ copy-sensitive task graphs and near-neutral task graphs, which is important for
 evaluating whether a residual scheduler improves favorable cases without
 forcing changes where there is little opportunity.
 
-Kernel latency is the primary performance metric. For DVFS, kernel energy is
-the primary energy metric. Kernel energy is computed by sampling NVML power on
-all visible GPUs and trapezoid-integrating the samples over the benchmark
-kernel window. Kernel power is reported as supporting evidence for the energy
-result. Whole-process energy is treated as auxiliary context and is not used
-for the headline DVFS claim.
+\section{Metrics}
+\label{sec:results-metrics}
 
+\textbf{Kernel latency.}
+Kernel latency is the primary performance metric. It measures the elapsed time
+between the benchmark's kernel-window start and end timestamps. This is the
+appropriate latency metric for the scheduler evaluation because both placement and
+DVFS decisions act on GPU task execution, not on unrelated process startup or
+host-side output handling.
+
+\textbf{Kernel energy consumption.}
+Kernel energy is the primary energy metric for DVFS. It is computed from NVML
+power samples collected on all visible GPUs during the same kernel window as
+the latency measurement. The sampled power curve is integrated with the
+trapezoidal rule, so the reported energy corresponds to the GPU energy consumed
+while the benchmark kernels are active. This metric is used for the headline
+DVFS result.
+
+\textbf{Kernel power.}
+Kernel power is the average NVML power over the kernel window. It is not the
+headline objective by itself, because lower power can be offset by longer
+runtime. Instead, it is used to explain whether an energy reduction comes from
+lower average power, shorter runtime, or both.
+
+\textbf{Whole-process energy.}
+Whole-process energy integrates power over the full benchmark process rather
+than only the kernel window. It captures extra effects such as startup,
+initialization, host-side work, and final output handling. This thesis reports
+whole-process energy only as auxiliary context. The headline energy result is
+based on kernel energy because the scheduler and DVFS controller act on the GPU
+execution window.
+
+\textbf{EDP and ED\(^2\)P.}
+Energy--delay product combines energy and runtime as
+\(\mathrm{EDP}=E \times T\). ED\(^2\)P extends this to
+\(\mathrm{ED}^2\mathrm{P}=E \times T^2\), giving stronger penalty to slowdown. These
+metrics are useful for reasoning about energy--performance trade-offs, but the
+main result tables report energy and latency separately so the reader can see
+the trade-off directly.
+
+\textbf{Speedup and geometric means.}
+Placement speedup is computed from the ratio between HEFT latency and scheduler
+latency. Suite-level placement and DVFS summaries use geometric means so that
+each benchmark contributes multiplicatively rather than allowing one large
+absolute benchmark to dominate the aggregate.
+
+\textbf{Relative deltas.}
 All relative results use the baseline named in the corresponding section.
-Negative deltas in latency, energy, power, and copy traffic indicate reductions
-relative to that baseline.
+For placement, the baseline is HEFT with DVFS disabled. For DVFS, the baseline
+is no-DVFS execution with the same placement layer. Negative deltas in latency,
+energy, power, and copy traffic indicate reductions relative to that baseline.
+
+\textbf{Data-movement and clock evidence.}
+Copy-byte reduction and non-HEFT deviation rate are used to analyze the
+placement result. Average SM clock and middle-clock sample share are used to
+analyze the DVFS result. These are supporting measurements: they help explain
+the observed latency and energy changes, but the main claims are based on
+kernel latency and kernel energy.
 
 \section{Evaluation Plan}
 \label{sec:results-plan}
