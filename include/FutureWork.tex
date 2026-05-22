@@ -1,0 +1,116 @@
+\chapter{Future Work}
+\label{chap:future-work}
+
+The results in this thesis show that task-graph information can be used for
+locality-aware placement and guarded DVFS control inside CUDASTF. At the same
+time, the current implementation is deliberately conservative and the
+evaluation is limited to a single-node benchmark suite. This chapter outlines
+the most important directions for extending the work.
+
+\section{Broader Hardware and Workload Evaluation}
+\label{sec:future-broader-evaluation}
+
+The first priority is broader evaluation. The current results are from one
+eight-GPU node and six benchmarks. Future experiments should repeat the
+placement and DVFS evaluation on different GPU generations, different
+interconnect topologies, and different problem sizes. This would test whether
+the locality wins remain stable when peer-copy bandwidth, copy-engine
+contention, memory capacity, and kernel execution time change.
+
+The benchmark suite should also be expanded. The current workloads include
+strong locality winners and neutral controls, but a larger suite would make it
+easier to identify the boundary between useful residual placement and
+HEFT-like fallback behavior. In particular, applications with irregular data
+reuse, phase changes, and mixed compute/communication behavior would be useful
+stress tests for both the placement gate and the DVFS guardrails.
+
+\section{More Accurate Slack and Criticality Models}
+\label{sec:future-slack-criticality}
+
+The current scheduler uses a local criticality proxy based on task cost,
+dependency count, and input-byte volume. This proxy is inexpensive and suitable
+for online use, but it is not a full dynamic critical-path analysis. A natural
+extension is to add a lightweight DAG-aware slack estimator that updates as the
+runtime observes task completions and queue states.
+
+Such a model could improve both layers of the scheduler. For placement, more
+accurate slack estimates could allow the residual gate to distinguish between
+safe non-HEFT deviations and deviations that are likely to delay the critical
+path. For DVFS, better slack information could identify windows where lower
+frequency is safe because the extra runtime is hidden by dependency structure
+or communication. The challenge is to gain this information without adding
+enough overhead to erase the benefit.
+
+\section{Topology-Aware Locality Modelling}
+\label{sec:future-topology-locality}
+
+The current locality model treats copy saving as a central scheduling signal,
+but the copy-cost estimate is intentionally lightweight. Future work should
+make this model topology aware. On modern multi-GPU systems, the cost of
+moving data depends on whether GPUs are connected by NVLink, PCIe, or another
+interconnect, and on whether copy engines are already busy.
+
+A topology-aware model could assign different costs to different source--target
+GPU pairs and could account for asymmetric bandwidth or contention. It could
+also distinguish copy bytes that are likely to overlap with computation from
+copy bytes that are likely to appear on the critical path. This would make the
+locality certificate more precise while preserving the HEFT-relative structure
+of the scheduler.
+
+\section{Richer DVFS Objectives}
+\label{sec:future-dvfs-objectives}
+
+The \texttt{win\_dvfs} layer in this thesis focuses on guarded kernel-energy
+reduction with bounded latency overhead. Future work could extend the
+committer to optimize different objectives, such as EDP, ED$^2$P, or a
+user-defined energy budget. The same proposal--commit structure could support
+these objectives by changing the reward or eligibility rule used at window
+boundaries.
+
+Another direction is to learn the DVFS commit policy online. The current
+committer is rule based: it uses proposal shares, criticality mass, backlog,
+slack budget, and slowdown guardrails. A learned committer could adapt these
+thresholds across workloads while keeping the existing guardrails as hard
+safety constraints. This would preserve the conservative behavior needed for
+runtime use while reducing manual parameter sensitivity.
+
+The DVFS action space could also be expanded. The current design primarily
+controls graphics frequency and treats memory frequency conservatively. Some
+workloads may benefit from coordinated graphics- and memory-clock decisions,
+especially when memory bandwidth rather than core throughput dominates
+runtime. Adding memory-clock control would require stronger safeguards because
+incorrect memory-frequency decisions can increase latency substantially.
+
+\section{Transition Placement and Overhead Reduction}
+\label{sec:future-overhead}
+
+The proposal--commit design amortizes frequency decisions over windows, but it
+does not fully solve transition placement. Future work should measure and model
+where transitions become visible in the CUDASTF execution timeline. If the
+runtime can schedule transitions during communication, synchronization, or
+other slack periods, the visible latency cost of DVFS could be reduced.
+
+Instrumentation overhead should also be reduced. E7 shows that compact
+placement logging is usually small but that diagnostic DVFS/control rows can
+be costly in some cases. A production-oriented implementation should separate
+low-overhead counters used during normal execution from detailed trace logging
+used only for debugging and thesis-style attribution. This would keep the
+scheduler explainable without making detailed logs part of the critical path.
+
+\section{Reproducibility and Deployment}
+\label{sec:future-reproducibility}
+
+The final direction is reproducibility and deployment. Future versions should
+standardize the result artifacts produced by each experiment, including raw
+runs, scheduler configuration, device metadata, power samples, and copyback
+manifests. A stable artifact format would make it easier to compare results
+across hardware and to regenerate thesis figures without relying on ad hoc log
+parsing.
+
+For deployment, the scheduler should expose a small set of user-facing modes:
+for example, placement-only, conservative DVFS, and diagnostic logging. These
+modes would let users choose between maximum stability, energy savings, and
+explainability depending on the application. The long-term goal is a CUDASTF
+scheduler that offers locality and energy-efficiency modes by default while
+remaining transparent enough for users to understand when and why it deviates
+from HEFT.

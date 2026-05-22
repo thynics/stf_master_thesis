@@ -1,8 +1,63 @@
-% CREATED BY DAVID FRISK, 2016
 \chapter{Conclusion}
+\label{chap:conclusion}
 
-You may consider to instead divide this chapter into discussion of the results and a summary. 
+This thesis investigated runtime-level scheduling for single-node multi-GPU
+CUDASTF task graphs. The motivation was that GPU placement and GPU frequency
+control are coupled through data movement, slack, and critical-path behavior,
+but combining them into one monolithic online decision would make the
+scheduler difficult to learn, explain, and stabilize. The proposed solution is
+a two-layer runtime framework: a HEFT-relative residual placement scheduler
+followed by a guarded, windowed proposal--commit DVFS controller.
 
-\section{Discussion}
+The placement layer keeps HEFT as the latency-oriented baseline. It evaluates
+candidate GPUs using data-ready time, copy time, queueing delay, and predicted
+finish time, and it accepts a non-HEFT placement only when the predicted copy
+saving is large enough and the normalized finish-time penalty is bounded. A
+window-level contextual bandit adapts the aggressiveness of this residual gate
+without directly choosing GPUs. The resulting policy remains explainable:
+every accepted deviation is expressed relative to the HEFT baseline and to a
+copy-saving condition.
 
-\section{Conclusion}
+The DVFS layer is deliberately separated from placement. Each task produces a
+frequency intent, but actual GPU frequency changes are committed only at
+per-device window boundaries. Criticality, backlog, heavy-task detection,
+slack budget, consecutive-window requirements, cooldowns, and slowdown
+guardrails prevent unstable per-task frequency switching and force recovery to
+high frequency when performance risk appears.
+
+The experimental results support the value of this layered design. With DVFS
+disabled, \texttt{bandit\_scheduler} improves geometric-mean kernel latency by
+\(7.146\%\) across six benchmarks using mean E1 latencies. The mechanism is
+visible in the locality-attribution experiment: the strongest wins coincide
+with large reductions in copy bytes, while neutral workloads show zero
+deviation and remain close to HEFT. Sensitivity validation shows that the
+default placement configuration is the best cross-workload choice among the
+tested variants.
+
+The final DVFS evaluation shows a smaller but meaningful energy result.
+\texttt{win\_dvfs} reduces geometric-mean kernel energy by \(2.904\%\) with a
+geometric-mean kernel-latency overhead of \(0.626\%\). The mechanism evidence
+shows that the strongest energy wins are associated with lower kernel average
+power and, in most cases, lower active SM clock exposure. The neutral
+\texttt{nbody\_blocked} result is also important: it shows that the final
+configuration does not force an energy claim when the benchmark offers little
+DVFS opportunity.
+
+The main conclusion is therefore that CUDASTF task-graph information can be
+used to make online scheduling both more locality aware and more energy aware,
+provided that the scheduler remains anchored to a strong performance baseline.
+The placement contribution is the clearer and stronger result: bounded
+HEFT-relative deviations can reduce unnecessary data movement and improve
+runtime on copy-sensitive workloads. The DVFS contribution is more modest but
+still useful: guarded window-level frequency control can reduce kernel energy
+on several workloads while keeping aggregate latency overhead small.
+
+The work also identifies the limits of the current implementation. The results
+are single-node measurements, the benchmark suite is limited, the criticality
+and copy-cost models are lightweight approximations, and the DVFS evaluation
+focuses on kernel-window energy rather than full-system energy. These
+limitations do not invalidate the main findings, but they define the next
+steps required before the scheduler can be treated as a general-purpose
+production policy. Overall, the thesis demonstrates that a carefully layered
+runtime scheduler can improve locality and expose energy-saving opportunities
+without abandoning the stability and interpretability of HEFT-based scheduling.
