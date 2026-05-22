@@ -1,0 +1,274 @@
+\definecolor{ResultLatency}{HTML}{2F5597}
+\definecolor{ResultEnergy}{HTML}{70AD47}
+\definecolor{ResultPower}{HTML}{C55A11}
+\definecolor{ResultNeutral}{HTML}{666666}
+
+\newcommand{\figResultsOverview}{%
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[
+    group style={group size=2 by 1, horizontal sep=1.4cm},
+    width=0.43\linewidth,
+    height=5.1cm,
+    ybar,
+    ymin=0.88,
+    ymax=1.04,
+    bar width=18pt,
+    symbolic x coords={Baseline,Optimized},
+    xtick=data,
+    ylabel={Normalized value},
+    nodes near coords,
+    nodes near coords style={font=\scriptsize},
+    tick label style={font=\small},
+    label style={font=\small},
+    title style={font=\small},
+    ymajorgrids=true,
+    grid style={gray!20},
+]
+\nextgroupplot[title={Placement latency}]
+\addplot+[fill=ResultNeutral!35, draw=ResultNeutral] coordinates {(Baseline,1.000) (Optimized,0.9285)};
+\node[font=\scriptsize, align=center] at (axis cs:Optimized,0.895) {7.146\% lower\\latency};
+\nextgroupplot[title={DVFS energy}]
+\addplot+[fill=ResultEnergy!45, draw=ResultEnergy!70!black] coordinates {(Baseline,1.000) (Optimized,0.9710)};
+\node[font=\scriptsize, align=center] at (axis cs:Optimized,0.895) {2.904\% lower\\energy};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Overview of the two main evaluation outcomes. The placement result reports normalized kernel latency relative to HEFT. The DVFS result reports normalized kernel energy relative to no-DVFS execution.}
+\label{fig:results-overview}
+\end{figure}
+}
+
+\newcommand{\figPlacementDeltas}{%
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\linewidth,
+    height=7cm,
+    ybar,
+    bar width=5pt,
+    ymin=-21,
+    ymax=3,
+    ylabel={Relative delta (\%)},
+    symbolic x coords={FDTD,CG,MW,Chol,LU,NBody},
+    xtick=data,
+    xticklabels={FDTD,CG,MiniWeather,Cholesky,LU,N-body},
+    x tick label style={rotate=25, anchor=east, font=\small},
+    ymajorgrids=true,
+    grid style={gray!20},
+    legend style={at={(0.5,-0.24)}, anchor=north, legend columns=2, draw=none},
+    enlarge x limits=0.09,
+]
+\addplot+[fill=ResultLatency!65, draw=ResultLatency] coordinates {
+    (FDTD,-1.333) (CG,-12.693) (MW,0.019) (Chol,-8.638) (LU,-18.539) (NBody,-0.052)
+};
+\addplot+[fill=ResultEnergy!65, draw=ResultEnergy!70!black] coordinates {
+    (FDTD,-0.597) (CG,-12.316) (MW,-0.062) (Chol,-2.441) (LU,-17.872) (NBody,-0.580)
+};
+\draw[black, thick] (axis cs:FDTD,0) -- (axis cs:NBody,0);
+\legend{Kernel latency, Kernel energy}
+\end{axis}
+\end{tikzpicture}
+\caption{Per-benchmark placement latency and kernel-energy deltas relative to HEFT. Negative values indicate reductions.}
+\label{fig:results-placement-deltas}
+\end{figure}
+}
+
+\newcommand{\figCopyLatencyScatter}{%
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.82\linewidth,
+    height=7cm,
+    xlabel={Copy bytes \(\Delta\) (\%)},
+    ylabel={Kernel latency \(\Delta\) (\%)},
+    xmin=-42,
+    xmax=4,
+    ymin=-18,
+    ymax=3,
+    ymajorgrids=true,
+    xmajorgrids=true,
+    grid style={gray!20},
+]
+\addplot+[only marks, mark=*, mark size=2.6pt, color=ResultLatency] coordinates {
+    (-12.030,-3.135)
+    (-7.692,-12.693)
+    (0.000,-0.0066)
+    (-38.220,-9.269)
+    (-23.905,-15.891)
+    (0.000,0.019)
+};
+\addplot+[black, thick] coordinates {(-42,0) (4,0)};
+\addplot+[black, thick] coordinates {(0,-18) (0,3)};
+\node[font=\scriptsize, anchor=south west] at (axis cs:-12.030,-3.135) {FDTD};
+\node[font=\scriptsize, anchor=north west] at (axis cs:-7.692,-12.693) {CG};
+\node[font=\scriptsize, anchor=south west] at (axis cs:0.000,-0.0066) {MiniWeather};
+\node[font=\scriptsize, anchor=south west] at (axis cs:-38.220,-9.269) {Cholesky};
+\node[font=\scriptsize, anchor=south west] at (axis cs:-23.905,-15.891) {LU};
+\node[font=\scriptsize, anchor=south west] at (axis cs:0.000,0.019) {N-body};
+\end{axis}
+\end{tikzpicture}
+\caption{Relationship between copy-byte reduction and placement latency reduction. CG uses copy counters from the placement run because the locality diagnostic run set did not include CG.}
+\label{fig:results-copy-latency}
+\end{figure}
+}
+
+\newcommand{\figDeviationLatencyScatter}{%
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.82\linewidth,
+    height=7cm,
+    xlabel={Non-HEFT deviation rate},
+    ylabel={Kernel latency \(\Delta\) (\%)},
+    xmin=-0.05,
+    xmax=0.70,
+    ymin=-18,
+    ymax=3,
+    ymajorgrids=true,
+    xmajorgrids=true,
+    grid style={gray!20},
+]
+\addplot+[only marks, mark=*, mark size=2.6pt, color=ResultLatency] coordinates {
+    (0.249902,-3.135)
+    (0.000000,-0.0066)
+    (0.281154,-9.269)
+    (0.619305,-15.891)
+    (0.000000,0.019)
+};
+\addplot+[black, thick] coordinates {(-0.05,0) (0.70,0)};
+\node[font=\scriptsize, anchor=south west] at (axis cs:0.249902,-3.135) {FDTD};
+\node[font=\scriptsize, anchor=south east] at (axis cs:0.000000,-0.0066) {MiniWeather};
+\node[font=\scriptsize, anchor=south west] at (axis cs:0.281154,-9.269) {Cholesky};
+\node[font=\scriptsize, anchor=south west] at (axis cs:0.619305,-15.891) {LU};
+\node[font=\scriptsize, anchor=north east] at (axis cs:0.000000,0.019) {N-body};
+\end{axis}
+\end{tikzpicture}
+\caption{Scheduler deviation rate and placement latency improvement in the locality diagnostic runs. Deviation frequency is explanatory, not a direct linear predictor of speedup.}
+\label{fig:results-deviation-latency}
+\end{figure}
+}
+
+\newcommand{\figDvfsDeltas}{%
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=\linewidth,
+    height=7cm,
+    ybar,
+    bar width=4.2pt,
+    ymin=-7.5,
+    ymax=3.5,
+    ylabel={Relative delta (\%)},
+    symbolic x coords={FDTD,MW,CG,LU,Chol,NBody},
+    xtick=data,
+    xticklabels={FDTD,MiniWeather,CG,LU,Cholesky,N-body},
+    x tick label style={rotate=25, anchor=east, font=\small},
+    ymajorgrids=true,
+    grid style={gray!20},
+    legend style={at={(0.5,-0.24)}, anchor=north, legend columns=3, draw=none},
+    enlarge x limits=0.10,
+]
+\addplot+[fill=ResultLatency!65, draw=ResultLatency] coordinates {
+    (FDTD,-0.604) (MW,0.073) (CG,0.953) (LU,0.662) (Chol,2.817) (NBody,-0.110)
+};
+\addplot+[fill=ResultEnergy!65, draw=ResultEnergy!70!black] coordinates {
+    (FDTD,-3.829) (MW,-3.079) (CG,-5.587) (LU,-3.287) (Chol,-1.411) (NBody,-0.137)
+};
+\addplot+[fill=ResultPower!70, draw=ResultPower!70!black] coordinates {
+    (FDTD,-3.230) (MW,-3.150) (CG,-6.478) (LU,-3.968) (Chol,-4.389) (NBody,-0.023)
+};
+\draw[black, thick] (axis cs:FDTD,0) -- (axis cs:NBody,0);
+\legend{Kernel latency, Kernel energy, Kernel power}
+\end{axis}
+\end{tikzpicture}
+\caption{Per-benchmark DVFS latency, energy, and power deltas relative to no-DVFS execution.}
+\label{fig:results-dvfs-deltas}
+\end{figure}
+}
+
+\newcommand{\figDvfsTradeoff}{%
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.82\linewidth,
+    height=7cm,
+    xlabel={Kernel latency \(\Delta\) (\%)},
+    ylabel={Kernel energy \(\Delta\) (\%)},
+    xmin=-1.0,
+    xmax=3.2,
+    ymin=-6.3,
+    ymax=0.8,
+    ymajorgrids=true,
+    xmajorgrids=true,
+    grid style={gray!20},
+]
+\addplot+[only marks, mark=*, mark size=2.6pt, color=ResultEnergy!70!black] coordinates {
+    (-0.604,-3.829)
+    (0.073,-3.079)
+    (0.953,-5.587)
+    (0.662,-3.287)
+    (2.817,-1.411)
+    (-0.110,-0.137)
+};
+\addplot+[black, thick] coordinates {(-1.0,0) (3.2,0)};
+\addplot+[black, thick] coordinates {(0,-6.3) (0,0.8)};
+\addplot+[black, dashed] coordinates {(1,-6.3) (1,0.8)};
+\node[font=\scriptsize, anchor=south west] at (axis cs:-0.604,-3.829) {FDTD};
+\node[font=\scriptsize, anchor=south west] at (axis cs:0.073,-3.079) {MiniWeather};
+\node[font=\scriptsize, anchor=south west] at (axis cs:0.953,-5.587) {CG};
+\node[font=\scriptsize, anchor=south west] at (axis cs:0.662,-3.287) {LU};
+\node[font=\scriptsize, anchor=south west] at (axis cs:2.817,-1.411) {Cholesky};
+\node[font=\scriptsize, anchor=south west] at (axis cs:-0.110,-0.137) {N-body};
+\node[font=\scriptsize, anchor=south west] at (axis cs:1.02,0.1) {1\% overhead};
+\end{axis}
+\end{tikzpicture}
+\caption{Energy--latency trade-off of WinDVFS. The dashed vertical line marks a 1\% latency-overhead reference.}
+\label{fig:results-dvfs-tradeoff}
+\end{figure}
+}
+
+\newcommand{\figMidEnergyScatter}{%
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.82\linewidth,
+    height=7cm,
+    xlabel={Middle-clock samples (\%)},
+    ylabel={Kernel energy \(\Delta\) (\%)},
+    xmin=-5,
+    xmax=105,
+    ymin=-6.3,
+    ymax=0.8,
+    ymajorgrids=true,
+    xmajorgrids=true,
+    grid style={gray!20},
+]
+\addplot+[only marks, mark=*, mark size=2.6pt, color=ResultPower] coordinates {
+    (91.903,-3.829)
+    (0.000,-3.079)
+    (98.912,-5.587)
+    (58.685,-3.287)
+    (58.654,-1.411)
+    (0.000,-0.137)
+};
+\addplot+[black, thick] coordinates {(-5,0) (105,0)};
+\addplot+[black, thick] coordinates {(0,-6.3) (0,0.8)};
+\node[font=\scriptsize, anchor=south east] at (axis cs:91.903,-3.829) {FDTD};
+\node[font=\scriptsize, anchor=south west] at (axis cs:0.000,-3.079) {MiniWeather};
+\node[font=\scriptsize, anchor=south east] at (axis cs:98.912,-5.587) {CG};
+\node[font=\scriptsize, anchor=south west] at (axis cs:58.685,-3.287) {LU};
+\node[font=\scriptsize, anchor=south west] at (axis cs:58.654,-1.411) {Cholesky};
+\node[font=\scriptsize, anchor=south west] at (axis cs:0.000,-0.137) {N-body};
+\end{axis}
+\end{tikzpicture}
+\caption{Middle-clock sample share and kernel-energy reduction. MiniWeather is an exception to a simple residency-based explanation because its measured energy decreases despite zero middle-clock samples.}
+\label{fig:results-mid-energy}
+\end{figure}
+}
