@@ -120,11 +120,11 @@ does the controller avoid forcing changes on low-opportunity workloads?
 The following sections answer these questions in the same order. The placement
 section first reports the latency and energy deltas relative to HEFT. The
 data-movement section then checks whether those deltas align with copy-volume
-reductions. The DVFS section reports the energy result relative to no-DVFS
-execution, while the clock and power section explains why the energy reductions
-appear on some workloads but not on all of them. The chapter ends with
-overheads and limitations, rather than mixing diagnostic details into the main
-result tables.
+reductions, followed by a robustness check across nearby placement settings.
+The DVFS section reports the energy result relative to no-DVFS execution,
+while the clock and power section explains why the energy reductions appear on
+some workloads but not on all of them. The chapter ends with overheads and
+limitations, rather than mixing diagnostic details into the main result tables.
 
 \section{Placement Results}
 \label{sec:results-placement-performance}
@@ -139,26 +139,36 @@ linear-algebra workloads.
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{@{}lrr@{}}
+\begin{tabular}{@{}lrrr@{}}
 \toprule
-Benchmark & Kernel latency \(\Delta\) & Kernel energy \(\Delta\) \\
+Benchmark & Speedup & Kernel latency \(\Delta\) & Kernel energy \(\Delta\) \\
 \midrule
-FDTD & \(-1.333\%\) & \(-0.597\%\) \\
-CG & \(-12.693\%\) & \(-12.316\%\) \\
-MiniWeather & \(+0.019\%\) & \(-0.062\%\) \\
-Cholesky & \(-8.638\%\) & \(-2.441\%\) \\
-LU decomposition & \(-18.539\%\) & \(-17.872\%\) \\
-Blocked N-body & \(-0.052\%\) & \(-0.580\%\) \\
+FDTD & \(1.0135\times\) & \(-1.333\%\) & \(-0.597\%\) \\
+CG & \(1.1454\times\) & \(-12.693\%\) & \(-12.316\%\) \\
+MiniWeather & \(0.9998\times\) & \(+0.019\%\) & \(-0.062\%\) \\
+Cholesky & \(1.0945\times\) & \(-8.638\%\) & \(-2.441\%\) \\
+LU decomposition & \(1.2276\times\) & \(-18.539\%\) & \(-17.872\%\) \\
+Blocked N-body & \(1.0005\times\) & \(-0.052\%\) & \(-0.580\%\) \\
 \bottomrule
 \end{tabular}
 \caption{Placement-only results relative to HEFT. DVFS is disabled.}
 \label{tab:results-placement-main}
 \end{table}
 
-The result is not a claim that every benchmark accelerates equally. Instead,
-the placement layer behaves selectively. It extracts large gains when the task
-graph exposes useful copy-saving alternatives, and it stays close to HEFT when
-those alternatives are absent.
+The six-benchmark geometric-mean speedup is \(1.076965\times\), equivalent to
+a \(7.146\%\) normalized latency reduction. The distribution of the result is
+more important than a single suite number. LU decomposition has the largest
+gain, followed by CG and Cholesky. These three workloads dominate the
+placement benefit because their task graphs expose useful alternatives to the
+HEFT placement. FDTD is a modest positive case. MiniWeather and Blocked
+N-body are effectively unchanged, showing that the scheduler does not need to
+move work aggressively when there is little locality benefit.
+
+The energy column is included to show that the placement-only runs do not
+hide a performance--energy reversal. CG and LU decomposition reduce both
+latency and kernel energy, while the neutral workloads remain near the
+baseline. The placement claim itself, however, is based on latency and
+locality evidence rather than on DVFS-style energy control.
 
 \section{Data-Movement Evidence}
 \label{sec:results-locality-attribution}
@@ -173,30 +183,73 @@ results.
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{@{}lrrr@{}}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-Benchmark & Latency \(\Delta\) & Copy bytes \(\Delta\) & Deviation rate \\
+Benchmark & Kernel latency \(\Delta\) & Speedup & Copy bytes \(\Delta\) & Copy time \(\Delta\) & Deviation rate \\
 \midrule
-FDTD & \(-3.135\%\) & \(-12.030\%\) & 0.249902 \\
-MiniWeather & \(-0.0066\%\) & \(0.000\%\) & 0.000000 \\
-Cholesky & \(-9.269\%\) & \(-38.220\%\) & 0.281154 \\
-LU decomposition & \(-15.891\%\) & \(-23.905\%\) & 0.619305 \\
-Blocked N-body & \(+0.019\%\) & \(0.000\%\) & 0.000000 \\
+FDTD & \(-3.135\%\) & \(1.0324\times\) & \(-12.030\%\) & \(-12.025\%\) & 0.249902 \\
+MiniWeather & \(-0.0066\%\) & \(1.0001\times\) & \(0.000\%\) & \(0.000\%\) & 0.000000 \\
+Cholesky & \(-9.269\%\) & \(1.1022\times\) & \(-38.220\%\) & \(-38.220\%\) & 0.281154 \\
+LU decomposition & \(-15.891\%\) & \(1.1889\times\) & \(-23.905\%\) & \(-23.905\%\) & 0.619305 \\
+Blocked N-body & \(+0.019\%\) & \(0.9998\times\) & \(0.000\%\) & \(0.000\%\) & 0.000000 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \caption{Data-movement evidence for the placement result. Negative latency and copy-byte deltas are reductions relative to HEFT.}
 \label{tab:results-locality-attribution}
 \end{table}
 
-The locality data supports the design of the residual placement gate. When a
-non-HEFT placement can reduce copy traffic while keeping the predicted local
-penalty bounded, the scheduler accepts the deviation. When that opportunity is
-not present, the scheduler naturally falls back to HEFT-like behavior.
+The locality data separates the benchmarks into two groups. For LU
+decomposition, Cholesky, and FDTD, the latency improvements coincide with
+lower copy volume and lower measured copy time. The amount of scheduler
+deviation is also workload dependent: LU decomposition deviates most often and
+has the strongest locality-driven speedup, while Cholesky obtains a large copy
+reduction from a smaller deviation rate. FDTD is the weaker copy-saving case,
+but still follows the same direction.
 
-The placement setting was also checked against nearby scheduler settings. The
-selected bandit-scheduler setting remained the best aggregate choice in that
-check, with a four-benchmark geometric-mean speedup of \(1.076371\times\)
-relative to HEFT. This supports using it as the thesis placement setting.
+MiniWeather and Blocked N-body provide the counterexample that makes the
+placement result credible. Their deviation rates are zero, copy traffic is
+unchanged, and latency remains effectively at the HEFT baseline. The residual
+policy is therefore selective: it changes placements when copy-saving
+opportunities are visible and otherwise collapses back to HEFT-like behavior.
+
+\section{Placement Robustness}
+\label{sec:results-placement-robustness}
+
+The selected placement setting was checked against nearby scheduler settings
+on the workloads that best expose sensitivity: FDTD, MiniWeather, Cholesky,
+and LU decomposition. Table~\ref{tab:results-placement-robustness} reports
+the selected setting together with the range observed across the neighboring
+settings. The four-benchmark geometric-mean speedup of the selected setting is
+\(1.076371\times\), which is the best aggregate result in this validation.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Benchmark & Selected speedup & Nearby speedup range & Selected latency \(\Delta\) \\
+\midrule
+FDTD & \(0.9862\times\) & \(0.9862\times\)--\(1.0239\times\) & \(+1.403\%\) \\
+MiniWeather & \(1.0006\times\) & \(0.9997\times\)--\(1.0006\times\) & \(-0.060\%\) \\
+Cholesky & \(1.1110\times\) & \(1.0207\times\)--\(1.1110\times\) & \(-9.992\%\) \\
+LU decomposition & \(1.2244\times\) & \(1.1582\times\)--\(1.2258\times\) & \(-18.327\%\) \\
+\bottomrule
+\end{tabular}
+\caption{Placement robustness check across nearby scheduler settings. DVFS is disabled.}
+\label{tab:results-placement-robustness}
+\end{table}
+
+This validation supports two conclusions. First, the strongest workloads are
+not artifacts of one narrow scheduler setting: Cholesky and LU decomposition
+remain positive throughout the nearby range. Second, the neutral behavior is
+stable: MiniWeather remains essentially unchanged. FDTD is the sensitivity
+stress case; its selected setting is weaker in this validation than in the
+main placement batch, but the nearby range still contains modest positive
+results and the copy reduction remains consistent with the locality evidence.
+This is why FDTD is treated as a modest locality case rather than as the main
+placement proof.
 
 \section{DVFS Energy Results}
 \label{sec:results-dvfs-energy}
@@ -296,7 +349,9 @@ The experimental evidence supports both layers of the proposed design. The
 bandit scheduler improves geometric-mean kernel latency by \(7.146\%\) relative
 to HEFT, with the largest gains appearing on copy-sensitive workloads. The
 data-movement results show that these gains align with reduced copy traffic,
-while neutral workloads remain close to HEFT.
+while neutral workloads remain close to HEFT. The robustness validation keeps
+the selected placement setting as the best four-benchmark aggregate and shows
+that the strongest placement gains persist across nearby scheduler settings.
 
 WinDVFS reduces geometric-mean kernel energy by \(2.904\%\) with \(0.626\%\)
 geometric-mean latency overhead. The result is not a universal claim that every
