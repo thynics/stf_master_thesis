@@ -88,6 +88,14 @@ Blocked N-body & 49152, 512, 14 & 131712 & 8659968 & low \\
 \label{tab:results-benchmark-characteristics}
 \end{table}
 
+\figBenchmarkCopyVolume
+
+Figure~\ref{fig:results-benchmark-copy-volume} visualizes the baseline copy
+volume column on a logarithmic scale. This figure is included before the main
+result tables to avoid conflating raw copy volume with scheduler opportunity.
+The later locality evidence focuses on copy traffic that the residual
+scheduler actually reduces relative to HEFT.
+
 \section{Metrics and Measurement Methodology}
 \label{sec:results-metrics}
 
@@ -392,6 +400,8 @@ Geometric mean & 0.977040 & 0.983155 \\
 \label{tab:results-dvfs-edp}
 \end{table}
 
+\figDvfsEdpRatios
+
 The EDP and ED\(^2\)P ratios support the same conclusion. The suite-level
 energy--delay products improve, but Cholesky exceeds 1.0 because its latency
 overhead is large enough to dominate the modest energy saving. Cholesky is
@@ -471,12 +481,19 @@ Blocked N-body & 0.000 & 0.000\% & 0 & 0 & 0 \\
 \label{tab:results-dvfs-guardrail}
 \end{table}
 
-The guardrail counters refine the clock evidence. FDTD and CG have high
-measured middle-clock exposure without slowdown recovery events. LU
+\figDvfsCommitShare
+
+\figDvfsGuardrailEvents
+
+The commit and guardrail figures refine the clock evidence. FDTD and CG have
+high measured middle-clock exposure without slowdown recovery events. LU
 decomposition and Cholesky show partial MID exposure together with force-HIGH
 and slowdown events, so their rows are better read as guarded trade-offs than
-as unconstrained down-clocking. MiniWeather and Blocked N-body have no committed
-MID share in these measurements.
+as unconstrained down-clocking. MiniWeather and Blocked N-body have no
+committed MID share in these measurements. The difference between
+controller-reported MID share and sampled MID share is expected: the former is
+a controller-side committed share, while the latter is observed only at NVML
+sampling timestamps.
 
 Blocked N-body serves as a near-neutral control case. In the placement
 experiment, its copy-byte reduction and deviation rate are both zero, and its
@@ -490,8 +507,9 @@ opportunity.
 \label{sec:results-overhead}
 
 Table~\ref{tab:results-overhead} reports the compact logging and control
-overhead snapshot. It should be read as a diagnostic stress test rather than
-as a production-overhead estimate.
+overhead snapshot, and Figure~\ref{fig:results-overhead-snapshot} visualizes
+the same rows. This experiment should be read as a diagnostic stress test
+rather than as a production-overhead estimate.
 
 \begin{table}[!htbp]
 \centering
@@ -510,6 +528,8 @@ Blocked N-body & \(+0.000\%\) & \(+4.369\%\) & \(+0.722\%\) \\
 \caption{Diagnostic overhead snapshot. The compact placement-log row compares compact logging with a no-log bandit baseline. The WinDVFS diagnostic row combines policy behavior, clock changes, and compact control logging. These rows are not production-overhead estimates and are not used to compute the primary placement or DVFS results.}
 \label{tab:results-overhead}
 \end{table}
+
+\figOverheadSnapshot
 
 The compact placement-log row isolates compact logging more directly, whereas
 the WinDVFS diagnostic row combines policy behavior, frequency changes, and
