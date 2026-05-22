@@ -1,0 +1,460 @@
+from __future__ import annotations
+
+from pathlib import Path
+import sys
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+ROOT = Path(__file__).resolve().parent
+OUT = ROOT / "figures"
+PREVIEW = OUT / "_preview"
+WRITE_PREVIEW = "--preview" in sys.argv
+
+
+BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU", "N-body"]
+BENCH_SHORT = ["FDTD", "CG", "MiniW.", "Chol.", "LU", "N-body"]
+
+TASKS = np.array([491712, 34, 57600, 2600, 318549, 131712], dtype=float)
+COPY_BYTES = np.array(
+    [353009664, 654311738, 241833733942, 15221178776, 22258961026, 8659968],
+    dtype=float,
+)
+
+PLACEMENT_LAT_DELTA = np.array([-1.333, -12.693, 0.019, -8.638, -18.539, -0.052])
+PLACEMENT_ENERGY_DELTA = np.array([-0.597, -12.316, -0.062, -2.441, -17.872, -0.580])
+
+LOC_BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU", "N-body"]
+COPY_DELTA = np.array([-12.030, -7.692, 0.0, -38.220, -23.905, 0.0])
+LOC_LAT_DELTA = np.array([-3.135, -12.693, -0.0066, -9.269, -15.891, 0.019])
+DEV_BENCH = ["FDTD", "MiniWeather", "Cholesky", "LU", "N-body"]
+DEV_RATE = np.array([0.249902, 0.0, 0.281154, 0.619305, 0.0])
+DEV_LAT_DELTA = np.array([-3.135, -0.0066, -9.269, -15.891, 0.019])
+
+DVFS_BENCH = ["FDTD", "MiniWeather", "CG", "LU", "Cholesky", "N-body"]
+DVFS_SHORT = ["FDTD", "MiniW.", "CG", "LU", "Chol.", "N-body"]
+LAT_DELTA = np.array([-0.604, 0.073, 0.953, 0.662, 2.817, -0.110])
+ENERGY_DELTA = np.array([-3.829, -3.079, -5.587, -3.287, -1.411, -0.137])
+POWER_DELTA = np.array([-3.230, -3.150, -6.478, -3.968, -4.389, -0.023])
+MID_SAMPLES = np.array([91.903, 0.0, 98.912, 58.685, 58.654, 0.0])
+EDP = np.array([0.955902, 0.969913, 0.953132, 0.973536, 1.013666, 0.997531])
+ED2P = np.array([0.950133, 0.970618, 0.962218, 0.979985, 1.042219, 0.996431])
+
+EFF_MID_SHARE = np.array([1.000, 0.000, 0.333, 0.697, 0.637, 0.000])
+COMMIT_SWITCHES = np.array([8, 0, 512, 290, 57, 0])
+FORCE_HIGH = np.array([0, 0, 0, 127, 23, 0])
+SLOWDOWN = np.array([0, 0, 0, 127, 23, 0])
+
+OVER_BENCH = ["FDTD", "LU", "N-body"]
+COMPACT_LOG = np.array([-0.159, 1.559, 0.000])
+CONTROL_LAT = np.array([0.953, 9.331, 4.369])
+CONTROL_ENERGY = np.array([-1.196, 7.233, 0.722])
+
+
+COLORS = {
+    "latency": "#2F5F98",
+    "energy": "#3A8C6E",
+    "power": "#B5682D",
+    "baseline": "#A7A9AC",
+    "optimized": "#3A8C6E",
+    "copy": "#4E6E81",
+    "mid": "#6A4C93",
+    "guard": "#8A6F2A",
+    "grid": "#D7DCE2",
+    "text": "#202124",
+}
+
+
+def configure_style() -> None:
+    mpl.rcParams.update(
+        {
+            "font.family": "DejaVu Sans",
+            "font.size": 8.0,
+            "axes.labelsize": 8.0,
+            "axes.titlesize": 8.5,
+            "xtick.labelsize": 7.2,
+            "ytick.labelsize": 7.2,
+            "legend.fontsize": 7.0,
+            "axes.linewidth": 0.7,
+            "xtick.major.width": 0.6,
+            "ytick.major.width": 0.6,
+            "xtick.major.size": 2.5,
+            "ytick.major.size": 2.5,
+            "pdf.fonttype": 42,
+            "ps.fonttype": 42,
+            "svg.fonttype": "none",
+            "mathtext.fontset": "dejavusans",
+            "figure.dpi": 180,
+            "savefig.dpi": 300,
+            "text.color": COLORS["text"],
+            "axes.labelcolor": COLORS["text"],
+            "axes.edgecolor": COLORS["text"],
+            "xtick.color": COLORS["text"],
+            "ytick.color": COLORS["text"],
+        }
+    )
+
+
+def polish_axes(ax: plt.Axes, grid_axis: str = "y") -> None:
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.grid(True, axis=grid_axis, color=COLORS["grid"], linewidth=0.55, alpha=0.75)
+    ax.set_axisbelow(True)
+
+
+def save(fig: plt.Figure, name: str) -> None:
+    OUT.mkdir(parents=True, exist_ok=True)
+    fig.tight_layout(pad=0.55)
+    fig.savefig(OUT / name, bbox_inches="tight", pad_inches=0.018)
+    if WRITE_PREVIEW:
+        PREVIEW.mkdir(parents=True, exist_ok=True)
+        fig.savefig(PREVIEW / name.replace(".pdf", ".png"), bbox_inches="tight", pad_inches=0.02)
+    plt.close(fig)
+
+
+def zero_line(ax: plt.Axes, axis: str = "y") -> None:
+    if axis == "y":
+        ax.axhline(0, color="#2B2B2B", linewidth=0.75, zorder=1)
+    else:
+        ax.axvline(0, color="#2B2B2B", linewidth=0.75, zorder=1)
+
+
+def bar_labels(ax: plt.Axes, bars, fmt: str = "{:.1f}", dy: float = 1.8) -> None:
+    ymin, ymax = ax.get_ylim()
+    span = ymax - ymin
+    for b in bars:
+        h = b.get_height()
+        if abs(h) < 0.03:
+            continue
+        y = h + (dy / 100.0) * span if h >= 0 else h - (dy / 100.0) * span
+        va = "bottom" if h >= 0 else "top"
+        ax.text(
+            b.get_x() + b.get_width() / 2,
+            y,
+            fmt.format(h),
+            ha="center",
+            va=va,
+            fontsize=6.1,
+            color=COLORS["text"],
+        )
+
+
+def grouped_bars(
+    name: str,
+    labels: list[str],
+    series: list[tuple[str, np.ndarray, str]],
+    ylabel: str,
+    ylim: tuple[float, float] | None = None,
+    hline: float | None = 0.0,
+    width: float = 5.25,
+    height: float = 2.55,
+    legend_cols: int | None = None,
+    annotate: bool = False,
+) -> None:
+    fig, ax = plt.subplots(figsize=(width, height))
+    x = np.arange(len(labels))
+    n = len(series)
+    bw = min(0.72 / n, 0.28)
+    offsets = (np.arange(n) - (n - 1) / 2) * bw
+    all_bars = []
+    for off, (label, values, color) in zip(offsets, series):
+        bars = ax.bar(
+            x + off,
+            values,
+            width=bw * 0.92,
+            label=label,
+            color=color,
+            edgecolor="#1F2933",
+            linewidth=0.35,
+        )
+        all_bars.append(bars)
+    if hline is not None:
+        ax.axhline(hline, color="#2B2B2B", linewidth=0.75, linestyle="-" if hline == 0 else "--")
+    ax.set_ylabel(ylabel)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=18, ha="right", rotation_mode="anchor")
+    if ylim is not None:
+        ax.set_ylim(*ylim)
+    polish_axes(ax)
+    cols = legend_cols or len(series)
+    ax.legend(frameon=False, ncols=cols, loc="upper center", bbox_to_anchor=(0.5, 1.12), columnspacing=1.0)
+    if annotate:
+        for bars in all_bars:
+            bar_labels(ax, bars)
+    save(fig, name)
+
+
+def results_overview() -> None:
+    fig, ax = plt.subplots(figsize=(4.35, 2.4))
+    labels = ["Placement\nlatency", "DVFS\nenergy"]
+    baseline = np.array([1.0, 1.0])
+    optimized = np.array([0.92854, 0.970962])
+    x = np.array([0.0, 1.35])
+    bw = 0.18
+    ax.bar(x - bw / 2, baseline, width=bw, color=COLORS["baseline"], edgecolor="#333333", linewidth=0.35, label="Baseline")
+    bars = ax.bar(x + bw / 2, optimized, width=bw, color=COLORS["optimized"], edgecolor="#333333", linewidth=0.35, label="Optimized")
+    ax.axhline(1.0, color="#333333", linewidth=0.7, linestyle="--")
+    ax.set_ylim(0.90, 1.028)
+    ax.set_ylabel("Normalized value")
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    polish_axes(ax)
+    for bar, text in zip(bars, ["7.146% lower", "2.904% lower"]):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.004,
+            text,
+            ha="center",
+            va="bottom",
+            fontsize=6.4,
+            color=COLORS["optimized"],
+        )
+    ax.legend(frameon=False, ncols=2, loc="upper center", bbox_to_anchor=(0.5, 1.14), columnspacing=1.2)
+    save(fig, "results_overview.pdf")
+
+
+def benchmark_copy_volume() -> None:
+    fig, ax = plt.subplots(figsize=(5.05, 2.45))
+    y = np.arange(len(BENCH_SHORT))
+    bars = ax.barh(y, COPY_BYTES, color=COLORS["copy"], edgecolor="#1F2933", linewidth=0.35)
+    ax.set_xscale("log")
+    ax.set_xlim(4e6, 5e11)
+    ax.set_yticks(y)
+    ax.set_yticklabels(BENCH_SHORT)
+    ax.invert_yaxis()
+    ax.set_xlabel("Baseline copy bytes (log scale)")
+    polish_axes(ax, grid_axis="x")
+    for bar, value in zip(bars, COPY_BYTES):
+        label = f"{value / 1e9:.1f} GB" if value >= 1e9 else f"{value / 1e6:.1f} MB"
+        ax.text(value * 1.14, bar.get_y() + bar.get_height() / 2, label, va="center", fontsize=6.2)
+    save(fig, "benchmark_copy_volume.pdf")
+
+
+def placement_deltas() -> None:
+    grouped_bars(
+        "placement_deltas.pdf",
+        BENCH_SHORT,
+        [
+            ("Kernel latency", PLACEMENT_LAT_DELTA, COLORS["latency"]),
+            ("Kernel energy", PLACEMENT_ENERGY_DELTA, COLORS["energy"]),
+        ],
+        "Delta vs HEFT (%)",
+        ylim=(-21.5, 3.0),
+        width=5.55,
+        height=2.55,
+    )
+
+
+def copy_latency_scatter() -> None:
+    fig, ax = plt.subplots(figsize=(4.25, 2.9))
+    ax.scatter(COPY_DELTA, LOC_LAT_DELTA, s=34, color=COLORS["latency"], edgecolor="white", linewidth=0.45, zorder=3)
+    ax.axhline(0, color="#333333", linewidth=0.7, linestyle="--")
+    ax.axvline(0, color="#333333", linewidth=0.7, linestyle="--")
+    offsets = {
+        "FDTD": (5, 5),
+        "CG": (5, -9),
+        "MiniWeather": (-58, -11),
+        "Cholesky": (5, 5),
+        "LU": (5, -10),
+        "N-body": (5, 7),
+    }
+    for x, y, label in zip(COPY_DELTA, LOC_LAT_DELTA, LOC_BENCH):
+        dx, dy = offsets[label]
+        ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
+    ax.set_xlabel("Copy bytes delta (%)")
+    ax.set_ylabel("Kernel latency delta (%)")
+    ax.set_xlim(-42, 4)
+    ax.set_ylim(-17.2, 2.1)
+    polish_axes(ax, grid_axis="both")
+    save(fig, "copy_latency_scatter.pdf")
+
+
+def deviation_latency_scatter() -> None:
+    fig, ax = plt.subplots(figsize=(4.25, 2.9))
+    ax.scatter(DEV_RATE, DEV_LAT_DELTA, s=34, color=COLORS["latency"], edgecolor="white", linewidth=0.45, zorder=3)
+    ax.axhline(0, color="#333333", linewidth=0.7, linestyle="--")
+    ax.axvline(0, color="#333333", linewidth=0.7, linestyle="--")
+    offsets = {
+        "FDTD": (5, 5),
+        "MiniWeather": (5, -11),
+        "Cholesky": (5, 5),
+        "LU": (-22, 7),
+        "N-body": (5, 7),
+    }
+    for x, y, label in zip(DEV_RATE, DEV_LAT_DELTA, DEV_BENCH):
+        dx, dy = offsets[label]
+        ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
+    ax.set_xlabel("Non-HEFT deviation rate")
+    ax.set_ylabel("Kernel latency delta (%)")
+    ax.set_xlim(-0.035, 0.68)
+    ax.set_ylim(-17.2, 2.1)
+    polish_axes(ax, grid_axis="both")
+    save(fig, "deviation_latency_scatter.pdf")
+
+
+def dvfs_deltas() -> None:
+    grouped_bars(
+        "dvfs_deltas.pdf",
+        DVFS_SHORT,
+        [
+            ("Kernel latency", LAT_DELTA, COLORS["latency"]),
+            ("Kernel energy", ENERGY_DELTA, COLORS["energy"]),
+            ("Kernel power", POWER_DELTA, COLORS["power"]),
+        ],
+        "Delta vs no-DVFS (%)",
+        ylim=(-7.2, 3.4),
+        width=5.75,
+        height=2.65,
+    )
+
+
+def dvfs_tradeoff() -> None:
+    fig, ax = plt.subplots(figsize=(4.25, 2.9))
+    ax.scatter(LAT_DELTA, ENERGY_DELTA, s=36, color=COLORS["energy"], edgecolor="white", linewidth=0.45, zorder=3)
+    ax.axhline(0, color="#333333", linewidth=0.7, linestyle="--")
+    ax.axvline(0, color="#333333", linewidth=0.7, linestyle="--")
+    ax.axvline(1.0, color="#333333", linewidth=0.7, linestyle=":")
+    ax.text(1.03, 0.19, "1% latency", fontsize=6.2, va="bottom")
+    offsets = {
+        "FDTD": (5, -10),
+        "MiniWeather": (5, 5),
+        "CG": (5, -2),
+        "LU": (5, 5),
+        "Cholesky": (-54, 5),
+        "N-body": (5, 5),
+    }
+    for x, y, label in zip(LAT_DELTA, ENERGY_DELTA, DVFS_BENCH):
+        dx, dy = offsets[label]
+        ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
+    ax.set_xlabel("Kernel latency delta (%)")
+    ax.set_ylabel("Kernel energy delta (%)")
+    ax.set_xlim(-1.0, 3.25)
+    ax.set_ylim(-6.25, 0.55)
+    polish_axes(ax, grid_axis="both")
+    save(fig, "dvfs_tradeoff.pdf")
+
+
+def dvfs_edp_ratios() -> None:
+    grouped_bars(
+        "dvfs_edp_ratios.pdf",
+        DVFS_SHORT,
+        [
+            ("EDP", EDP, COLORS["energy"]),
+            ("ED$^2$P", ED2P, COLORS["mid"]),
+        ],
+        "Ratio to no-DVFS",
+        ylim=(0.94, 1.052),
+        hline=1.0,
+        width=5.55,
+        height=2.55,
+    )
+
+
+def mid_energy_scatter() -> None:
+    fig, ax = plt.subplots(figsize=(4.25, 2.9))
+    ax.scatter(MID_SAMPLES, ENERGY_DELTA, s=36, color=COLORS["power"], edgecolor="white", linewidth=0.45, zorder=3)
+    ax.axhline(0, color="#333333", linewidth=0.7, linestyle="--")
+    ax.axvline(0, color="#333333", linewidth=0.7, linestyle="--")
+    offsets = {
+        "FDTD": (-35, 5),
+        "MiniWeather": (5, -11),
+        "CG": (-19, -11),
+        "LU": (5, -10),
+        "Cholesky": (5, 5),
+        "N-body": (5, 5),
+    }
+    for x, y, label in zip(MID_SAMPLES, ENERGY_DELTA, DVFS_BENCH):
+        dx, dy = offsets[label]
+        ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
+    ax.set_xlabel("Middle-clock samples (%)")
+    ax.set_ylabel("Kernel energy delta (%)")
+    ax.set_xlim(-5, 105)
+    ax.set_ylim(-6.25, 0.55)
+    polish_axes(ax, grid_axis="both")
+    save(fig, "mid_energy_scatter.pdf")
+
+
+def dvfs_commit_share() -> None:
+    grouped_bars(
+        "dvfs_commit_share.pdf",
+        DVFS_SHORT,
+        [
+            ("Committed MID share", EFF_MID_SHARE * 100.0, COLORS["mid"]),
+            ("Measured MID samples", MID_SAMPLES, COLORS["power"]),
+        ],
+        "Share (%)",
+        ylim=(0, 110),
+        hline=None,
+        width=5.55,
+        height=2.55,
+    )
+
+
+def dvfs_guardrail_events() -> None:
+    fig, ax = plt.subplots(figsize=(5.55, 2.55))
+    x = np.arange(len(DVFS_SHORT))
+    bw = 0.22
+    series = [
+        ("Commit switches", COMMIT_SWITCHES, COLORS["latency"]),
+        ("Force-HIGH", FORCE_HIGH, COLORS["guard"]),
+        ("Slowdown", SLOWDOWN, COLORS["power"]),
+    ]
+    for i, (label, values, color) in enumerate(series):
+        ax.bar(
+            x + (i - 1) * bw,
+            values,
+            width=bw * 0.92,
+            label=label,
+            color=color,
+            edgecolor="#1F2933",
+            linewidth=0.35,
+        )
+    ax.set_yscale("symlog", linthresh=1)
+    ax.set_ylim(0, 850)
+    ax.set_yticks([0, 1, 10, 100, 500])
+    ax.set_yticklabels(["0", "1", "10", "100", "500"])
+    ax.set_ylabel("Event count")
+    ax.set_xticks(x)
+    ax.set_xticklabels(DVFS_SHORT, rotation=18, ha="right", rotation_mode="anchor")
+    polish_axes(ax)
+    ax.legend(frameon=False, ncols=3, loc="upper center", bbox_to_anchor=(0.5, 1.12), columnspacing=0.9)
+    save(fig, "dvfs_guardrail_events.pdf")
+
+
+def overhead_snapshot() -> None:
+    grouped_bars(
+        "overhead_snapshot.pdf",
+        OVER_BENCH,
+        [
+            ("Placement log latency", COMPACT_LOG, COLORS["latency"]),
+            ("WinDVFS diagnostic latency", CONTROL_LAT, COLORS["power"]),
+            ("WinDVFS diagnostic energy", CONTROL_ENERGY, COLORS["energy"]),
+        ],
+        "Delta vs baseline (%)",
+        ylim=(-2.2, 10.4),
+        width=5.0,
+        height=2.5,
+        legend_cols=1,
+    )
+
+
+def main() -> None:
+    configure_style()
+    results_overview()
+    benchmark_copy_volume()
+    placement_deltas()
+    copy_latency_scatter()
+    deviation_latency_scatter()
+    dvfs_deltas()
+    dvfs_tradeoff()
+    dvfs_edp_ratios()
+    mid_energy_scatter()
+    dvfs_commit_share()
+    dvfs_guardrail_events()
+    overhead_snapshot()
+
+
+if __name__ == "__main__":
+    main()
