@@ -30,7 +30,7 @@ does not try to replace HEFT with a globally different placement strategy.
 Instead, it asks whether a non-HEFT GPU can reduce predicted copy cost while
 keeping the local finish-time penalty bounded. The locality-attribution
 analysis confirms that this mechanism is visible in the measurements. The
-strongest wins coincide with large copy
+largest improvements coincide with large copy
 byte reductions: \texttt{cholesky} reduces copy bytes by \(38.220\%\), and
 \texttt{lu\_decomposition} reduces copy bytes by \(23.905\%\). The neutral
 benchmarks have zero deviation rate and zero copy-byte reduction, which
@@ -57,7 +57,7 @@ This outcome is consistent with the proposal--commit design. The DVFS layer
 does not directly optimize each task in isolation. It accumulates task-level
 frequency intents into per-GPU windows and commits a lower frequency only when
 guardrails indicate that the performance risk is acceptable. The DVFS mechanism
-analysis shows that the stronger energy wins are associated with lower kernel
+analysis shows that the larger energy reductions are associated with lower kernel
 average power and, in most cases, lower active SM clock exposure. At the same
 time, the
 \texttt{nbody\_blocked} row shows why the guardrails are necessary: when the
@@ -91,7 +91,7 @@ non-zero deviation rates. Conversely,
 the neutral benchmarks show no copy-byte reduction and no deviation. This
 alignment does not prove that copy traffic explains every millisecond of
 runtime variation, but it gives a clear mechanism-level explanation for the
-main placement wins.
+main placement improvements.
 
 The third research question asks how GPU DVFS decisions can be integrated into
 the task scheduler without unstable per-task control. The proposal--commit

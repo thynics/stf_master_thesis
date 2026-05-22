@@ -108,16 +108,16 @@ summarizes the per-benchmark results.
 \centering
 \small
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrrp{0.29\linewidth}@{}}
+\begin{tabular}{@{}lrrrp{0.31\linewidth}@{}}
 \toprule
-Benchmark & Mean \(\Delta T\) & Median \(\Delta T\) & Wins & Kernel energy \(\Delta\) & Interpretation \\
+Benchmark & Mean \(\Delta T\) & Median \(\Delta T\) & Kernel energy \(\Delta\) & Interpretation \\
 \midrule
-\texttt{fdtd} & \(-1.333\%\) & \(+5.629\%\) & 2/5 & \(-0.597\%\) & Mean improves, but median is noisy. \\
-\texttt{cg} & \(-12.693\%\) & \(-12.468\%\) & 5/5 & \(-12.316\%\) & Stable placement win. \\
-\texttt{miniweather} & \(+0.019\%\) & \(+0.040\%\) & 3/5 & \(-0.062\%\) & Neutral control. \\
-\texttt{cholesky} & \(-8.638\%\) & \(-8.257\%\) & 5/5 & \(-2.441\%\) & Stable irregular-workload win. \\
-\texttt{lu\_decomposition} & \(-18.539\%\) & \(-18.585\%\) & 5/5 & \(-17.872\%\) & Strongest placement win. \\
-\texttt{nbody\_blocked} & \(-0.052\%\) & \(-0.106\%\) & 4/5 & \(-0.580\%\) & Near neutral. \\
+\texttt{fdtd} & \(-1.333\%\) & \(+5.629\%\) & \(-0.597\%\) & Mean latency decreases, while median latency remains noisy. \\
+\texttt{cg} & \(-12.693\%\) & \(-12.468\%\) & \(-12.316\%\) & Stable latency reduction. \\
+\texttt{miniweather} & \(+0.019\%\) & \(+0.040\%\) & \(-0.062\%\) & Approximately neutral. \\
+\texttt{cholesky} & \(-8.638\%\) & \(-8.257\%\) & \(-2.441\%\) & Stable irregular-workload improvement. \\
+\texttt{lu\_decomposition} & \(-18.539\%\) & \(-18.585\%\) & \(-17.872\%\) & Largest placement latency reduction. \\
+\texttt{nbody\_blocked} & \(-0.052\%\) & \(-0.106\%\) & \(-0.580\%\) & Near neutral. \\
 \bottomrule
 \end{tabular}%
 }
@@ -146,7 +146,7 @@ improvements align with copy-byte reductions. \texttt{cholesky} reduces median
 latency by \(9.269\%\) while reducing copy bytes by \(38.220\%\), and
 \texttt{lu\_decomposition} reduces median latency by \(15.891\%\) while
 reducing copy bytes by \(23.905\%\). \texttt{fdtd} shows a smaller but still
-consistent locality win. By contrast, \texttt{miniweather} and
+consistent locality improvement. By contrast, \texttt{miniweather} and
 \texttt{nbody\_blocked} have zero deviation rate and zero copy-byte reduction,
 which explains their near-neutral latency behavior.
 
@@ -157,10 +157,10 @@ which explains their near-neutral latency behavior.
 \toprule
 Benchmark & Median \(\Delta T\) & Copy bytes \(\Delta\) & Deviation rate & Mechanism \\
 \midrule
-\texttt{fdtd} & \(-3.135\%\) & \(-12.030\%\) & 0.249902 & Modest locality win. \\
+\texttt{fdtd} & \(-3.135\%\) & \(-12.030\%\) & 0.249902 & Modest locality improvement. \\
 \texttt{miniweather} & \(-0.0066\%\) & \(0.000\%\) & 0.000000 & No useful locality opportunity. \\
-\texttt{cholesky} & \(-9.269\%\) & \(-38.220\%\) & 0.281154 & Strong locality win. \\
-\texttt{lu\_decomposition} & \(-15.891\%\) & \(-23.905\%\) & 0.619305 & Strong locality win. \\
+\texttt{cholesky} & \(-9.269\%\) & \(-38.220\%\) & 0.281154 & Strong locality improvement. \\
+\texttt{lu\_decomposition} & \(-15.891\%\) & \(-23.905\%\) & 0.619305 & Strong locality improvement. \\
 \texttt{nbody\_blocked} & \(+0.019\%\) & \(0.000\%\) & 0.000000 & HEFT-like neutral behavior. \\
 \bottomrule
 \end{tabular}
@@ -172,7 +172,7 @@ These results support the intended placement mechanism. When the runtime
 observes a non-HEFT placement that can reduce copy traffic while keeping the
 predicted finish-time penalty bounded, the residual gate accepts the
 deviation. When no such opportunity exists, the scheduler naturally collapses
-back to HEFT-like behavior. This explains both the strong wins and the neutral
+back to HEFT-like behavior. This explains both the strong improvements and the neutral
 controls without requiring a separate benchmark-specific policy.
 
 \section{Robustness of the Placement Configuration}
@@ -217,11 +217,11 @@ opportunity.
 \toprule
 Benchmark & Base ms & DVFS ms & \(\Delta T\) & Base J & DVFS J & \(\Delta E\) & \(\Delta P\) & Conclusion \\
 \midrule
-\texttt{fdtd} & 6296.000 & 6258.000 & \(-0.604\%\) & 3126.321 & 3006.605 & \(-3.829\%\) & \(-3.230\%\) & Clear energy win. \\
-\texttt{miniweather} & 15127.000 & 15138.000 & \(+0.073\%\) & 4871.344 & 4721.346 & \(-3.079\%\) & \(-3.150\%\) & Clear energy win. \\
-\texttt{cg} & 12484.000 & 12603.000 & \(+0.953\%\) & 3091.629 & 2918.909 & \(-5.587\%\) & \(-6.478\%\) & Strongest energy win. \\
-\texttt{lu\_decomposition} & 15399.100 & 15501.100 & \(+0.662\%\) & 4071.342 & 3937.518 & \(-3.287\%\) & \(-3.968\%\) & Clear energy win. \\
-\texttt{cholesky} & 18620.000 & 19144.500 & \(+2.817\%\) & 5303.507 & 5228.698 & \(-1.411\%\) & \(-4.389\%\) & Modest energy win. \\
+\texttt{fdtd} & 6296.000 & 6258.000 & \(-0.604\%\) & 3126.321 & 3006.605 & \(-3.829\%\) & \(-3.230\%\) & Clear energy reduction. \\
+\texttt{miniweather} & 15127.000 & 15138.000 & \(+0.073\%\) & 4871.344 & 4721.346 & \(-3.079\%\) & \(-3.150\%\) & Clear energy reduction. \\
+\texttt{cg} & 12484.000 & 12603.000 & \(+0.953\%\) & 3091.629 & 2918.909 & \(-5.587\%\) & \(-6.478\%\) & Largest energy reduction. \\
+\texttt{lu\_decomposition} & 15399.100 & 15501.100 & \(+0.662\%\) & 4071.342 & 3937.518 & \(-3.287\%\) & \(-3.968\%\) & Clear energy reduction. \\
+\texttt{cholesky} & 18620.000 & 19144.500 & \(+2.817\%\) & 5303.507 & 5228.698 & \(-1.411\%\) & \(-4.389\%\) & Modest energy reduction. \\
 \texttt{nbody\_blocked} & 14916.379 & 14899.927 & \(-0.110\%\) & 3876.692 & 3871.392 & \(-0.137\%\) & \(-0.023\%\) & Near neutral. \\
 \bottomrule
 \end{tabular}%
@@ -241,7 +241,7 @@ benchmark set while keeping the aggregate latency penalty below one percent.
 \label{sec:results-dvfs-mechanism}
 
 The mechanism analysis explains why the final DVFS rows reduce energy. The
-most important mechanism is lower average kernel power. In most winning rows,
+most important mechanism is lower average kernel power. In most energy-reduction rows,
 the lower power is accompanied by visible exposure to a lower active SM clock.
 The guardrail behavior is also visible in the near-neutral case:
 \texttt{nbody\_blocked} does not show meaningful clock or power movement, so
@@ -256,9 +256,9 @@ energy claim.
 \toprule
 Benchmark & \(\Delta E\) & \(\Delta P\) & \(\Delta T\) & Base SM MHz & DVFS SM MHz & MID samples & MID time & Explanation \\
 \midrule
-\texttt{fdtd} & \(-3.829\%\) & \(-3.230\%\) & \(-0.604\%\) & 1931.442 & 1852.530 & 91.903\% & 1.000 & Clear clock-mediated energy win. \\
+\texttt{fdtd} & \(-3.829\%\) & \(-3.230\%\) & \(-0.604\%\) & 1931.442 & 1852.530 & 91.903\% & 1.000 & Clear clock-mediated energy reduction. \\
 \texttt{miniweather} & \(-3.079\%\) & \(-3.150\%\) & \(+0.073\%\) & 2040.000 & 2028.091 & 0.000\% & 0.000 & Power drops with negligible latency cost. \\
-\texttt{cg} & \(-5.587\%\) & \(-6.478\%\) & \(+0.953\%\) & 2032.581 & 1876.795 & 98.912\% & 0.333 & Strongest clock-mediated energy win. \\
+\texttt{cg} & \(-5.587\%\) & \(-6.478\%\) & \(+0.953\%\) & 2032.581 & 1876.795 & 98.912\% & 0.333 & Largest clock-mediated energy reduction. \\
 \texttt{lu\_decomposition} & \(-3.287\%\) & \(-3.968\%\) & \(+0.662\%\) & 2040.000 & 1943.170 & 58.685\% & 0.697 & Partial clock exposure lowers energy. \\
 \texttt{cholesky} & \(-1.411\%\) & \(-4.389\%\) & \(+2.817\%\) & 2040.000 & 1943.222 & 58.654\% & 0.637 & Power reduction is real, latency limits net gain. \\
 \texttt{nbody\_blocked} & \(-0.137\%\) & \(-0.023\%\) & \(-0.110\%\) & 2040.000 & 2040.000 & 0.000\% & 0.000 & Little DVFS opportunity. \\
@@ -272,10 +272,10 @@ Benchmark & \(\Delta E\) & \(\Delta P\) & \(\Delta T\) & Base SM MHz & DVFS SM M
 The strongest evidence comes from \texttt{fdtd}, \texttt{cg}, and
 \texttt{lu\_decomposition}. These rows combine lower kernel energy, lower
 kernel power, and visible lower-clock exposure. \texttt{miniweather} is also a
-useful positive case because its latency remains essentially unchanged while
+useful supporting example because its latency remains essentially unchanged while
 kernel power decreases. \texttt{cholesky} demonstrates the expected trade-off:
 DVFS lowers power, but the latency increase absorbs part of the energy benefit.
-Finally, \texttt{nbody\_blocked} acts as a negative control. Its clock and
+Finally, \texttt{nbody\_blocked} acts as a neutral control. Its clock and
 power metrics remain almost unchanged, and its energy result is correspondingly
 near neutral.
 
@@ -325,10 +325,10 @@ scale. The placement evaluation uses repeated runs, but some benchmarks still
 show noise. \texttt{fdtd} is the clearest example: the mean and median results
 point in different directions because the per-run order contains mixed
 outcomes. The thesis therefore treats \texttt{fdtd} as a fragile or modest
-locality case rather than as a headline placement win.
+locality case rather than as a headline placement improvement.
 
 The locality attribution uses runtime copy metrics as mechanism evidence.
-Copy-byte reductions explain the observed wins well for
+Copy-byte reductions explain the observed improvements well for
 \texttt{cholesky} and \texttt{lu\_decomposition}, but they do not capture every
 possible source of runtime variation, such as queueing effects, kernel launch
 overheads, or overlap between computation and communication. The claim is
@@ -351,7 +351,7 @@ instrumentation-heavy diagnostic rows.
 The experimental evidence supports both layers of the proposed design. For
 placement, \texttt{bandit\_scheduler} improves geometric-mean kernel latency
 by \(7.146\%\) using mean latencies across six benchmarks, while the locality
-analysis shows that the strongest wins coincide with large copy-byte
+analysis shows that the largest improvements coincide with large copy-byte
 reductions. The neutral controls show the complementary behavior: when no
 copy-saving opportunity is present, the scheduler stays close to HEFT rather
 than forcing arbitrary deviations. The sensitivity analysis confirms that the
@@ -360,7 +360,7 @@ tested alternatives.
 
 For DVFS, \texttt{win\_dvfs} reduces geometric-mean kernel energy by
 \(2.904\%\) with \(0.626\%\) geometric-mean kernel-latency overhead. The
-mechanism evidence shows that the strongest energy wins are associated with
+mechanism evidence shows that the largest energy reductions are associated with
 lower kernel average power and, in most cases, visible exposure to lower SM
 clock levels. The final result is therefore not a universal claim that every
 benchmark benefits from DVFS. Instead, it is a controlled result showing that a
