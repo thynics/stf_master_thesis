@@ -108,16 +108,16 @@ summarizes the per-benchmark results.
 \centering
 \small
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrp{0.31\linewidth}@{}}
+\begin{tabular}{@{}lrrr@{}}
 \toprule
-Benchmark & Mean \(\Delta T\) & Median \(\Delta T\) & Kernel energy \(\Delta\) & Interpretation \\
+Benchmark & Mean \(\Delta T\) & Median \(\Delta T\) & Kernel energy \(\Delta\) \\
 \midrule
-\texttt{fdtd} & \(-1.333\%\) & \(+5.629\%\) & \(-0.597\%\) & Mean latency decreases, while median latency remains noisy. \\
-\texttt{cg} & \(-12.693\%\) & \(-12.468\%\) & \(-12.316\%\) & Stable latency reduction. \\
-\texttt{miniweather} & \(+0.019\%\) & \(+0.040\%\) & \(-0.062\%\) & Approximately neutral. \\
-\texttt{cholesky} & \(-8.638\%\) & \(-8.257\%\) & \(-2.441\%\) & Stable irregular-workload improvement. \\
-\texttt{lu\_decomposition} & \(-18.539\%\) & \(-18.585\%\) & \(-17.872\%\) & Largest placement latency reduction. \\
-\texttt{nbody\_blocked} & \(-0.052\%\) & \(-0.106\%\) & \(-0.580\%\) & Near neutral. \\
+\texttt{fdtd} & \(-1.333\%\) & \(+5.629\%\) & \(-0.597\%\) \\
+\texttt{cg} & \(-12.693\%\) & \(-12.468\%\) & \(-12.316\%\) \\
+\texttt{miniweather} & \(+0.019\%\) & \(+0.040\%\) & \(-0.062\%\) \\
+\texttt{cholesky} & \(-8.638\%\) & \(-8.257\%\) & \(-2.441\%\) \\
+\texttt{lu\_decomposition} & \(-18.539\%\) & \(-18.585\%\) & \(-17.872\%\) \\
+\texttt{nbody\_blocked} & \(-0.052\%\) & \(-0.106\%\) & \(-0.580\%\) \\
 \bottomrule
 \end{tabular}%
 }
@@ -126,11 +126,12 @@ Benchmark & Mean \(\Delta T\) & Median \(\Delta T\) & Kernel energy \(\Delta\) &
 \end{table}
 
 The result is intentionally not interpreted as a uniform speedup across all
-workloads. The scheduler is effective when the task graph exposes useful
-copy-saving alternatives, and it stays close to HEFT when such alternatives
-are absent. This behavior is consistent with the method design: the scheduler
-is a HEFT-relative residual policy, not an unconstrained learned placement
-rule.
+workloads. The largest reductions appear on \texttt{cg},
+\texttt{cholesky}, and \texttt{lu\_decomposition}; \texttt{fdtd} is noisier,
+with an improved mean but worse median; and \texttt{miniweather} and
+\texttt{nbody\_blocked} remain close to neutral. This behavior is consistent
+with the method design: the scheduler is a HEFT-relative residual policy, not
+an unconstrained learned placement rule.
 
 \section{Locality Attribution}
 \label{sec:results-locality-attribution}
@@ -153,15 +154,15 @@ which explains their near-neutral latency behavior.
 \begin{table}[t]
 \centering
 \small
-\begin{tabular}{@{}lrrrp{0.34\linewidth}@{}}
+\begin{tabular}{@{}lrrr@{}}
 \toprule
-Benchmark & Median \(\Delta T\) & Copy bytes \(\Delta\) & Deviation rate & Mechanism \\
+Benchmark & Median \(\Delta T\) & Copy bytes \(\Delta\) & Deviation rate \\
 \midrule
-\texttt{fdtd} & \(-3.135\%\) & \(-12.030\%\) & 0.249902 & Modest locality improvement. \\
-\texttt{miniweather} & \(-0.0066\%\) & \(0.000\%\) & 0.000000 & No useful locality opportunity. \\
-\texttt{cholesky} & \(-9.269\%\) & \(-38.220\%\) & 0.281154 & Strong locality improvement. \\
-\texttt{lu\_decomposition} & \(-15.891\%\) & \(-23.905\%\) & 0.619305 & Strong locality improvement. \\
-\texttt{nbody\_blocked} & \(+0.019\%\) & \(0.000\%\) & 0.000000 & HEFT-like neutral behavior. \\
+\texttt{fdtd} & \(-3.135\%\) & \(-12.030\%\) & 0.249902 \\
+\texttt{miniweather} & \(-0.0066\%\) & \(0.000\%\) & 0.000000 \\
+\texttt{cholesky} & \(-9.269\%\) & \(-38.220\%\) & 0.281154 \\
+\texttt{lu\_decomposition} & \(-15.891\%\) & \(-23.905\%\) & 0.619305 \\
+\texttt{nbody\_blocked} & \(+0.019\%\) & \(0.000\%\) & 0.000000 \\
 \bottomrule
 \end{tabular}
 \caption{Locality attribution for the placement scheduler. Negative latency and copy-byte deltas are improvements relative to HEFT.}
@@ -213,16 +214,16 @@ opportunity.
 \centering
 \small
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrrrrrp{0.23\linewidth}@{}}
+\begin{tabular}{@{}lrrrrrrr@{}}
 \toprule
-Benchmark & Base ms & DVFS ms & \(\Delta T\) & Base J & DVFS J & \(\Delta E\) & \(\Delta P\) & Conclusion \\
+Benchmark & Base ms & DVFS ms & \(\Delta T\) & Base J & DVFS J & \(\Delta E\) & \(\Delta P\) \\
 \midrule
-\texttt{fdtd} & 6296.000 & 6258.000 & \(-0.604\%\) & 3126.321 & 3006.605 & \(-3.829\%\) & \(-3.230\%\) & Clear energy reduction. \\
-\texttt{miniweather} & 15127.000 & 15138.000 & \(+0.073\%\) & 4871.344 & 4721.346 & \(-3.079\%\) & \(-3.150\%\) & Clear energy reduction. \\
-\texttt{cg} & 12484.000 & 12603.000 & \(+0.953\%\) & 3091.629 & 2918.909 & \(-5.587\%\) & \(-6.478\%\) & Largest energy reduction. \\
-\texttt{lu\_decomposition} & 15399.100 & 15501.100 & \(+0.662\%\) & 4071.342 & 3937.518 & \(-3.287\%\) & \(-3.968\%\) & Clear energy reduction. \\
-\texttt{cholesky} & 18620.000 & 19144.500 & \(+2.817\%\) & 5303.507 & 5228.698 & \(-1.411\%\) & \(-4.389\%\) & Modest energy reduction. \\
-\texttt{nbody\_blocked} & 14916.379 & 14899.927 & \(-0.110\%\) & 3876.692 & 3871.392 & \(-0.137\%\) & \(-0.023\%\) & Near neutral. \\
+\texttt{fdtd} & 6296.000 & 6258.000 & \(-0.604\%\) & 3126.321 & 3006.605 & \(-3.829\%\) & \(-3.230\%\) \\
+\texttt{miniweather} & 15127.000 & 15138.000 & \(+0.073\%\) & 4871.344 & 4721.346 & \(-3.079\%\) & \(-3.150\%\) \\
+\texttt{cg} & 12484.000 & 12603.000 & \(+0.953\%\) & 3091.629 & 2918.909 & \(-5.587\%\) & \(-6.478\%\) \\
+\texttt{lu\_decomposition} & 15399.100 & 15501.100 & \(+0.662\%\) & 4071.342 & 3937.518 & \(-3.287\%\) & \(-3.968\%\) \\
+\texttt{cholesky} & 18620.000 & 19144.500 & \(+2.817\%\) & 5303.507 & 5228.698 & \(-1.411\%\) & \(-4.389\%\) \\
+\texttt{nbody\_blocked} & 14916.379 & 14899.927 & \(-0.110\%\) & 3876.692 & 3871.392 & \(-0.137\%\) & \(-0.023\%\) \\
 \bottomrule
 \end{tabular}%
 }
@@ -252,16 +253,16 @@ energy claim.
 \centering
 \small
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrrrrrp{0.25\linewidth}@{}}
+\begin{tabular}{@{}lrrrrrrr@{}}
 \toprule
-Benchmark & \(\Delta E\) & \(\Delta P\) & \(\Delta T\) & Base SM MHz & DVFS SM MHz & MID samples & MID time & Explanation \\
+Benchmark & \(\Delta E\) & \(\Delta P\) & \(\Delta T\) & Base SM MHz & DVFS SM MHz & MID samples & MID time \\
 \midrule
-\texttt{fdtd} & \(-3.829\%\) & \(-3.230\%\) & \(-0.604\%\) & 1931.442 & 1852.530 & 91.903\% & 1.000 & Clear clock-mediated energy reduction. \\
-\texttt{miniweather} & \(-3.079\%\) & \(-3.150\%\) & \(+0.073\%\) & 2040.000 & 2028.091 & 0.000\% & 0.000 & Power drops with negligible latency cost. \\
-\texttt{cg} & \(-5.587\%\) & \(-6.478\%\) & \(+0.953\%\) & 2032.581 & 1876.795 & 98.912\% & 0.333 & Largest clock-mediated energy reduction. \\
-\texttt{lu\_decomposition} & \(-3.287\%\) & \(-3.968\%\) & \(+0.662\%\) & 2040.000 & 1943.170 & 58.685\% & 0.697 & Partial clock exposure lowers energy. \\
-\texttt{cholesky} & \(-1.411\%\) & \(-4.389\%\) & \(+2.817\%\) & 2040.000 & 1943.222 & 58.654\% & 0.637 & Power reduction is real, latency limits net gain. \\
-\texttt{nbody\_blocked} & \(-0.137\%\) & \(-0.023\%\) & \(-0.110\%\) & 2040.000 & 2040.000 & 0.000\% & 0.000 & Little DVFS opportunity. \\
+\texttt{fdtd} & \(-3.829\%\) & \(-3.230\%\) & \(-0.604\%\) & 1931.442 & 1852.530 & 91.903\% & 1.000 \\
+\texttt{miniweather} & \(-3.079\%\) & \(-3.150\%\) & \(+0.073\%\) & 2040.000 & 2028.091 & 0.000\% & 0.000 \\
+\texttt{cg} & \(-5.587\%\) & \(-6.478\%\) & \(+0.953\%\) & 2032.581 & 1876.795 & 98.912\% & 0.333 \\
+\texttt{lu\_decomposition} & \(-3.287\%\) & \(-3.968\%\) & \(+0.662\%\) & 2040.000 & 1943.170 & 58.685\% & 0.697 \\
+\texttt{cholesky} & \(-1.411\%\) & \(-4.389\%\) & \(+2.817\%\) & 2040.000 & 1943.222 & 58.654\% & 0.637 \\
+\texttt{nbody\_blocked} & \(-0.137\%\) & \(-0.023\%\) & \(-0.110\%\) & 2040.000 & 2040.000 & 0.000\% & 0.000 \\
 \bottomrule
 \end{tabular}%
 }
