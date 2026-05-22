@@ -117,41 +117,14 @@ cost small?
 does the controller avoid forcing changes on low-opportunity workloads?
 \end{enumerate}
 
-The following sections answer these questions in the same order. The key
-results are reported first to give the reader the overall effect size. The
-placement section then shows the per-benchmark latency and energy deltas, and
-the data-movement section checks whether those deltas align with copy-volume
-reductions. The DVFS section reports the final energy result, while the clock
-and power section explains why the energy reductions appear on some workloads
-but not on all of them. The chapter ends with overheads and limitations, rather
-than mixing diagnostic details into the main result tables.
-
-\section{Key Results}
-\label{sec:results-key}
-
-Table~\ref{tab:results-headline} summarizes the main results. The bandit
-scheduler reduces geometric-mean kernel latency by \(7.146\%\) relative to
-HEFT. WinDVFS reduces geometric-mean kernel energy by \(2.904\%\) with a
-\(0.626\%\) geometric-mean kernel-latency overhead.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{@{}lr@{}}
-\toprule
-Metric & Value \\
-\midrule
-Placement geometric-mean kernel-latency reduction & \(7.146\%\) \\
-Placement geometric-mean speedup & \(1.076965\times\) \\
-Largest placement latency reduction & \(18.539\%\) \\
-DVFS geometric-mean kernel-energy reduction & \(2.904\%\) \\
-DVFS geometric-mean kernel-latency overhead & \(0.626\%\) \\
-Largest single-benchmark DVFS energy reduction & \(5.587\%\) \\
-\bottomrule
-\end{tabular}
-\caption{Headline results across the benchmark suite. Placement is compared with HEFT; DVFS is compared with no-DVFS execution.}
-\label{tab:results-headline}
-\end{table}
+The following sections answer these questions in the same order. The placement
+section first reports the latency and energy deltas relative to HEFT. The
+data-movement section then checks whether those deltas align with copy-volume
+reductions. The DVFS section reports the energy result relative to no-DVFS
+execution, while the clock and power section explains why the energy reductions
+appear on some workloads but not on all of them. The chapter ends with
+overheads and limitations, rather than mixing diagnostic details into the main
+result tables.
 
 \section{Placement Results}
 \label{sec:results-placement-performance}
