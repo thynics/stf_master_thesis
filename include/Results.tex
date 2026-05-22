@@ -120,11 +120,11 @@ does the controller avoid forcing changes on low-opportunity workloads?
 The following sections answer these questions in the same order. The placement
 section first reports the latency and energy deltas relative to HEFT. The
 data-movement section then checks whether those deltas align with copy-volume
-reductions, followed by a robustness check across nearby placement settings.
-The DVFS section reports the energy result relative to no-DVFS execution,
-while the clock and power section explains why the energy reductions appear on
-some workloads but not on all of them. The chapter ends with overheads and
-limitations, rather than mixing diagnostic details into the main result tables.
+reductions. The DVFS section reports the energy result relative to no-DVFS
+execution, while the clock and power section explains why the energy reductions
+appear on some workloads but not on all of them. The chapter ends with
+overheads and limitations, rather than mixing diagnostic details into the main
+result tables.
 
 \section{Placement Results}
 \label{sec:results-placement-performance}
@@ -213,43 +213,6 @@ placement result credible. Their deviation rates are zero, copy traffic is
 unchanged, and latency remains effectively at the HEFT baseline. The residual
 policy is therefore selective: it changes placements when copy-saving
 opportunities are visible and otherwise collapses back to HEFT-like behavior.
-
-\section{Placement Robustness}
-\label{sec:results-placement-robustness}
-
-The selected placement setting was checked against nearby scheduler settings
-on the workloads that best expose sensitivity: FDTD, MiniWeather, Cholesky,
-and LU decomposition. Table~\ref{tab:results-placement-robustness} reports
-the selected setting together with the range observed across the neighboring
-settings. The four-benchmark geometric-mean speedup of the selected setting is
-\(1.076371\times\), which is the best aggregate result in this validation.
-
-\begin{table}[H]
-\centering
-\small
-\begin{tabular}{@{}lrrr@{}}
-\toprule
-Benchmark & Selected speedup & Nearby speedup range & Selected latency \(\Delta\) \\
-\midrule
-FDTD & \(0.9862\times\) & \(0.9862\times\)--\(1.0239\times\) & \(+1.403\%\) \\
-MiniWeather & \(1.0006\times\) & \(0.9997\times\)--\(1.0006\times\) & \(-0.060\%\) \\
-Cholesky & \(1.1110\times\) & \(1.0207\times\)--\(1.1110\times\) & \(-9.992\%\) \\
-LU decomposition & \(1.2244\times\) & \(1.1582\times\)--\(1.2258\times\) & \(-18.327\%\) \\
-\bottomrule
-\end{tabular}
-\caption{Placement robustness check across nearby scheduler settings. DVFS is disabled.}
-\label{tab:results-placement-robustness}
-\end{table}
-
-This validation supports two conclusions. First, the strongest workloads are
-not artifacts of one narrow scheduler setting: Cholesky and LU decomposition
-remain positive throughout the nearby range. Second, the neutral behavior is
-stable: MiniWeather remains essentially unchanged. FDTD is the sensitivity
-stress case; its selected setting is weaker in this validation than in the
-main placement batch, but the nearby range still contains modest positive
-results and the copy reduction remains consistent with the locality evidence.
-This is why FDTD is treated as a modest locality case rather than as the main
-placement proof.
 
 \section{DVFS Energy Results}
 \label{sec:results-dvfs-energy}
@@ -349,9 +312,7 @@ The experimental evidence supports both layers of the proposed design. The
 bandit scheduler improves geometric-mean kernel latency by \(7.146\%\) relative
 to HEFT, with the largest gains appearing on copy-sensitive workloads. The
 data-movement results show that these gains align with reduced copy traffic,
-while neutral workloads remain close to HEFT. The robustness validation keeps
-the selected placement setting as the best four-benchmark aggregate and shows
-that the strongest placement gains persist across nearby scheduler settings.
+while neutral workloads remain close to HEFT.
 
 WinDVFS reduces geometric-mean kernel energy by \(2.904\%\) with \(0.626\%\)
 geometric-mean latency overhead. The result is not a universal claim that every
