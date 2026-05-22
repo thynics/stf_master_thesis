@@ -19,11 +19,11 @@ The placement results support the main design choice of this thesis: HEFT
 should remain the performance anchor, while locality-aware deviations should be
 admitted only when there is sufficient copy-saving evidence. In the placement
 performance experiment,
-\texttt{bandit\_scheduler} improves geometric-mean kernel latency by
+the bandit scheduler improves geometric-mean kernel latency by
 \(7.146\%\) across six benchmarks using mean latencies. The improvement is not
-uniform. \texttt{cg}, \texttt{cholesky}, and \texttt{lu\_decomposition} show
-stable gains, whereas \texttt{miniweather} and \texttt{nbody\_blocked} are
-near neutral and \texttt{fdtd} is more fragile.
+uniform. CG, Cholesky, and LU decomposition show
+stable gains, whereas MiniWeather and Blocked N-body are
+near neutral and FDTD is more fragile.
 
 This non-uniformity is expected for a residual placement policy. The scheduler
 does not try to replace HEFT with a globally different placement strategy.
@@ -31,8 +31,8 @@ Instead, it asks whether a non-HEFT GPU can reduce predicted copy cost while
 keeping the local finish-time penalty bounded. The locality-attribution
 analysis confirms that this behavior is visible in the measurements. The
 largest improvements coincide with large copy
-byte reductions: \texttt{cholesky} reduces copy bytes by \(38.220\%\), and
-\texttt{lu\_decomposition} reduces copy bytes by \(23.905\%\). The neutral
+byte reductions: Cholesky reduces copy bytes by \(38.220\%\), and
+LU decomposition reduces copy bytes by \(23.905\%\). The neutral
 benchmarks have zero deviation rate and zero copy-byte reduction, which
 explains why they remain close to HEFT.
 
@@ -45,13 +45,13 @@ manual adjustment would be less useful in practice.
 \section{Interpreting the DVFS Result}
 \label{sec:discussion-dvfs}
 
-The \texttt{win\_dvfs} result should be interpreted as a conservative
+The WinDVFS result should be interpreted as a conservative
 energy-control result rather than as a universal energy optimum. Across the
-six final rows, \texttt{win\_dvfs} reduces geometric-mean kernel energy by
+six final rows, WinDVFS reduces geometric-mean kernel energy by
 \(2.904\%\) with a geometric-mean kernel-latency overhead of \(0.626\%\).
-Four benchmarks show clear kernel-energy reductions, \texttt{cholesky} shows
+Four benchmarks show clear kernel-energy reductions, Cholesky shows
 a smaller reduction with a larger latency trade-off, and
-\texttt{nbody\_blocked} remains near neutral.
+Blocked N-body remains near neutral.
 
 This outcome is consistent with the proposal--commit design. The DVFS layer
 does not directly optimize each task in isolation. It accumulates task-level
@@ -60,7 +60,7 @@ guardrails indicate that the performance risk is acceptable. The DVFS clock and 
 analysis shows that the larger energy reductions are associated with lower kernel
 average power and, in most cases, lower active SM clock exposure. At the same
 time, the
-\texttt{nbody\_blocked} row shows why the guardrails are necessary: when the
+Blocked N-body row shows why the guardrails are necessary: when the
 benchmark offers little useful DVFS opportunity, the final behavior remains
 near the no-DVFS baseline instead of forcing an aggressive lower-frequency
 choice.
@@ -131,7 +131,7 @@ events.
 The results also suggest that non-regression behavior is as important as peak
 improvement. A scheduler that improves only a subset of benchmarks is still
 useful if it reliably avoids harming low-opportunity workloads. In this thesis,
-\texttt{miniweather} and \texttt{nbody\_blocked} are important precisely
+MiniWeather and Blocked N-body are important precisely
 because they are neutral controls. They show that the scheduler does not need
 to force deviations or frequency changes where the measured opportunity is
 small.
@@ -149,9 +149,9 @@ engine behavior may change the magnitude of the placement gains.
 The workload set is also limited. The six benchmarks cover several useful
 cases, including strong locality winners, neutral controls, and DVFS-positive
 rows, but they do not exhaust the range of CUDASTF applications. The
-\texttt{fdtd} results also show that benchmark-level noise can affect median
+FDTD results also show that benchmark-level noise can affect median
 and mean conclusions differently. This is why the thesis treats
-\texttt{fdtd} as a fragile locality case rather than as a primary proof point.
+FDTD as a fragile locality case rather than as a primary proof point.
 
 The placement model uses a lightweight residency and copy-cost approximation.
 This is appropriate for an online scheduler, but it cannot perfectly model
