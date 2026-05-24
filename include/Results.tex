@@ -189,8 +189,8 @@ Overhead diagnostic & selected scheduler/control rows & mixed diagnostic rows & 
 \end{table}
 
 The presentation follows this evidence order. The placement section reports
-latency and energy deltas relative to HEFT. The data-movement section examines
-whether these deltas align with copy-volume reductions. The DVFS section
+latency relative to HEFT. The data-movement section examines
+whether these latency changes align with copy-volume reductions. The DVFS section
 reports energy relative to no-DVFS execution, and the clock, power, and
 guardrail section explains why the energy reductions are workload dependent.
 The chapter ends by separating diagnostic overhead measurements from the main
@@ -202,13 +202,14 @@ performance and energy claims.
 \label{sec:results-placement-performance}
 
 Figure~\ref{fig:results-placement-deltas} visualizes the placement-only
-latency and energy deltas for each benchmark, while
-Table~\ref{tab:results-placement-main} reports the exact numerical values. The
-figure separates the benchmark suite into three behaviors. CG, Cholesky, and
-LU decomposition show strong placement benefits; FDTD shows a smaller positive
-effect; and MiniWeather remains near the baseline. This separation is important
-because the scheduler is expected to exploit locality only when the task graph
-exposes useful placement alternatives.
+latency result by normalizing HEFT to \(100\%\) for each benchmark and plotting
+the corresponding Bandit latency. Table~\ref{tab:results-placement-main}
+reports the absolute latency measurements. The result separates the benchmark
+suite into three behaviors. CG, Cholesky, and LU decomposition show strong
+placement benefits; FDTD shows a moderate positive effect; and MiniWeather
+remains near the baseline. This separation is important because the scheduler
+is expected to exploit locality only when the task graph exposes useful
+placement alternatives.
 
 \figPlacementDeltas
 
@@ -217,39 +218,38 @@ exposes useful placement alternatives.
 \small
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-Benchmark & Speedup & Latency \(\Delta\) & Energy \(\Delta\) \\
+Benchmark & HEFT latency & Bandit latency & Latency \(\Delta\) \\
 \midrule
-FDTD & \(1.0135\times\) & \(-1.333\%\) & \(-0.597\%\) \\
-CG & \(1.1454\times\) & \(-12.693\%\) & \(-12.316\%\) \\
-MiniWeather & \(0.9998\times\) & \(+0.019\%\) & \(-0.062\%\) \\
-Cholesky & \(1.0945\times\) & \(-8.638\%\) & \(-2.441\%\) \\
-LU decomposition & \(1.2276\times\) & \(-18.539\%\) & \(-17.872\%\) \\
+FDTD & 6784.000 ms & 6341.000 ms & \(-6.530\%\) \\
+CG & 14301.000 ms & 12337.000 ms & \(-13.733\%\) \\
+MiniWeather & 15111.600 ms & 15114.400 ms & \(+0.019\%\) \\
+Cholesky & 20672.900 ms & 18592.600 ms & \(-10.063\%\) \\
+LU decomposition & 18591.620 ms & 15145.000 ms & \(-18.539\%\) \\
 \bottomrule
 \end{tabular}
 \caption{Placement-only results relative to HEFT. DVFS is disabled.}
 \label{tab:results-placement-main}
 \end{table}
 
-The five-benchmark geometric-mean speedup is \(1.092940\times\), equivalent to
-an \(8.504\%\) normalized latency reduction. This aggregate value should be read
+The five-benchmark geometric-mean speedup is \(1.110971\times\), equivalent to
+a \(9.989\%\) normalized latency reduction. This aggregate value should be read
 together with the per-benchmark distribution. LU decomposition has the largest
 gain, followed by CG and Cholesky. These three workloads dominate the
 placement benefit because their task graphs expose useful alternatives to HEFT
-placement. FDTD is a modest positive case. MiniWeather is effectively
+placement. FDTD is a moderate positive case. MiniWeather is effectively
 unchanged, indicating that the scheduler remains close to the baseline when
 there is little locality benefit.
 
 The geometric mean is therefore a suite-level summary rather than evidence
-that every benchmark benefits equally. FDTD is treated as a weak positive
-placement case because its latency improvement is modest. The stronger
-placement evidence comes from CG, Cholesky, and LU decomposition, where the
-effects are substantially larger.
+that every benchmark benefits equally. The stronger placement evidence comes
+from CG, Cholesky, and LU decomposition, where the effects are substantially
+larger. FDTD still contributes a clear positive result, while MiniWeather
+serves as the near-neutral case.
 
-The energy column shows that the placement-only measurements do not introduce
-an energy regression that would contradict the latency result. CG and LU
-decomposition reduce both latency and energy, while the neutral workload
-remains near the baseline. The placement claim itself, however, is based on
-latency and locality evidence rather than on frequency-control effects.
+The placement claim is therefore based on latency and locality evidence rather
+than on frequency-control effects. The following locality section explains why
+the large latency reductions in CG, Cholesky, and LU decomposition are
+consistent with reduced data movement.
 
 \section{Placement Locality Evidence}
 \label{sec:results-locality-attribution}
@@ -527,7 +527,7 @@ study.
 \label{sec:results-summary}
 
 The experimental evidence supports both layers of the proposed design. The
-bandit scheduler improves geometric-mean latency by \(8.504\%\) relative
+bandit scheduler improves geometric-mean latency by \(9.989\%\) relative
 to HEFT, with the largest gains appearing on copy-sensitive workloads. The
 data-movement results are consistent with a locality-driven explanation of
 these gains: the strongest placement cases reduce copy traffic, while the

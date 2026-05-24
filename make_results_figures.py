@@ -23,8 +23,8 @@ COPY_BYTES = np.array(
     dtype=float,
 )
 
-PLACEMENT_LAT_DELTA = np.array([-1.333, -12.693, 0.019, -8.638, -18.539])
-PLACEMENT_ENERGY_DELTA = np.array([-0.597, -12.316, -0.062, -2.441, -17.872])
+PLACEMENT_LAT_DELTA = np.array([-6.530, -13.733, 0.019, -10.063, -18.539])
+PLACEMENT_BANDIT_NORM = 100.0 + PLACEMENT_LAT_DELTA
 
 LOC_BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU"]
 COPY_DELTA = np.array([-12.030, -7.692, 0.0, -38.220, -23.905])
@@ -189,7 +189,7 @@ def results_overview() -> None:
     fig, ax = plt.subplots(figsize=(4.35, 2.4))
     labels = ["Placement\nlatency", "DVFS\nenergy"]
     baseline = np.array([1.0, 1.0])
-    optimized = np.array([0.914963, 0.965520])
+    optimized = np.array([0.900113, 0.965520])
     x = np.array([0.0, 1.35])
     bw = 0.18
     ax.bar(x - bw / 2, baseline, width=bw, color=COLORS["baseline"], edgecolor="#333333", linewidth=0.35, label="Baseline")
@@ -200,7 +200,7 @@ def results_overview() -> None:
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     polish_axes(ax)
-    for bar, text in zip(bars, ["8.504% lower", "3.448% lower"]):
+    for bar, text in zip(bars, ["9.989% lower", "3.448% lower"]):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 0.004,
@@ -232,18 +232,45 @@ def benchmark_copy_volume() -> None:
 
 
 def placement_deltas() -> None:
-    grouped_bars(
-        "placement_deltas.pdf",
-        BENCH_SHORT,
-        [
-            ("Latency", PLACEMENT_LAT_DELTA, COLORS["latency"]),
-            ("Energy", PLACEMENT_ENERGY_DELTA, COLORS["energy"]),
-        ],
-        "Delta vs HEFT (%)",
-        ylim=(-21.5, 3.0),
-        width=5.55,
-        height=2.55,
+    fig, ax = plt.subplots(figsize=(5.55, 2.6))
+    x = np.arange(len(BENCH_SHORT))
+    bw = 0.28
+    ax.bar(
+        x - bw / 2,
+        np.full(len(BENCH_SHORT), 100.0),
+        width=bw,
+        label="HEFT",
+        color=COLORS["baseline"],
+        edgecolor="#1F2933",
+        linewidth=0.35,
     )
+    bars = ax.bar(
+        x + bw / 2,
+        PLACEMENT_BANDIT_NORM,
+        width=bw,
+        label="Bandit",
+        color=COLORS["latency"],
+        edgecolor="#1F2933",
+        linewidth=0.35,
+    )
+    ax.axhline(100.0, color="#333333", linewidth=0.7, linestyle="--")
+    ax.set_ylabel("Normalized latency (%)")
+    ax.set_xticks(x)
+    ax.set_xticklabels(BENCH_SHORT, rotation=18, ha="right", rotation_mode="anchor")
+    ax.set_ylim(78, 104)
+    polish_axes(ax)
+    ax.legend(frameon=False, ncols=2, loc="upper center", bbox_to_anchor=(0.5, 1.12), columnspacing=1.0)
+    for bar, delta in zip(bars, PLACEMENT_LAT_DELTA):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() - 1.2 if delta < -2.0 else bar.get_height() + 0.55,
+            f"{delta:+.1f}%",
+            ha="center",
+            va="top" if delta < -2.0 else "bottom",
+            fontsize=6.2,
+            color="white" if delta < -2.0 else COLORS["text"],
+        )
+    save(fig, "placement_deltas.pdf")
 
 
 def copy_latency_scatter() -> None:
