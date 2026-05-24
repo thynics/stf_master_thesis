@@ -48,10 +48,10 @@ CLOCK_COMMIT_SWITCHES = np.array([8, 0, 512, 290, 57])
 CLOCK_FORCE_HIGH = np.array([0, 0, 0, 127, 23])
 CLOCK_SLOWDOWN = np.array([0, 0, 0, 127, 23])
 
-OVER_BENCH = ["FDTD", "LU"]
-COMPACT_LOG = np.array([-0.159, 1.559])
-CONTROL_LAT = np.array([0.953, 9.331])
-CONTROL_ENERGY = np.array([-1.196, 7.233])
+OVER_LABELS = ["Compact\nlog", "Force-\nnoop", "All-HIGH\nno-request"]
+OVER_LATENCY = np.array([0.724, -1.144, -0.884])
+OVER_ENERGY = np.array([0.620, -0.574, -0.494])
+OVER_EDP = np.array([0.790, -0.925, 0.126])
 
 
 COLORS = {
@@ -506,16 +506,16 @@ def dvfs_guardrail_events() -> None:
 def overhead_snapshot() -> None:
     grouped_bars(
         "overhead_snapshot.pdf",
-        OVER_BENCH,
+        OVER_LABELS,
         [
-            ("Placement log", COMPACT_LOG, COLORS["latency_light"]),
-            ("WinDVFS latency", CONTROL_LAT, COLORS["latency"]),
-            ("WinDVFS energy", CONTROL_ENERGY, COLORS["energy"]),
+            ("Latency", OVER_LATENCY, COLORS["latency"]),
+            ("Energy", OVER_ENERGY, COLORS["energy"]),
+            ("EDP", OVER_EDP, COLORS["power"]),
         ],
         "Delta vs baseline (%)",
-        ylim=(-2.2, 10.4),
-        width=5.0,
-        height=2.5,
+        ylim=(-1.7, 1.2),
+        width=5.15,
+        height=2.45,
         legend_cols=3,
     )
 

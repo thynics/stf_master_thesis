@@ -454,49 +454,59 @@ EDP.
 \section{Diagnostic Overheads and Claim Boundaries}
 \label{sec:results-overhead}
 
-Table~\ref{tab:results-overhead} reports the compact logging and control
-overhead snapshot, and Figure~\ref{fig:results-overhead-snapshot} visualizes
-the same rows. This experiment should be read as a diagnostic stress test
-rather than as a production-overhead estimate.
+Table~\ref{tab:results-overhead} reports the overhead diagnostic used to
+separate measurement and control costs from the main performance results. The
+baseline is the no-log Bandit configuration. The three diagnostic rows isolate
+compact placement logging, a force-noop WinDVFS path, and an all-HIGH WinDVFS
+path that does not issue frequency requests. The experiment uses the same five
+benchmarks reported in the main results and repeats each row twice.
 
 \begin{table}[!htbp]
 \centering
 \small
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrr@{}}
+\begin{tabular}{@{}llrrrr@{}}
 \toprule
-Benchmark & Compact placement-log latency \(\Delta\) & WinDVFS diagnostic latency \(\Delta\) & WinDVFS diagnostic energy \(\Delta\) \\
+Diagnostic row & Isolated path & Geomean latency \(\Delta\) & Median latency \(\Delta\) & Geomean energy \(\Delta\) & Geomean EDP \(\Delta\) \\
 \midrule
-FDTD & \(-0.159\%\) & \(+0.953\%\) & \(-1.196\%\) \\
-LU decomposition & \(+1.559\%\) & \(+9.331\%\) & \(+7.233\%\) \\
+Compact placement log & Bandit with compact placement summaries & \(+0.724\%\) & \(-0.056\%\) & \(+0.620\%\) & \(+0.790\%\) \\
+WinDVFS force-noop & WinDVFS scheduler path with proposer skipped & \(-1.144\%\) & \(-0.268\%\) & \(-0.574\%\) & \(-0.925\%\) \\
+WinDVFS all-HIGH & All-HIGH WinDVFS path without frequency requests & \(-0.884\%\) & \(+0.013\%\) & \(-0.494\%\) & \(+0.126\%\) \\
 \bottomrule
 \end{tabular}%
 }
-\caption{Diagnostic overhead snapshot. The compact placement-log row compares compact logging with a no-log bandit baseline. The WinDVFS diagnostic row combines policy behavior, clock changes, and compact control logging. These rows are not production-overhead estimates and are not used to compute the primary placement or DVFS results.}
+\caption{Diagnostic overhead snapshot over the five reported benchmarks. All rows are relative to the no-log Bandit baseline and are used only to bound measurement and control-path costs.}
 \label{tab:results-overhead}
 \end{table}
 
 \figOverheadSnapshot
 
-The compact placement-log row isolates compact logging more directly, whereas
-the WinDVFS diagnostic row combines policy behavior, frequency changes, and
-compact control logging. These rows therefore do not contradict the final DVFS
-validation rows; instead, they show that detailed diagnostic control paths can
-become visible in runtime and should be separated from the no-log or validation
-rows used for final claims. In this snapshot, compact placement logging is
-within the small-change regime for FDTD, while LU decomposition shows a visible
-single-run cost.
+The compact placement-log row has a near-zero median latency delta
+\((-0.056\%)\). Its small positive geometric mean is dominated by one FDTD
+outlier, so the result should be interpreted as a diagnostic bound rather than
+as a stable production overhead estimate. The two WinDVFS rows do not show a
+consistent positive latency tax when frequency requests are disabled. The
+force-noop path has a \(-1.144\%\) geometric-mean latency delta, and the
+all-HIGH no-request path has a \(-0.884\%\) geometric-mean latency delta with a
+median latency delta of only \(+0.013\%\). This indicates that, under this
+configuration, the no-frequency control path is close to the measurement-noise
+regime.
+
+These overhead rows are therefore kept separate from the main placement and
+DVFS claims. They support the use of compact logging for attribution and show
+that no-frequency WinDVFS control does not introduce a stable positive overhead
+in this diagnostic pass. They do not replace the no-log performance rows or the
+final DVFS comparison rows used for the headline results.
 
 The evaluation has four main limitations. First, all results are measured on a
 single eight-GPU node, so the magnitude of the results may change with GPU
 generation, interconnect topology, driver behavior, and benchmark scale.
-Second, FDTD has higher run-to-run variation than the linear-algebra workloads
-and should be read as a modest locality case rather than as the strongest
-placement example. Third, NVML sampling is approximately 100 ms in the final
-rows, so very short clock transitions may not appear as sustained middle-clock
-residency. Fourth, the DVFS conclusion is based on energy and latency measured
-over the benchmark execution window; it does not replace a full-system power
-study.
+Second, the overhead diagnostic uses two runs per row and should be read as a
+bounded stress check rather than as a precise production-overhead estimate.
+Third, FDTD has higher run-to-run variation than the linear-algebra workloads
+and contributes the main compact-logging outlier in the overhead diagnostic.
+Fourth, the DVFS conclusion is based on energy and latency measured over the
+benchmark execution window; it does not replace a full-system power study.
 
 \section{Results Summary}
 \label{sec:results-summary}
