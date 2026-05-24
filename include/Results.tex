@@ -263,19 +263,22 @@ improvement is consistent with reduced data movement.
 
 \begin{table}[!htbp]
 \centering
-\footnotesize
-\begin{tabular}{@{}lrr@{}}
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrr@{}}
 \toprule
-Benchmark & Latency \(\Delta\) & Copy bytes \(\Delta\) \\
+Benchmark & HEFT copy bytes & Bandit copy bytes & Copy bytes \(\Delta\) & Latency \(\Delta\) \\
 \midrule
-FDTD & \(-6.530\%\) & \(-12.030\%\) \\
-CG & \(-13.733\%\) & \(-7.692\%\) \\
-MiniWeather & \(+0.019\%\) & \(0.000\%\) \\
-Cholesky & \(-10.063\%\) & \(-38.220\%\) \\
-LU decomposition & \(-18.539\%\) & \(-23.905\%\) \\
+FDTD & 353,009,664 & 310,542,336 & \(-12.030\%\) & \(-6.530\%\) \\
+CG & 654,311,738 & 603,980,114 & \(-7.692\%\) & \(-13.733\%\) \\
+MiniWeather & 241,833,733,942 & 241,833,733,942 & \(0.000\%\) & \(+0.019\%\) \\
+Cholesky & 15,221,178,776 & 9,403,679,128 & \(-38.220\%\) & \(-10.063\%\) \\
+LU decomposition & 22,258,961,026 & 16,938,027,650 & \(-23.905\%\) & \(-18.539\%\) \\
 \bottomrule
 \end{tabular}
-\caption{Data-movement evidence for the placement result. Negative latency and copy-byte deltas indicate reductions relative to HEFT.}
+\endgroup
+\caption{Data-movement evidence for the placement result. Copy-byte counts are measured run means, and negative deltas indicate reductions relative to HEFT.}
 \label{tab:results-locality-attribution}
 \end{table}
 
