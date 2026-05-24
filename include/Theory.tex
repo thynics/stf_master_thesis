@@ -217,7 +217,6 @@ Metric & Definition \\
 Runtime & $T_{\mathrm{app}}$ \\
 Energy & $E_{\mathrm{app}}$ \\
 EDP & $E_{\mathrm{app}}T_{\mathrm{app}}$ \\
-ED$^2$P & $E_{\mathrm{app}}T_{\mathrm{app}}^2$ \\
 Slowdown & $T_{\mathrm{app}}/T_{\mathrm{base}} - 1$ \\
 \bottomrule
 \end{tabular}
@@ -337,11 +336,7 @@ where
 \qquad
 \beta_C+\beta_d+\beta_B=1.
 \end{equation}
-The weights describe how much the proxy should trust each signal. A larger $\beta_C$ makes long-running tasks more critical; a larger $\beta_d$ emphasizes tasks with many dependencies, which often occur near synchronization points; and a larger $\beta_B$ emphasizes data-heavy tasks, where poor placement can amplify communication cost. In the parameterization used in this thesis, the default values are
-\begin{equation}
-\beta_C=0.55,\qquad \beta_d=0.30,\qquad \beta_B=0.15.
-\end{equation}
-These constants are therefore not part of the theoretical definition itself. They are a default parameterization of a weighted proxy whose principle is that long, dependency-heavy, data-heavy tasks should be treated more conservatively.
+The weights describe how much the proxy should trust each signal. A larger $\beta_C$ makes long-running tasks more critical; a larger $\beta_d$ emphasizes tasks with many dependencies, which often occur near synchronization points; and a larger $\beta_B$ emphasizes data-heavy tasks, where poor placement can amplify communication cost. These weights are not part of the theoretical definition itself. They are implementation hyperparameters, and the evaluation defaults are reported in the Methods chapter.
 
 \section{Controlled Deviation from HEFT Baselines}
 \label{sec:theory_controlled_deviation}

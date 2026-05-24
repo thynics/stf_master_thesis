@@ -123,10 +123,7 @@ The scheduler does not require an offline critical-path computation. Instead, it
 \qquad
 \widetilde{B}(t)=\frac{\log(1+B_{\mathrm{in}}(t))}{\log(1+B_{\mathrm{ref}})}.
 \end{equation}
-Here $C_{\mathrm{ref}}$, $d_{\mathrm{ref}}$, and $B_{\mathrm{ref}}$ are normalization constants. The default values are
-\begin{equation}
-C_{\mathrm{ref}}=500,\qquad d_{\mathrm{ref}}=16,\qquad B_{\mathrm{ref}}=2^{30}.
-\end{equation}
+Here $C_{\mathrm{ref}}$, $d_{\mathrm{ref}}$, and $B_{\mathrm{ref}}$ are normalization constants. Their evaluation defaults are reported in Table~\ref{tab:criticality-hyperparameters}.
 The criticality proxy is then defined as
 \begin{equation}
 q(t)
@@ -141,13 +138,29 @@ q(t)
 \right),
 \label{eq:criticality-proxy}
 \end{equation}
-where $\beta_C$, $\beta_d$, and $\beta_B$ are tunable non-negative weights. They control the relative contribution of compute cost, dependency fan-in, and input-data volume, respectively. In the default configuration,
-\begin{equation}
-\beta_C=0.55,\qquad \beta_d=0.30,\qquad \beta_B=0.15,
-\qquad
-\beta_C+\beta_d+\beta_B=1.
-\end{equation}
+where $\beta_C$, $\beta_d$, and $\beta_B$ are tunable non-negative weights. They control the relative contribution of compute cost, dependency fan-in, and input-data volume, respectively, and satisfy $\beta_C+\beta_d+\beta_B=1$ in the default configuration.
 A larger $\beta_C$ makes the scheduler treat long-running kernels as more critical; a larger $\beta_d$ emphasizes tasks with many input dependencies, which are more likely to sit at synchronization points; and a larger $\beta_B$ emphasizes tasks with large input data volumes, where poor placement can amplify copy cost. A larger value of $q(t)$ therefore indicates a task that is locally more likely to affect the critical execution path. The placement gate and the DVFS proposer both use this proxy to become more conservative for high-criticality tasks.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Parameter & Role & Evaluation default \\
+\midrule
+$C_{\mathrm{ref}}$ & Cost normalizer & $500$ scheduler-cost units \\
+$K_{\mathrm{ref}}$ & Copy-time normalizer for bandit context & $100$ scheduler-cost units \\
+$d_{\mathrm{ref}}$ & Dependency-count normalizer & $16$ \\
+$B_{\mathrm{ref}}$ & Input-byte normalizer & $2^{30}$ bytes \\
+$\beta_C$ & Task-cost weight & $0.55$ \\
+$\beta_d$ & Dependency-count weight & $0.30$ \\
+$\beta_B$ & Input-byte weight & $0.15$ \\
+$\theta_q$ & Criticality split for residual gates & $0.60$ \\
+\bottomrule
+\end{tabular}
+\caption{Criticality, context-normalization, and residual-gate hyperparameters used in the evaluation.}
+\label{tab:criticality-hyperparameters}
+\end{table}
 
 \section{Copy-Only HEFT-Relative Residual Gate}
 \label{sec:methods-copy-only-gate}
@@ -268,10 +281,10 @@ x(W)=
 \begin{array}{c}
 \overline{q} \\
 \phi_{\mathrm{high}} \\
-\displaystyle \frac{\log(1+\overline{K}_0)}{\log(1+100)} \\
-\displaystyle \frac{\log(1+\overline{B}_{\mathrm{in}})}{\log(1+2^{30})} \\
-\displaystyle \frac{\overline{d}}{16} \\
-\displaystyle \frac{\log(1+\overline{C})}{\log(1+500)} \\
+\displaystyle \frac{\log(1+\overline{K}_0)}{\log(1+K_{\mathrm{ref}})} \\
+\displaystyle \frac{\log(1+\overline{B}_{\mathrm{in}})}{\log(1+B_{\mathrm{ref}})} \\
+\displaystyle \frac{\overline{d}}{d_{\mathrm{ref}}} \\
+\displaystyle \frac{\log(1+\overline{C})}{\log(1+C_{\mathrm{ref}})} \\
 \overline{L}_{\mathrm{imb}} \\
 \phi_{\mathrm{dev}}
 \end{array}
@@ -489,7 +502,9 @@ The proposer also detects heavy kernels. A task is marked heavy if its estimated
 
 The proposal weight accumulated by the window committer is
 \begin{equation}
-w_{\mathrm{dvfs}}(t)=1+1.5q(t)+c_{\mathrm{norm}}(t).
+w_{\mathrm{dvfs}}(t)
+=
+1+\lambda_q^{w}q(t)+\lambda_C^{w}c_{\mathrm{norm}}(t).
 \end{equation}
 The method also defines a diagnostic DVFS risk score,
 \begin{equation}
@@ -502,52 +517,101 @@ z_{\mathrm{dvfs}}(t)
 -\gamma_s s_{\mathrm{norm}}(t)
 +\gamma_h\mathbf{1}\{\mathrm{heavy}(t)\},
 \end{equation}
-where the default weights are $\gamma_q=0.35$, $\gamma_C=0.20$, $\gamma_b=0.15$, $\gamma_{\omega}=0.20$, $\gamma_s=0.10$, and $\gamma_h=0.15$. These coefficients are fixed across experiments and serve only as diagnostic attribution weights; the actual proposal is governed by the threshold rules below.
+where the weights are listed in Table~\ref{tab:dvfs-proposer-hyperparameters}. These coefficients are fixed across experiments and serve only as diagnostic attribution weights; the actual proposal is governed by the threshold rules below.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Parameter & Role & Evaluation default \\
+\midrule
+$G_{\mathrm{ref}}$ & Task-cost normalizer & $1.0\,\mathrm{ms}$ \\
+$\lambda_q^{w}$ & Proposal-weight criticality multiplier & $1.5$ \\
+$\lambda_C^{w}$ & Proposal-weight cost multiplier & $1.0$ \\
+$\gamma_q$ & Diagnostic risk weight for criticality & $0.35$ \\
+$\gamma_C$ & Diagnostic risk weight for task cost & $0.20$ \\
+$\gamma_b$ & Diagnostic risk weight for backlog & $0.15$ \\
+$\gamma_{\omega}$ & Diagnostic risk weight for copy-wait ratio & $0.20$ \\
+$\gamma_s$ & Diagnostic risk weight for slack & $0.10$ \\
+$\gamma_h$ & Diagnostic risk weight for heavy tasks & $0.15$ \\
+$\theta_{\mathrm{force}}$ & Task-level criticality force-high threshold & $0.90$ \\
+$C_{\mathrm{heavy}}^{\mathrm{strict}}$ & Strict heavy-task force-high cost & $1.0\,\mathrm{ms}$ \\
+$C_{\mathrm{light}}$ & Maximum task cost for low intent & $0.25\,\mathrm{ms}$ \\
+\bottomrule
+\end{tabular}
+\caption{Task-level DVFS proposer hyperparameters.}
+\label{tab:dvfs-proposer-hyperparameters}
+\end{table}
 
 The deterministic proposal rule is conservative. It returns $\mathrm{HIGH}$ if the mid frequency is not meaningfully below high, if
 \begin{equation}
-q(t)\geq0.90,
+q(t)\geq\theta_{\mathrm{force}},
 \qquad
 \mathrm{urgentHeavy}(t)=1,
 \qquad
-C(t)\geq1.0\,\mathrm{ms},
+C(t)\geq C_{\mathrm{heavy}}^{\mathrm{strict}},
 \qquad
-b_{\mathrm{norm}}(t,g)\geq0.80,
+b_{\mathrm{norm}}(t,g)\geq b_{\mathrm{force}},
 \end{equation}
 or if a heavy task is not sufficiently wait-bound and slack-rich. A heavy task is eligible for mid only when
 \begin{equation}
-\omega(t)\geq0.60,
+\omega(t)\geq\omega_{\mathrm{heavy}}^{\mathrm{mid}},
 \qquad
-s_{\mathrm{norm}}(t)\geq0.70,
+s_{\mathrm{norm}}(t)\geq s_{\mathrm{heavy}}^{\mathrm{mid}},
 \qquad
-b_{\mathrm{norm}}(t,g)\leq0.35.
+b_{\mathrm{norm}}(t,g)\leq b_{\mathrm{heavy}}^{\mathrm{mid}}.
 \end{equation}
 For non-forced cases, the mid-level intent is eligible when
 \begin{equation}
-\omega(t)\geq0.25,
+\omega(t)\geq\omega_{\mathrm{mid}},
 \qquad
-q(t)\leq0.45,
+q(t)\leq q_{\mathrm{mid}},
 \qquad
 \mathrm{urgentHeavy}(t)=0,
 \qquad
-b_{\mathrm{norm}}(t,g)\leq0.60.
+b_{\mathrm{norm}}(t,g)\leq b_{\mathrm{mid}}.
 \end{equation}
 The low-level intent is eligible only under stricter conditions:
 \begin{equation}
-q(t)\leq0.25,
+q(t)\leq q_{\mathrm{low}},
 \qquad
-s_{\mathrm{norm}}(t)\geq0.50,
+s_{\mathrm{norm}}(t)\geq s_{\mathrm{low}},
 \qquad
-\omega(t)\geq0.40,
+\omega(t)\geq\omega_{\mathrm{low}},
 \end{equation}
 \begin{equation}
 \mathrm{heavy}(t)=0,
 \qquad
-C(t)\leq0.25\,\mathrm{ms},
+C(t)\leq C_{\mathrm{light}},
 \qquad
-b_{\mathrm{norm}}(t,g)\leq0.40,
+b_{\mathrm{norm}}(t,g)\leq b_{\mathrm{low}},
 \end{equation}
 and only when mid is already eligible and low-frequency operation is enabled. The proposer returns $\mathrm{LOW}$ when the low rule passes, $\mathrm{MID}$ when only the mid rule passes, and $\mathrm{HIGH}$ otherwise.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Parameter & Role & Evaluation default \\
+\midrule
+$b_{\mathrm{force}}$ & Task-level backlog force-high threshold & $0.80$ \\
+$\omega_{\mathrm{heavy}}^{\mathrm{mid}}$ & Heavy-task wait ratio for mid intent & $0.60$ \\
+$s_{\mathrm{heavy}}^{\mathrm{mid}}$ & Heavy-task slack for mid intent & $0.70$ \\
+$b_{\mathrm{heavy}}^{\mathrm{mid}}$ & Heavy-task backlog limit for mid intent & $0.35$ \\
+$\omega_{\mathrm{mid}}$ & Wait-ratio threshold for mid intent & $0.25$ \\
+$q_{\mathrm{mid}}$ & Criticality limit for mid intent & $0.45$ \\
+$b_{\mathrm{mid}}$ & Backlog limit for mid intent & $0.60$ \\
+$q_{\mathrm{low}}$ & Criticality limit for low intent & $0.25$ \\
+$s_{\mathrm{low}}$ & Slack threshold for low intent & $0.50$ \\
+$\omega_{\mathrm{low}}$ & Wait-ratio threshold for low intent & $0.40$ \\
+$b_{\mathrm{low}}$ & Backlog limit for low intent & $0.40$ \\
+\bottomrule
+\end{tabular}
+\caption{Task-level DVFS intent thresholds.}
+\label{tab:dvfs-intent-thresholds}
+\end{table}
 
 \subsection{Per-GPU Window Committer}
 \label{subsec:methods-dvfs-committer}
@@ -568,11 +632,13 @@ For a lower frequency level $\ell$, the committer estimates the extra runtime as
 \end{equation}
 where
 \begin{equation}
-\alpha_t=1+1.5q(t)+\mathbf{1}\{\mathrm{heavy}(t)\},
+\alpha_t
+=
+1+\lambda_q^{\alpha}q(t)+\lambda_h^{\alpha}\mathbf{1}\{\mathrm{heavy}(t)\},
 \end{equation}
-$T(t)$ is the predicted runtime contribution of the task, and $f_{\ell}$ is the graphics clock of level $\ell$. Equation~\ref{eq:dvfs-extra-runtime} makes the estimated slowdown larger for compute-bound, critical, or heavy tasks and smaller for copy-wait-bound tasks.
+$T(t)$ is the predicted runtime contribution of the task, and $f_{\ell}$ is the graphics clock of level $\ell$. The default values of $\lambda_q^{\alpha}$ and $\lambda_h^{\alpha}$ are given in Table~\ref{tab:dvfs-committer-hyperparameters}. Equation~\ref{eq:dvfs-extra-runtime} makes the estimated slowdown larger for compute-bound, critical, or heavy tasks and smaller for copy-wait-bound tasks.
 
-A commit is considered when the per-GPU window reaches the configured number of intents, which is $16$ tasks by default. Let $V_{\mathrm{HIGH}}$, $V_{\mathrm{MID}}$, and $V_{\mathrm{LOW}}$ be the weighted vote totals and let
+A commit is considered when the per-GPU window reaches the configured number of intents $N_{\mathrm{dvfs}}$. Let $V_{\mathrm{HIGH}}$, $V_{\mathrm{MID}}$, and $V_{\mathrm{LOW}}$ be the weighted vote totals and let
 \begin{equation}
 p_{\ell}=\frac{V_{\ell}}{V_{\mathrm{HIGH}}+V_{\mathrm{MID}}+V_{\mathrm{LOW}}}.
 \end{equation}
@@ -586,40 +652,76 @@ the urgent-heavy mass, the wait share
 \end{equation}
 the average backlog, and the heavy-task fraction.
 
-The window is forced to high frequency when the mid level is unavailable, a cooldown is active, a critical override has been triggered, the urgent-heavy mass exceeds $0.15$, the weighted criticality mass exceeds $0.55$, or the average backlog exceeds $0.80$. If none of these conditions holds, the mid level is eligible only when
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Parameter & Role & Evaluation default \\
+\midrule
+$N_{\mathrm{dvfs}}$ & Intents per per-GPU DVFS window & $16$ \\
+$\lambda_q^{\alpha}$ & Criticality multiplier in slowdown estimate & $1.5$ \\
+$\lambda_h^{\alpha}$ & Heavy-task multiplier in slowdown estimate & $1.0$ \\
+$u_{\mathrm{force}}$ & Urgent-heavy mass force-high threshold & $0.15$ \\
+$q_{\mathrm{force}}^{W}$ & Criticality-mass force-high threshold & $0.55$ \\
+$b_{\mathrm{force}}^{W}$ & Average-backlog force-high threshold & $0.80$ \\
+$\Omega_{\mathrm{mid}}$ & Minimum wait share for mid commit & $0.25$ \\
+$u_{\mathrm{mid}}$ & Urgent-heavy mass limit for mid commit & $0.10$ \\
+$q_{\mathrm{mid}}^{W}$ & Criticality-mass limit for mid commit & $0.45$ \\
+$b_{\mathrm{mid}}^{W}$ & Average-backlog limit for mid commit & $0.60$ \\
+$\lambda_{\mathrm{mid}}^{S}$ & Slack-consumption coefficient for mid & $0.35$ \\
+$B_{\mathrm{mid}}$ & Additive mid performance budget & $0.20\,\mathrm{ms}$ \\
+$p_{\mathrm{HIGH}}^{\max}$ & High-vote limit for considering low & $0.25$ \\
+$h_{\mathrm{low}}^{\max}$ & Heavy-task fraction limit for low & $0.20$ \\
+$b_{\mathrm{low}}^{\mathrm{forbid}}$ & Backlog threshold that forbids low & $0.70$ \\
+$\Omega_{\mathrm{low}}$ & Minimum wait share for low commit & $0.40$ \\
+$u_{\mathrm{low}}$ & Urgent-heavy mass limit for low commit & $0.0$ \\
+$q_{\mathrm{low}}^{W}$ & Criticality-mass limit for low commit & $0.25$ \\
+$b_{\mathrm{low}}^{W}$ & Average-backlog limit for low commit & $0.40$ \\
+$\lambda_{\mathrm{low}}^{S}$ & Slack-consumption coefficient for low & $0.25$ \\
+$B_{\mathrm{low}}$ & Additive low performance budget & $0.10\,\mathrm{ms}$ \\
+$n_{\mathrm{mid}}$ & Consecutive eligible windows for mid & $2$ \\
+$n_{\mathrm{low}}$ & Consecutive eligible windows for low & $3$ \\
+\bottomrule
+\end{tabular}
+\caption{Window-level DVFS committer hyperparameters.}
+\label{tab:dvfs-committer-hyperparameters}
+\end{table}
+
+The window is forced to high frequency when the mid level is unavailable, a cooldown is active, a critical override has been triggered, the urgent-heavy mass exceeds $u_{\mathrm{force}}$, the weighted criticality mass exceeds $q_{\mathrm{force}}^{W}$, or the average backlog exceeds $b_{\mathrm{force}}^{W}$. If none of these conditions holds, the mid level is eligible only when
 \begin{equation}
-\Omega\geq0.25,
+\Omega\geq\Omega_{\mathrm{mid}},
 \qquad
-\mathrm{urgentHeavyMass}\leq0.10,
+\mathrm{urgentHeavyMass}\leq u_{\mathrm{mid}},
 \qquad
-\bar{q}_{w}\leq0.45,
+\bar{q}_{w}\leq q_{\mathrm{mid}}^{W},
 \qquad
-\overline{b}_{\mathrm{norm}}\leq0.60,
+\overline{b}_{\mathrm{norm}}\leq b_{\mathrm{mid}}^{W},
 \end{equation}
 and
 \begin{equation}
 \sum_{t\in W_g}\Delta T_{\mathrm{MID}}(t)
 \leq
-0.35\Sigma_{\mathrm{slack}}(g,W)+0.20\,\mathrm{ms}.
+\lambda_{\mathrm{mid}}^{S}\Sigma_{\mathrm{slack}}(g,W)+B_{\mathrm{mid}}.
 \end{equation}
-The low level is considered only when it is not disabled by global settings or guardrails, no cooldown is active, $p_{\mathrm{HIGH}}<0.25$, the heavy-task fraction is below $0.20$, and the average backlog is below $0.70$. It is then eligible only when mid is eligible, the window contains enough intents, no recent slowdown guardrail is active, and
+The low level is considered only when it is not disabled by global settings or guardrails, no cooldown is active, $p_{\mathrm{HIGH}}<p_{\mathrm{HIGH}}^{\max}$, the heavy-task fraction is below $h_{\mathrm{low}}^{\max}$, and the average backlog is below $b_{\mathrm{low}}^{\mathrm{forbid}}$. It is then eligible only when mid is eligible, the window contains enough intents, no recent slowdown guardrail is active, and
 \begin{equation}
-\Omega\geq0.40,
+\Omega\geq\Omega_{\mathrm{low}},
 \qquad
-\mathrm{urgentHeavyMass}=0,
+\mathrm{urgentHeavyMass}\leq u_{\mathrm{low}},
 \qquad
-\bar{q}_{w}\leq0.25,
+\bar{q}_{w}\leq q_{\mathrm{low}}^{W},
 \qquad
-\overline{b}_{\mathrm{norm}}\leq0.40,
+\overline{b}_{\mathrm{norm}}\leq b_{\mathrm{low}}^{W},
 \end{equation}
 with
 \begin{equation}
 \sum_{t\in W_g}\Delta T_{\mathrm{LOW}}(t)
 \leq
-0.25\Sigma_{\mathrm{slack}}(g,W)+0.10\,\mathrm{ms}.
+\lambda_{\mathrm{low}}^{S}\Sigma_{\mathrm{slack}}(g,W)+B_{\mathrm{low}}.
 \end{equation}
 
-To avoid oscillation, the committer requires consecutive eligible windows before entering a lower level. By default, $\mathrm{MID}$ requires two consecutive eligible windows and $\mathrm{LOW}$ requires three. If a forced-high condition is present, the committed level is $\mathrm{HIGH}$. If the previous level is $\mathrm{LOW}$ and low is no longer eligible, the committer returns to $\mathrm{HIGH}$. If the previous level is $\mathrm{MID}$ and mid is no longer eligible, it also returns to $\mathrm{HIGH}$. Otherwise, the committer enters $\mathrm{LOW}$ or $\mathrm{MID}$ only after the required consecutive eligibility count has been reached.
+To avoid oscillation, the committer requires consecutive eligible windows before entering a lower level. The required counts are $n_{\mathrm{mid}}$ for $\mathrm{MID}$ and $n_{\mathrm{low}}$ for $\mathrm{LOW}$. If a forced-high condition is present, the committed level is $\mathrm{HIGH}$. If the previous level is $\mathrm{LOW}$ and low is no longer eligible, the committer returns to $\mathrm{HIGH}$. If the previous level is $\mathrm{MID}$ and mid is no longer eligible, it also returns to $\mathrm{HIGH}$. Otherwise, the committer enters $\mathrm{LOW}$ or $\mathrm{MID}$ only after the required consecutive eligibility count has been reached.
 
 \begin{algorithm}[t]
 \caption{Windowed DVFS proposal and commit}
@@ -656,7 +758,25 @@ To avoid oscillation, the committer requires consecutive eligible windows before
 
 The guardrail is not an additional frequency-optimization objective. Its role is to make the proposal--commit DVFS layer fail-safe. The proposer and committer decide from predicted task features, while the guardrail observes the realized behavior of recent windows and revokes lower-frequency operation when those decisions appear to increase runtime.
 
-After each per-GPU commit, the runtime updates exponential moving averages for two window-level measurements: the total window runtime and the busy-tail duration between the first and last task endpoints in the window. A slowdown indicator is raised when the current window runtime exceeds its moving average by more than $2\%$ or when the busy-tail duration exceeds its moving average by more than $3\%$. The moving-average coefficient is $0.2$. Recent indicators are stored in a four-window ring buffer. If at least two of the recent windows indicate slowdown, the next windows are forced to $\mathrm{HIGH}$ frequency for a recovery interval. If the slowdown follows a $\mathrm{LOW}$ commit, $\mathrm{LOW}$ is disabled for a longer interval. This mechanism prevents an unsafe lower-frequency choice from persisting across multiple scheduling windows.
+After each per-GPU commit, the runtime updates exponential moving averages for two window-level measurements using coefficient $a_{\mathrm{ema}}$: the total window runtime and the busy-tail duration between the first and last task endpoints in the window. A slowdown indicator is raised when the current window runtime exceeds its moving average by more than $r_{\mathrm{win}}$ or when the busy-tail duration exceeds its moving average by more than $r_{\mathrm{tail}}$. Recent indicators are stored in a ring buffer of $n_{\mathrm{recent}}$ windows. If at least $n_{\mathrm{trigger}}$ of the recent windows indicate slowdown, the next windows are forced to $\mathrm{HIGH}$ frequency for a recovery interval. If the slowdown follows a $\mathrm{LOW}$ commit, $\mathrm{LOW}$ is disabled for a longer interval. This mechanism prevents an unsafe lower-frequency choice from persisting across multiple scheduling windows. Table~\ref{tab:dvfs-guardrail-hyperparameters} reports the default guardrail values used in the evaluation.
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Parameter & Role & Evaluation default \\
+\midrule
+$r_{\mathrm{win}}$ & Window-runtime slowdown threshold & $2\%$ \\
+$r_{\mathrm{tail}}$ & Busy-tail slowdown threshold & $3\%$ \\
+$a_{\mathrm{ema}}$ & Exponential moving-average coefficient & $0.2$ \\
+$n_{\mathrm{recent}}$ & Number of recent windows tracked & $4$ \\
+$n_{\mathrm{trigger}}$ & Recent slowdown indicators needed for recovery & $2$ \\
+\bottomrule
+\end{tabular}
+\caption{DVFS slowdown-guardrail hyperparameters.}
+\label{tab:dvfs-guardrail-hyperparameters}
+\end{table}
 
 Frequency application is also delayed by design. The committed level $\ell_g$ for GPU $g$ is applied to later tasks by annotating each task with
 \begin{equation}
