@@ -40,8 +40,6 @@ ENERGY_DELTA = np.array([-3.829, -3.079, -5.587, -3.287, -1.411])
 POWER_DELTA = np.array([-3.230, -3.150, -6.478, -3.968, -4.389])
 MID_SAMPLES = np.array([91.903, 0.0, 98.912, 58.685, 58.654])
 EDP = np.array([0.955902, 0.969913, 0.953132, 0.973536, 1.013666])
-ED2P = np.array([0.950133, 0.970618, 0.962218, 0.979985, 1.042219])
-
 EFF_MID_SHARE = np.array([1.000, 0.000, 0.333, 0.697, 0.637])
 COMMIT_SWITCHES = np.array([8, 0, 512, 290, 57])
 FORCE_HIGH = np.array([0, 0, 0, 127, 23])
@@ -225,7 +223,7 @@ def benchmark_copy_volume() -> None:
     ax.set_yticks(y)
     ax.set_yticklabels(BENCH_SHORT)
     ax.invert_yaxis()
-    ax.set_xlabel("Baseline copy bytes (log scale)")
+    ax.set_xlabel("")
     polish_axes(ax, grid_axis="x")
     for bar, value in zip(bars, COPY_BYTES):
         label = f"{value / 1e9:.1f} GB" if value >= 1e9 else f"{value / 1e6:.1f} MB"
@@ -239,7 +237,7 @@ def placement_deltas() -> None:
         BENCH_SHORT,
         [
             ("Kernel latency", PLACEMENT_LAT_DELTA, COLORS["latency"]),
-            ("Kernel energy", PLACEMENT_ENERGY_DELTA, COLORS["energy"]),
+            ("Energy", PLACEMENT_ENERGY_DELTA, COLORS["energy"]),
         ],
         "Delta vs HEFT (%)",
         ylim=(-21.5, 3.0),
@@ -299,7 +297,7 @@ def dvfs_deltas() -> None:
         DVFS_SHORT,
         [
             ("Kernel latency", LAT_DELTA, COLORS["latency"]),
-            ("Kernel energy", ENERGY_DELTA, COLORS["energy"]),
+            ("Energy", ENERGY_DELTA, COLORS["energy"]),
             ("Kernel power", POWER_DELTA, COLORS["power"]),
         ],
         "Delta vs no-DVFS (%)",
@@ -327,7 +325,7 @@ def dvfs_tradeoff() -> None:
         dx, dy = offsets[label]
         ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
     ax.set_xlabel("Kernel latency delta (%)")
-    ax.set_ylabel("Kernel energy delta (%)")
+    ax.set_ylabel("Energy delta (%)")
     ax.set_xlim(-1.0, 3.25)
     ax.set_ylim(-6.25, 0.55)
     polish_axes(ax, grid_axis="both")
@@ -340,12 +338,11 @@ def dvfs_edp_ratios() -> None:
         DVFS_SHORT,
         [
             ("EDP", EDP, COLORS["energy"]),
-            ("ED$^2$P", ED2P, COLORS["mid"]),
         ],
         "Ratio to no-DVFS",
         ylim=(0.94, 1.052),
         hline=1.0,
-        width=5.55,
+        width=4.95,
         height=2.55,
     )
 
@@ -366,7 +363,7 @@ def mid_energy_scatter() -> None:
         dx, dy = offsets[label]
         ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
     ax.set_xlabel("Middle-clock samples (%)")
-    ax.set_ylabel("Kernel energy delta (%)")
+    ax.set_ylabel("Energy delta (%)")
     ax.set_xlim(-5, 105)
     ax.set_ylim(-6.25, 0.55)
     polish_axes(ax, grid_axis="both")

@@ -57,12 +57,7 @@ core-frequency control path rather than a joint core-and-memory frequency
 policy.
 
 Table~\ref{tab:results-benchmark-characteristics} summarizes the benchmark
-inputs and the observed task-graph scale. The opportunity label describes the
-expected chance for residual placement to find useful non-HEFT alternatives. It
-does not represent the absolute amount of baseline copy traffic. A benchmark
-can have large copy volume but limited residual-placement opportunity when the
-copy pattern is structurally fixed or when the HEFT baseline already preserves
-the relevant locality. The benchmark suite therefore includes both
+inputs and the observed task-graph scale. The benchmark suite includes both
 copy-sensitive task graphs and lower-opportunity task graphs, allowing the
 evaluation to test whether the scheduler improves favorable cases while keeping
 low-opportunity cases close to the baseline.
@@ -71,15 +66,15 @@ low-opportunity cases close to the baseline.
 \centering
 \small
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}llrrl@{}}
+\begin{tabular}{@{}llrr@{}}
 \toprule
-Benchmark & Problem size / input & Tasks & Baseline copy bytes & Expected residual-placement opportunity \\
+Benchmark & Problem size / input & Tasks & Baseline copy bytes \\
 \midrule
-FDTD & 3840, 288, 288, 288 & 491712 & 353009664 & medium \\
-CG & 16777216, 64, 4, 1e-10 & 34 & 654311738 & medium \\
-MiniWeather & 1600, 2048, 1536 & 57600 & 241833733942 & low \\
-Cholesky & 49152, 2048 & 2600 & 15221178776 & high \\
-LU decomposition & 25088, 256 & 318549 & 22258961026 & high \\
+FDTD & 3840, 288, 288, 288 & 491712 & 353009664 \\
+CG & 16777216, 64, 4, 1e-10 & 34 & 654311738 \\
+MiniWeather & 1600, 2048, 1536 & 57600 & 241833733942 \\
+Cholesky & 49152, 2048 & 2600 & 15221178776 \\
+LU decomposition & 25088, 256 & 318549 & 22258961026 \\
 \bottomrule
 \end{tabular}%
 }
@@ -105,11 +100,11 @@ DVFS performance comparisons. This metric excludes process startup, final
 output, and host-side bookkeeping, so it focuses on the execution interval that
 can be affected by the runtime scheduler.
 
-\textbf{Kernel energy:}
-Kernel energy is the primary energy metric for DVFS. At each NVML sampling
-timestamp, the result scripts record power readings for the eight visible GPUs.
-Kernel energy is computed by trapezoidal integration over the kernel-window
-samples. The final measurements have an observed sampling interval of
+\textbf{Energy consumption:}
+Energy consumption is the primary energy metric for DVFS. At each NVML
+sampling timestamp, the result scripts record power readings for the eight
+visible GPUs. Energy is computed by trapezoidal integration over the
+benchmark execution window. The final measurements have an observed sampling interval of
 approximately 100 ms. The resulting estimate is therefore limited by the NVML
 sampling resolution, especially when clock transitions are short relative to
 the sampling period.
@@ -139,18 +134,17 @@ baseline is no-DVFS execution under the same placement layer. Negative deltas
 in latency, energy, power, and copy traffic indicate reductions relative to
 that baseline.
 
-\textbf{EDP and ED\(^2\)P:}
-Energy--delay product is reported for DVFS as \(E \times T\), and ED\(^2\)P is
-reported as
-\(E \times T^2\). These ratios show whether energy savings still hold after
-accounting for runtime changes, especially for latency-sensitive workloads.
+\textbf{EDP:}
+Energy--delay product is reported for DVFS as \(E \times T\). This ratio shows
+whether energy savings still hold after accounting for runtime changes,
+especially for latency-sensitive workloads.
 
 \textbf{Data-movement and DVFS evidence:}
 Copy-byte reduction, copy-time reduction, and non-HEFT deviation rate are used
 as placement locality evidence. Average SM clock, middle-clock sample share,
 and commit or guardrail counters are used as DVFS evidence. These supporting
 measurements explain the observed latency and energy changes, but the primary
-claims are based on kernel latency and kernel energy.
+claims are based on latency, energy consumption, and EDP.
 
 \textbf{Evidence roles:}
 The measurements in this chapter serve different evidential roles. Placement
@@ -165,7 +159,7 @@ diagnostic checks rather than production-overhead estimates.
 The evaluation separates placement from frequency control. The placement
 experiments compare HEFT with the bandit scheduler while DVFS is disabled. The
 DVFS experiments hold the placement layer fixed and compare WinDVFS with a
-no-DVFS baseline, using kernel energy as the main metric. This separation is
+no-DVFS baseline, using energy consumption and EDP as the main metrics. This separation is
 necessary because placement changes where work runs, whereas DVFS changes the
 frequency at which the selected GPUs execute the assigned work.
 
@@ -185,7 +179,7 @@ Experiment & Placement policy & DVFS policy & Main metric \\
 \midrule
 Placement-only & HEFT vs bandit scheduler & disabled & kernel latency \\
 Data-movement diagnostic & HEFT vs bandit scheduler & disabled & copy bytes and copy time \\
-DVFS energy comparison & fixed placement layer & no-DVFS vs WinDVFS & kernel energy \\
+DVFS energy comparison & fixed placement layer & no-DVFS vs WinDVFS & energy and EDP \\
 Clock and power evidence & fixed placement layer & no-DVFS vs WinDVFS & SM clock and kernel power \\
 Overhead diagnostic & selected scheduler/control rows & mixed diagnostic rows & kernel latency and energy \\
 \bottomrule
@@ -209,7 +203,7 @@ performance and energy claims.
 \label{sec:results-placement-performance}
 
 Figure~\ref{fig:results-placement-deltas} visualizes the placement-only
-latency and kernel-energy deltas for each benchmark, while
+latency and energy deltas for each benchmark, while
 Table~\ref{tab:results-placement-main} reports the exact numerical values. The
 figure separates the benchmark suite into three behaviors. CG, Cholesky, and
 LU decomposition show strong placement benefits; FDTD shows a smaller positive
@@ -224,7 +218,7 @@ exposes useful placement alternatives.
 \small
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-Benchmark & Speedup & Kernel latency \(\Delta\) & Kernel energy \(\Delta\) \\
+Benchmark & Speedup & Latency \(\Delta\) & Energy \(\Delta\) \\
 \midrule
 FDTD & \(1.0135\times\) & \(-1.333\%\) & \(-0.597\%\) \\
 CG & \(1.1454\times\) & \(-12.693\%\) & \(-12.316\%\) \\
@@ -254,10 +248,9 @@ effects are substantially larger.
 
 The energy column shows that the placement-only measurements do not introduce
 an energy regression that would contradict the latency result. CG and LU
-decomposition reduce both latency and kernel energy, while the neutral
-workloads remain near the baseline. The placement claim itself, however, is
-based on latency and locality evidence rather than on frequency-control
-effects.
+decomposition reduce both latency and energy, while the neutral workload
+remains near the baseline. The placement claim itself, however, is based on
+latency and locality evidence rather than on frequency-control effects.
 
 \section{Placement Locality Evidence}
 \label{sec:results-locality-attribution}
@@ -344,7 +337,7 @@ together, and Table~\ref{tab:results-dvfs-energy} gives the exact values.
 \small
 \begin{tabular}{@{}lrrr@{}}
 \toprule
-Benchmark & Kernel latency \(\Delta\) & Kernel energy \(\Delta\) & Kernel power \(\Delta\) \\
+Benchmark & Latency \(\Delta\) & Energy \(\Delta\) & Power \(\Delta\) \\
 \midrule
 FDTD & \(-0.604\%\) & \(-3.829\%\) & \(-3.230\%\) \\
 MiniWeather & \(+0.073\%\) & \(-3.079\%\) & \(-3.150\%\) \\
@@ -357,11 +350,11 @@ Cholesky & \(+2.817\%\) & \(-1.411\%\) & \(-4.389\%\) \\
 \label{tab:results-dvfs-energy}
 \end{table}
 
-Across the five benchmarks, the geometric-mean kernel-energy ratio is
-0.965520, corresponding to \(3.448\%\) lower normalized kernel energy. The
+Across the five benchmarks, the geometric-mean energy ratio is
+0.965520, corresponding to \(3.448\%\) lower normalized energy. The
 geometric-mean latency ratio is 1.007737, corresponding to a \(0.774\%\)
 latency overhead. This is the main DVFS result: guarded window-level frequency
-control reduces kernel energy on this benchmark set while keeping the
+control reduces energy on this benchmark set while keeping the
 aggregate latency cost below one percent.
 
 \figDvfsTradeoff
@@ -372,35 +365,34 @@ lower-energy region. MiniWeather, CG, and LU decomposition reduce energy with
 less than one percent latency overhead. Cholesky is the main less-favorable
 case: its average kernel power decreases by \(4.389\%\), but the \(2.817\%\)
 latency increase offsets much of the power saving, leaving a \(1.411\%\)
-kernel-energy reduction.
+energy reduction.
 
 \begin{table}[!htbp]
 \centering
 \small
-\begin{tabular}{@{}lrr@{}}
+\begin{tabular}{@{}lr@{}}
 \toprule
-Benchmark & EDP ratio & ED\(^2\)P ratio \\
+Benchmark & EDP ratio \\
 \midrule
-FDTD & 0.955902 & 0.950133 \\
-MiniWeather & 0.969913 & 0.970618 \\
-CG & 0.953132 & 0.962218 \\
-LU decomposition & 0.973536 & 0.979985 \\
-Cholesky & 1.013666 & 1.042219 \\
+FDTD & 0.955902 \\
+MiniWeather & 0.969913 \\
+CG & 0.953132 \\
+LU decomposition & 0.973536 \\
+Cholesky & 1.013666 \\
 \midrule
-Geometric mean & 0.972990 & 0.980518 \\
+Geometric mean & 0.972990 \\
 \bottomrule
 \end{tabular}
-\caption{DVFS energy--delay ratios computed from the kernel-energy and kernel-latency ratios in Table~\ref{tab:results-dvfs-energy}. Values below 1.0 indicate improvement.}
+\caption{DVFS energy--delay ratios computed from the energy and latency ratios in Table~\ref{tab:results-dvfs-energy}. Values below 1.0 indicate improvement.}
 \label{tab:results-dvfs-edp}
 \end{table}
 
 \figDvfsEdpRatios
 
-The EDP and ED\(^2\)P ratios support the same conclusion. The suite-level
-energy--delay products improve, but Cholesky exceeds 1.0 because its latency
-overhead is large enough to dominate the modest energy saving. Cholesky is
-therefore a latency-sensitive trade-off case rather than a primary DVFS
-benefit case.
+The EDP ratios support the same conclusion. The suite-level energy--delay
+product improves, but Cholesky exceeds 1.0 because its latency overhead is
+large enough to dominate the modest energy saving. Cholesky is therefore a
+latency-sensitive trade-off case rather than a primary DVFS benefit case.
 
 \section{Clock, Power, and Guardrail Evidence}
 \label{sec:results-dvfs-clock-guardrail}
@@ -415,7 +407,7 @@ and visible exposure to the middle SM clock.
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{@{}lrrrr@{}}
 \toprule
-Benchmark & Base SM MHz & WinDVFS SM MHz & MID samples & Kernel energy \(\Delta\) \\
+Benchmark & Base SM MHz & WinDVFS SM MHz & MID samples & Energy \(\Delta\) \\
 \midrule
 FDTD & 1931.442 & 1852.530 & 91.903\% & \(-3.829\%\) \\
 MiniWeather & 2040.000 & 2028.091 & 0.000\% & \(-3.079\%\) \\
@@ -528,8 +520,9 @@ Second, FDTD has higher run-to-run variation than the linear-algebra workloads
 and should be read as a modest locality case rather than as the strongest
 placement example. Third, NVML sampling is approximately 100 ms in the final
 rows, so very short clock transitions may not appear as sustained middle-clock
-residency. Fourth, the DVFS conclusion is based on kernel-window energy and
-latency; it does not replace a full-system power study.
+residency. Fourth, the DVFS conclusion is based on energy and latency measured
+over the benchmark execution window; it does not replace a full-system power
+study.
 
 \section{Results Summary}
 \label{sec:results-summary}
@@ -541,17 +534,17 @@ data-movement results are consistent with a locality-driven explanation of
 these gains: the strongest placement cases reduce copy traffic, while the
 near-neutral workload remains close to HEFT.
 
-WinDVFS reduces geometric-mean kernel energy by \(3.448\%\) with a
-\(0.774\%\) geometric-mean latency overhead. The EDP and ED\(^2\)P ratios also
-improve at the suite level, but the benchmark-level trade-off remains
-important: Cholesky shows that lower power can be partly offset by longer
-runtime.
+WinDVFS reduces geometric-mean energy by \(3.448\%\) with a \(0.774\%\)
+geometric-mean latency overhead. The EDP ratio also improves at the suite
+level, but the benchmark-level trade-off remains important: Cholesky shows
+that lower power can be partly offset by longer runtime.
 
 The boundary of the claim is therefore explicit. The placement result is a
 locality-sensitive latency improvement, not a claim that every task graph
-benefits equally. The DVFS result is a kernel-window energy result on one
-eight-GPU L4 node, not a full-system energy study. Within these boundaries,
+benefits equally. The DVFS result is measured over the benchmark execution
+window on one eight-GPU L4 node, not as a full-system energy study. Within
+these boundaries,
 this chapter shows two measured outcomes: the placement layer improves
 suite-level kernel latency while preserving near-baseline behavior on
-low-opportunity workloads, and the DVFS layer reduces suite-level kernel energy
+low-opportunity workloads, and the DVFS layer reduces suite-level energy
 while keeping the geometric-mean latency overhead below one percent.

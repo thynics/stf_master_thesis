@@ -4,7 +4,7 @@
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.86\linewidth]{figures/results_overview.pdf}
-\caption{Overview of the two main evaluation outcomes. Placement reports normalized kernel latency relative to HEFT, while DVFS reports normalized kernel energy relative to no-DVFS execution. The y-axis is truncated to make the normalized differences visible.}
+\caption{Overview of the two main evaluation outcomes. Placement reports normalized latency relative to HEFT, while DVFS reports normalized energy relative to no-DVFS execution. The y-axis is truncated to make the normalized differences visible.}
 \label{fig:results-overview}
 \end{figure}%
 }
@@ -22,7 +22,7 @@
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.94\linewidth]{figures/placement_deltas.pdf}
-\caption{Per-benchmark placement latency and kernel-energy deltas relative to HEFT. Negative values indicate reductions.}
+\caption{Per-benchmark placement latency and energy deltas relative to HEFT. Negative values indicate reductions.}
 \label{fig:results-placement-deltas}
 \end{figure}%
 }
@@ -58,7 +58,7 @@
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.78\linewidth]{figures/dvfs_tradeoff.pdf}
-\caption{Energy--latency trade-off of WinDVFS. The dotted vertical line marks a 1\% latency-overhead reference. Points below the horizontal axis reduce kernel energy; points to the left of the vertical axis also reduce latency.}
+\caption{Energy--latency trade-off of WinDVFS. The dotted vertical line marks a 1\% latency-overhead reference. Points below the horizontal axis reduce energy; points to the left of the vertical axis also reduce latency.}
 \label{fig:results-dvfs-tradeoff}
 \end{figure}%
 }
@@ -67,7 +67,7 @@
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.94\linewidth]{figures/dvfs_edp_ratios.pdf}
-\caption{DVFS EDP and ED\(^{2}\)P ratios relative to no-DVFS execution. Values below the dashed 1.0 line indicate improvement after accounting for runtime.}
+\caption{DVFS EDP ratios relative to no-DVFS execution. Values below the dashed 1.0 line indicate improvement after accounting for runtime.}
 \label{fig:results-dvfs-edp-ratios}
 \end{figure}%
 }
@@ -76,7 +76,7 @@
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.78\linewidth]{figures/mid_energy_scatter.pdf}
-\caption{Middle-clock sample share and kernel-energy reduction. MiniWeather is an exception to a simple residency-based explanation because its measured energy decreases despite zero middle-clock samples.}
+\caption{Middle-clock sample share and energy reduction. MiniWeather is an exception to a simple residency-based explanation because its measured energy decreases despite zero middle-clock samples.}
 \label{fig:results-mid-energy}
 \end{figure}%
 }
