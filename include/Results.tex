@@ -2,11 +2,12 @@
 \label{chap:results}
 \input{include/ResultsFigures}
 
-This chapter evaluates the CUDASTF runtime scheduler on a single-node
-multi-GPU platform. The chapter first describes the experimental platform and
-the measurement methodology. It then separates the evaluation of placement from
-the evaluation of DVFS, reports the main results, and uses data movement,
-clock, and power measurements to explain the observed behavior.
+The evaluation studies the CUDASTF runtime scheduler on a single-node
+multi-GPU platform. It first describes the experimental platform and
+measurement methodology, then separates placement from DVFS before reporting
+the end-to-end behavior of the complete runtime. Data-movement, clock, and
+power measurements are used to explain the observed trends rather than to
+replace the primary latency, energy, and EDP results.
 
 \section{Experimental Setup}
 \label{sec:results-setup}

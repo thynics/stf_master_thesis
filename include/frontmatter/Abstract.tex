@@ -4,13 +4,37 @@
 Department of Computer Science and Engineering\\
 Chalmers University of Technology and University of Gothenburg
 
-\thispagestyle{plain}			% Supress header 
+\thispagestyle{plain}			% Suppress header
 \section*{Abstract}
-Abstract text about your project in  Computer Science and Engineering.
+Multi-GPU task-graph runtimes expose scheduling information that is not
+available to external power controllers, including task dependencies, data
+residency, communication cost, device queues, and execution slack. This thesis
+uses that information to study energy--performance optimization inside CUDA
+Sequential Task Flow (CUDASTF). The proposed framework separates the problem
+into two runtime layers. The first layer is a HEFT-relative residual placement
+scheduler that keeps earliest-finish-time placement as a conservative baseline
+and accepts non-HEFT placements only when predicted data-movement savings
+justify a bounded finish-time penalty. A window-level contextual bandit adapts
+the aggressiveness of this residual gate. The second layer is a guarded
+proposal--commit DVFS controller that converts task-level frequency intents
+into stable per-GPU window-level frequency decisions.
+
+The evaluation uses a single-node eight-GPU NVIDIA L4 platform and five
+CUDASTF benchmarks. With DVFS disabled, the placement layer reduces
+geometric-mean latency by \(9.989\%\) relative to HEFT. Data-movement evidence
+shows that the strongest placement improvements coincide with substantial
+copy-byte reductions, while the near-neutral workload remains close to the
+baseline. Under fixed Bandit placement, WinDVFS reduces geometric-mean energy
+by \(5.318\%\) with a \(0.479\%\) geometric-mean latency overhead and improves
+geometric-mean EDP by \(4.865\%\). End to end, Bandit+WinDVFS reduces
+geometric-mean latency by \(8.795\%\), energy by \(11.874\%\), and EDP by
+\(19.625\%\) relative to HEFT. These results show that bounded, explainable
+runtime decisions can improve locality and energy efficiency without replacing
+HEFT with an unconstrained learned scheduler.
 
 % KEYWORDS (MAXIMUM 10 WORDS)
 \vfill
-Keywords: Computer, science, computer science, engineering, project, thesis.
+Keywords: multi-GPU scheduling, CUDASTF, task graphs, HEFT, DVFS, energy efficiency, EDP, data locality.
 
 \newpage				% Create empty back of side
 \thispagestyle{empty}

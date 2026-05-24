@@ -7,7 +7,7 @@
 \chapter{Methods}
 \label{chap:methods}
 
-This chapter describes the runtime scheduling method implemented in this thesis. The system targets single-node multi-GPU CUDASTF task graphs and is organized as two cooperating layers. The first layer is a placement scheduler. It uses HEFT as a deterministic earliest-finish-time baseline and then applies a residual locality gate that may redirect a task to a non-HEFT GPU only when the predicted data-movement saving is sufficiently large and the normalized finish-time penalty is bounded. The second layer is an optional DVFS extension. It does not change the placement decision directly; instead, it assigns frequency intents to scheduled tasks, aggregates those intents over per-GPU windows, and commits stable GPU frequency levels with guardrails against slowdown.
+The proposed runtime scheduler targets single-node multi-GPU CUDASTF task graphs and is organized as two cooperating layers. The first layer is a placement scheduler. It uses HEFT as a deterministic earliest-finish-time baseline and then applies a residual locality gate that may redirect a task to a non-HEFT GPU only when the predicted data-movement saving is sufficiently large and the normalized finish-time penalty is bounded. The second layer is an optional DVFS extension. It does not change the placement decision directly; instead, it assigns frequency intents to scheduled tasks, aggregates those intents over per-GPU windows, and commits stable GPU frequency levels with guardrails against slowdown.
 
 The placement policy studied in this work is a two-profile, copy-only, HEFT-relative residual gate with relative reward and an aggressive-profile bias. The term ``bandit'' should therefore be interpreted carefully: the bandit layer does not select a GPU for each task. GPU selection remains a HEFT-relative deterministic decision. The bandit layer selects the gate profile used over a scheduling window, thereby controlling how permissive the residual deviation from HEFT should be.
 
@@ -18,7 +18,7 @@ Let
 \begin{equation}
 \mathcal{G}=\{0,1,\ldots,m-1\}
 \end{equation}
-denote the set of GPUs available to the runtime. A task $t$ becomes schedulable when all of its CUDASTF dependencies are known to the scheduler. For each task, the scheduler observes a set of dependency descriptors, their access modes, logical data sizes, and an estimated execution cost. The method uses calibrated task statistics when available and falls back to a default task cost otherwise. We denote the estimated cost by
+denote the set of GPUs available to the runtime. A task $t$ becomes schedulable when all of its CUDASTF dependencies are known to the scheduler. For each task, the scheduler observes a set of dependency descriptors, their access modes, logical data sizes, and an estimated execution cost. The method uses calibrated task statistics when available and falls back to a default task cost otherwise. The estimated cost is denoted by
 \begin{equation}
 C(t).
 \end{equation}
@@ -106,7 +106,7 @@ g_0(t)
 =
 \mathop{\mathrm{arg\,min}}_{g\in\mathcal{G}} F(t,g).
 \end{equation}
-Ties are resolved deterministically; when two candidates have the same finish time, the lower GPU identifier is selected. We denote the corresponding baseline candidate by
+Ties are resolved deterministically; when two candidates have the same finish time, the lower GPU identifier is selected. The corresponding baseline candidate is denoted by
 \begin{equation}
 \xi_0(t)=\xi(t,g_0(t)).
 \end{equation}
@@ -116,7 +116,7 @@ HEFT is therefore the latency-oriented reference policy under the current reside
 \section{Local Criticality Proxy}
 \label{sec:methods-criticality-proxy}
 
-The scheduler does not require an offline critical-path computation. Instead, it uses a tunable local criticality proxy derived from three observable task features: estimated compute cost, dependency fan-in, and input-data volume. Let $B_{\mathrm{in}}(t)$ be the total number of input bytes read by task $t$, and let $d(t)$ be the total number of dependency descriptors attached to $t$ across all access modes. We first normalize these features as
+The scheduler does not require an offline critical-path computation. Instead, it uses a tunable local criticality proxy derived from three observable task features: estimated compute cost, dependency fan-in, and input-data volume. Let $B_{\mathrm{in}}(t)$ be the total number of input bytes read by task $t$, and let $d(t)$ be the total number of dependency descriptors attached to $t$ across all access modes. These features are normalized as
 \begin{equation}
 \widetilde{C}(t)=\frac{\log(1+C(t))}{\log(1+C_{\mathrm{ref}})},
 \qquad

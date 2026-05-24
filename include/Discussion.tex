@@ -1,16 +1,13 @@
 \chapter{Discussion}
 \label{chap:discussion}
 
-This chapter discusses the implications of the results in
-Chapter~\ref{chap:results}. The central question is not whether every
-benchmark benefits equally from the proposed scheduler. The results show a
-more specific and more defensible pattern: the placement layer improves runtime
-when the CUDASTF task graph exposes copy-saving alternatives to HEFT, and it
-falls back to HEFT-like behavior when such alternatives are absent. The DVFS
-layer then provides conservative energy control on top of the same
-placement framework. Its effect is measurable but workload dependent, which is
-consistent with the energy--performance trade-offs described in
-Chapter~\ref{ch:theory}.
+The results in Chapter~\ref{chap:results} support a specific claim rather
+than a universal one. The placement layer improves runtime when the CUDASTF
+task graph exposes copy-saving alternatives to HEFT, and it falls back to
+HEFT-like behavior when such alternatives are absent. The DVFS layer then
+provides conservative energy control on top of the same placement framework.
+Its effect is measurable but workload dependent, which is consistent with the
+energy--performance trade-offs described in Chapter~\ref{ch:theory}.
 
 \section{Interpreting the Placement Result}
 \label{sec:discussion-placement}

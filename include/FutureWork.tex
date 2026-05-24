@@ -1,16 +1,18 @@
 \chapter{Future Work}
 \label{chap:future-work}
 
-The results in this thesis show that task-graph information can be used for
+The results in this thesis show that task-graph information can support
 locality-aware placement and guarded DVFS control inside CUDASTF. At the same
-time, the current implementation is deliberately conservative and the
-evaluation is limited to a single-node benchmark suite. This chapter outlines
-the most important directions for extending the work.
+time, the current implementation is deliberately conservative, and the
+evaluation is limited to a single-node benchmark suite. The most important
+extensions concern broader evaluation, richer runtime models, stronger DVFS
+objectives, lower-overhead instrumentation, and more systematic deployment
+support.
 
 \section{Broader Hardware and Workload Evaluation}
 \label{sec:future-broader-evaluation}
 
-The first priority is broader evaluation. The current results are from one
+A first extension is broader evaluation. The current results are from one
 eight-GPU node and five reported benchmarks. Future experiments should repeat the
 placement and DVFS evaluation on different GPU generations, different
 interconnect topologies, and different problem sizes. This would test whether
@@ -101,7 +103,7 @@ scheduler explainable without making detailed logs part of the critical path.
 \section{Reproducibility and Deployment}
 \label{sec:future-reproducibility}
 
-The final direction is reproducibility and deployment. Future versions should
+A final direction is reproducibility and deployment. Future versions should
 standardize the experiment records produced by each run, including benchmark
 summaries, scheduler configuration, device metadata, and power-sampling
 summaries. A stable record format would make it easier to compare results

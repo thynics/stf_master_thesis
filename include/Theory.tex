@@ -11,7 +11,7 @@
 \chapter{Theory}
 \label{ch:theory}
 
-This chapter introduces the theoretical background for a runtime-level scheduling and DVFS-control framework for single-node multi-GPU task graphs. The target execution model is CUDA Sequential Task Flow (CUDASTF), where applications are represented as task graphs with data-driven dependencies. The central optimization goal is to reduce energy consumption and energy--delay product (EDP) while keeping the performance loss within a user-defined bound. To support this goal, the chapter first introduces multi-GPU task graph execution and CUDASTF, then reviews GPU dynamic voltage and frequency scaling (DVFS), energy--performance metrics, DAG scheduling, data-locality-aware placement, online bandit scheduling, and windowed proposal--commit DVFS control.
+Runtime-level energy optimization for multi-GPU task graphs requires a model of both scheduling and frequency control. The target execution model in this thesis is CUDA Sequential Task Flow (CUDASTF), where applications are represented as task graphs with data-driven dependencies. The central optimization goal is to reduce energy consumption and energy--delay product (EDP) while keeping performance loss within a user-defined bound. This chapter provides the theoretical background for that goal by reviewing multi-GPU task graph execution, CUDASTF, GPU dynamic voltage and frequency scaling (DVFS), energy--performance metrics, DAG scheduling, data-locality-aware placement, online bandit scheduling, and windowed proposal--commit DVFS control.
 
 \section{Multi-GPU Task Graph Execution}
 \label{sec:theory_task_graphs}
@@ -21,7 +21,7 @@ Task-graph execution is the foundation of this thesis. Instead of viewing a GPU 
 \subsection{Directed Acyclic Graph Representation}
 \label{subsec:dag_representation}
 
-A task graph is usually modelled as a directed acyclic graph (DAG):
+A task graph is usually modeled as a directed acyclic graph (DAG):
 \begin{equation}
 G = (V,E),
 \label{eq:dag_definition}
@@ -88,7 +88,7 @@ CUDASTF exposes several opportunities for energy-aware scheduling:
     \item task dependencies can be used to estimate criticality and slack;
     \item data residency information can be used to reduce unnecessary transfers;
     \item communication phases can be used to hide frequency-transition latency;
-    \item repeated task types can be profiled and modelled at runtime;
+    \item repeated task types can be profiled and modeled at runtime;
     \item task placement and DVFS decisions can be integrated into one runtime-level control pipeline.
 \end{itemize}
 
@@ -228,7 +228,7 @@ Slowdown & $T_{\mathrm{app}}/T_{\mathrm{base}} - 1$ \\
 \section{Online Task Characterization for DVFS}
 \label{sec:theory_task_characterization}
 
-A runtime scheduler cannot rely on expensive offline modelling for every task instance. Offline task-type profiles can be useful background information, but the DVFS path studied in this thesis is designed to operate from information already available inside the scheduler. The characterization problem is therefore not to predict exact power and runtime for every frequency pair. It is to separate tasks that should remain at high frequency from tasks that are plausible mid- or low-frequency candidates under the current DAG and device context.
+A runtime scheduler cannot rely on expensive offline modeling for every task instance. Offline task-type profiles can be useful background information, but the DVFS path studied in this thesis is designed to operate from information already available inside the scheduler. The characterization problem is therefore not to predict exact power and runtime for every frequency pair. It is to separate tasks that should remain at high frequency from tasks that are plausible mid- or low-frequency candidates under the current DAG and device context.
 
 \subsection{Observable Runtime Features}
 \label{subsec:observable_runtime_features}
@@ -390,7 +390,7 @@ A gate profile is a parameterized policy that controls how willing the scheduler
 \footnotesize
 \begin{tabular}{@{}llll@{}}
 \toprule
-Profile & Behaviour & End-time penalty & Copy-gain threshold \\
+Profile & Behavior & End-time penalty & Copy-gain threshold \\
 \midrule
 Closed & Always follow HEFT & Not applicable & Not applicable \\
 Conservative & Rarely deviate & Very small & High \\
@@ -402,7 +402,7 @@ Aggressive & More locality-driven & Larger & Lower \\
 \label{tab:gate_profiles_theory}
 \end{table}
 
-This profile abstraction is useful because an online scheduler can adapt the profile according to recent workload behaviour instead of relying on one fixed policy.
+This profile abstraction is useful because an online scheduler can adapt the profile according to recent workload behavior instead of relying on one fixed policy.
 
 \section{Contextual Bandits for Online Runtime Scheduling}
 \label{sec:theory_contextual_bandits}
@@ -608,7 +608,7 @@ Low-level cooldown & A slowdown is observed after a low-frequency commit & Tempo
 \label{tab:dvfs_guardrails}
 \end{table}
 
-The purpose of these guardrails is not to maximize energy savings for every local window. Instead, they protect the global runtime objective and make DVFS behaviour stable. Recent slowdown is detected from window-level runtime and busy-tail measurements maintained as moving averages. If enough recent windows exceed the allowed slowdown ratios, the committer forces recovery to high frequency. This turns the lower-frequency levels into optimistic choices that must continue to earn their place.
+The purpose of these guardrails is not to maximize energy savings for every local window. Instead, they protect the global runtime objective and make DVFS behavior stable. Recent slowdown is detected from window-level runtime and busy-tail measurements maintained as moving averages. If enough recent windows exceed the allowed slowdown ratios, the committer forces recovery to high frequency. This turns the lower-frequency levels into optimistic choices that must continue to earn their place.
 
 \subsection{Algorithm}
 \label{subsec:algorithm_proposal_commit}
@@ -664,7 +664,7 @@ At a high level, the runtime can be viewed as approximating the following constr
 & \text{all DAG dependencies are respected},
 \label{eq:runtime_optimization_problem}
 \end{align}
-where $\pi(v)$ is the placement decision, $\phi(v)$ is the frequency decision, and $J$ may be energy, EDP, ED$^2$P, or another user-selected objective. This formulation is a conceptual target rather than a claim that the online scheduler solves the constrained problem exactly.
+where $\pi(v)$ is the placement decision, $\phi(v)$ is the frequency decision, and $J$ may be energy, EDP, or another user-selected objective. This formulation is a conceptual target rather than a claim that the online scheduler solves the constrained problem exactly.
 
 Solving this problem exactly online is impractical. The thesis therefore uses a layered heuristic framework: HEFT-style baseline placement, controlled deviation for data locality, contextual-bandit adaptation of gate profiles, and proposal--commit DVFS for stable frequency control.
 
@@ -682,4 +682,4 @@ The theory motivates four design choices:
 \section{Summary}
 \label{sec:theory_summary}
 
-This chapter presented the theoretical foundation for energy-aware scheduling of multi-GPU task graphs. A CUDASTF application can be viewed as a DAG where tasks, dependencies, data residency, and communication costs are visible to the runtime. GPU DVFS introduces an energy--performance trade-off that depends on criticality, copy-wait behavior, backlog, frequency levels, and transition overhead. HEFT-style scheduling provides a strong baseline for performance, but it does not directly optimize energy or data-locality-driven trade-offs. Controlled deviation from HEFT, contextual bandit adaptation, region-level DVFS, and windowed proposal--commit frequency control form the theoretical basis for the framework developed in this thesis.
+The theoretical foundation of the proposed framework is that a CUDASTF application can be viewed as a DAG in which tasks, dependencies, data residency, and communication costs are visible to the runtime. GPU DVFS introduces an energy--performance trade-off that depends on criticality, copy-wait behavior, backlog, frequency levels, and transition overhead. HEFT-style scheduling provides a strong baseline for performance, but it does not directly optimize energy or data-locality-driven trade-offs. Controlled deviation from HEFT, contextual bandit adaptation, region-level DVFS, and windowed proposal--commit frequency control therefore form the basis for the framework developed in this thesis.
