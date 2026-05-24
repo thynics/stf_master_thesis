@@ -284,6 +284,8 @@ LU decomposition & \(-18.539\%\) & \(-23.905\%\) & \(-23.905\%\) & 0.619305 \\
 
 \figCopyLatencyScatter
 
+\figCholeskyLocalCopyFootprint
+
 \figDeviationLatencyScatter
 
 The locality data separates the benchmarks into copy-saving and near-neutral
@@ -292,6 +294,14 @@ time, and all four also reduce latency in the final placement table.
 Figure~\ref{fig:results-copy-latency} visualizes this relationship: the
 copy-saving benchmarks lie in the latency-improvement region, while
 MiniWeather stays close to zero on both axes.
+
+Figure~\ref{fig:results-cholesky-local-copy} gives a local view of the same
+effect for Cholesky. In this representative 64-task window, HEFT produces
+\(6.31\) MiB of copy traffic, while Bandit produces \(0.62\) MiB. The resulting
+\(90.1\%\) local reduction illustrates how a sequence of placement changes can
+remove repeated tile transfers within a dense linear-algebra wavefront. This
+window-level example is used as attribution evidence, not to recompute the
+aggregate placement speedup.
 
 Figure~\ref{fig:results-deviation-latency} shows that the residual scheduler is
 selective, but the deviation rate should be interpreted as the frequency of

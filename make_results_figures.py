@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 from pathlib import Path
 import sys
 
@@ -12,6 +13,7 @@ ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "figures"
 PREVIEW = OUT / "_preview"
 WRITE_PREVIEW = "--preview" in sys.argv
+CHOLESKY_LOCAL_COPY_CSV = OUT / "data" / "cholesky_local_copy_window.csv"
 
 
 BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU"]
@@ -318,6 +320,84 @@ def deviation_latency_scatter() -> None:
     save(fig, "deviation_latency_scatter.pdf")
 
 
+def cholesky_local_copy_footprint() -> None:
+    rows: list[dict[str, str]] = []
+    with CHOLESKY_LOCAL_COPY_CSV.open(newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+
+    order = np.arange(1, len(rows) + 1)
+    heft_copy_kib = np.array([int(float(row["heft_copy_bytes"])) / 1024.0 for row in rows])
+    bandit_copy_kib = np.array([int(float(row["bandit_copy_bytes"])) / 1024.0 for row in rows])
+    saved_copy_kib = np.array([int(float(row["saved_copy_bytes"])) / 1024.0 for row in rows])
+    cumulative_saved_mib = np.cumsum(saved_copy_kib) / 1024.0
+    heft_dev = np.array([int(float(row["heft_dev"])) for row in rows])
+    bandit_dev = np.array([int(float(row["bandit_dev"])) for row in rows])
+
+    total_heft_mib = float(np.sum(heft_copy_kib) / 1024.0)
+    total_bandit_mib = float(np.sum(bandit_copy_kib) / 1024.0)
+    total_saved_mib = float(np.sum(saved_copy_kib) / 1024.0)
+    saved_pct = total_saved_mib / total_heft_mib * 100.0 if total_heft_mib else 0.0
+
+    fig = plt.figure(figsize=(5.85, 3.18))
+    gs = fig.add_gridspec(3, 1, height_ratios=[0.55, 1.5, 1.0], hspace=0.13)
+    ax0 = fig.add_subplot(gs[0])
+    ax1 = fig.add_subplot(gs[1], sharex=ax0)
+    ax2 = fig.add_subplot(gs[2], sharex=ax0)
+
+    device_cmap = mpl.colors.ListedColormap(
+        ["#4B6F9F", "#D88C3D", "#4F8D5A", "#BA4A4A", "#6FA9A0", "#8B6F9F", "#C77886", "#8A725E"]
+    )
+    ax0.imshow(np.vstack([heft_dev, bandit_dev]), aspect="auto", cmap=device_cmap, vmin=0, vmax=7)
+    ax0.set_yticks([0, 1])
+    ax0.set_yticklabels(["HEFT", "Bandit"])
+    ax0.set_xticks([])
+    ax0.tick_params(axis="x", bottom=False, labelbottom=False)
+    for spine in ax0.spines.values():
+        spine.set_linewidth(0.6)
+    ax0.text(
+        0.995,
+        1.15,
+        "64-task Cholesky window",
+        transform=ax0.transAxes,
+        ha="right",
+        va="bottom",
+        fontsize=7.0,
+    )
+
+    bw = 0.38
+    ax1.bar(order - bw / 2, heft_copy_kib, width=bw, color=COLORS["baseline"], label="HEFT", linewidth=0)
+    ax1.bar(order + bw / 2, bandit_copy_kib, width=bw, color=COLORS["latency"], label="Bandit", linewidth=0)
+    ax1.set_ylabel("Copy per task (KiB)")
+    ax1.set_ylim(0, max(heft_copy_kib) * 1.22)
+    ax1.tick_params(axis="x", bottom=False, labelbottom=False)
+    ax1.legend(frameon=False, ncols=2, loc="upper right", handlelength=1.2)
+    polish_axes(ax1)
+
+    ax2.bar(order, saved_copy_kib, color=COLORS["energy"], width=0.72, linewidth=0, label="Saved copy")
+    ax2b = ax2.twinx()
+    ax2b.plot(order, cumulative_saved_mib, color=COLORS["text"], linewidth=1.05, label="Cumulative saved")
+    ax2.set_ylabel("Saved (KiB)")
+    ax2b.set_ylabel("Cumulative (MiB)")
+    ax2.set_xlabel("Local task order")
+    ax2.set_xlim(0.2, len(rows) + 0.8)
+    ax2.set_xticks([1, 16, 32, 48, 64])
+    polish_axes(ax2)
+    ax2b.spines["top"].set_visible(False)
+    ax2b.grid(False)
+
+    ax2.text(
+        0.015,
+        0.93,
+        f"HEFT {total_heft_mib:.2f} MiB; Bandit {total_bandit_mib:.2f} MiB; saved {saved_pct:.1f}%",
+        transform=ax2.transAxes,
+        ha="left",
+        va="top",
+        fontsize=6.2,
+        bbox={"boxstyle": "round,pad=0.18", "facecolor": "white", "edgecolor": "none", "alpha": 0.88},
+    )
+    save(fig, "cholesky_local_copy_footprint.pdf")
+
+
 def dvfs_deltas() -> None:
     grouped_bars(
         "dvfs_deltas.pdf",
@@ -468,6 +548,7 @@ def main() -> None:
     placement_deltas()
     copy_latency_scatter()
     deviation_latency_scatter()
+    cholesky_local_copy_footprint()
     dvfs_deltas()
     dvfs_tradeoff()
     dvfs_edp_ratios()
