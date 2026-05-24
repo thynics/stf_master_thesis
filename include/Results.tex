@@ -318,27 +318,36 @@ than as a repeated-run statistical comparison. The analysis therefore
 emphasizes multi-percent energy changes and treats sub-percent changes as
 near-neutral unless they are supported by power, clock, or trade-off evidence.
 Figure~\ref{fig:results-dvfs-deltas} reports latency, energy, and EDP
-together, and Table~\ref{tab:results-dvfs-energy} gives the exact values.
+together, and Table~\ref{tab:results-dvfs-energy} gives the corresponding
+absolute values and relative deltas.
 
 \figDvfsDeltas
 
 \begin{table}[!htbp]
 \centering
-\small
+\scriptsize
+\setlength{\tabcolsep}{2.8pt}
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}llll@{}}
+\begin{tabular}{@{}lrrrrrrrrr@{}}
 \toprule
-Benchmark & Latency & Energy & EDP \\
+& \multicolumn{3}{c}{Latency (ms)}
+& \multicolumn{3}{c}{Energy (J)}
+& \multicolumn{3}{c}{EDP (J\(\cdot\)s)} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(l){8-10}
+Benchmark
+& Base & WinDVFS & \(\Delta\)
+& Base & WinDVFS & \(\Delta\)
+& Base & WinDVFS & \(\Delta\) \\
 \midrule
-FDTD & \(6398.667 \rightarrow 6407.000\) ms (\(+0.130\%\)) & \(3182.112 \rightarrow 2984.556\) J (\(-6.208\%\)) & \(20361.273 \rightarrow 19122.048\) J\(\cdot\)s (\(-6.086\%\)) \\
-CG & \(12432.000 \rightarrow 12373.500\) ms (\(-0.471\%\)) & \(3077.927 \rightarrow 2766.860\) J (\(-10.106\%\)) & \(38264.785 \rightarrow 34235.747\) J\(\cdot\)s (\(-10.529\%\)) \\
-MiniWeather & \(15126.500 \rightarrow 15119.000\) ms (\(-0.050\%\)) & \(4957.807 \rightarrow 4875.699\) J (\(-1.656\%\)) & \(74994.269 \rightarrow 73715.700\) J\(\cdot\)s (\(-1.705\%\)) \\
-LU decomposition & \(15544.650 \rightarrow 15777.500\) ms (\(+1.498\%\)) & \(4044.087 \rightarrow 3842.609\) J (\(-4.982\%\)) & \(62863.910 \rightarrow 60626.757\) J\(\cdot\)s (\(-3.559\%\)) \\
-Cholesky & \(18562.650 \rightarrow 18804.600\) ms (\(+1.303\%\)) & \(5327.811 \rightarrow 5145.532\) J (\(-3.421\%\)) & \(98898.294 \rightarrow 96759.678\) J\(\cdot\)s (\(-2.162\%\)) \\
+FDTD & 6398.7 & 6407.0 & \(+0.13\%\) & 3182.1 & 2984.6 & \(-6.21\%\) & 20361.3 & 19122.0 & \(-6.09\%\) \\
+CG & 12432.0 & 12373.5 & \(-0.47\%\) & 3077.9 & 2766.9 & \(-10.11\%\) & 38264.8 & 34235.7 & \(-10.53\%\) \\
+MiniWeather & 15126.5 & 15119.0 & \(-0.05\%\) & 4957.8 & 4875.7 & \(-1.66\%\) & 74994.3 & 73715.7 & \(-1.70\%\) \\
+LU decomposition & 15544.7 & 15777.5 & \(+1.50\%\) & 4044.1 & 3842.6 & \(-4.98\%\) & 62863.9 & 60626.8 & \(-3.56\%\) \\
+Cholesky & 18562.7 & 18804.6 & \(+1.30\%\) & 5327.8 & 5145.5 & \(-3.42\%\) & 98898.3 & 96759.7 & \(-2.16\%\) \\
 \bottomrule
 \end{tabular}%
 }
-\caption{Final WinDVFS result relative to no-DVFS execution. Each cell reports the no-DVFS value, the WinDVFS value, and the relative delta.}
+\caption{Final WinDVFS result relative to no-DVFS execution. Base denotes the no-DVFS baseline. Absolute values are rounded to one decimal place, while relative deltas are computed from the underlying measurements.}
 \label{tab:results-dvfs-energy}
 \end{table}
 
