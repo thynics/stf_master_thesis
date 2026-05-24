@@ -179,7 +179,7 @@ Experiment & Placement policy & DVFS policy & Main metric \\
 Placement-only & HEFT vs bandit scheduler & disabled & latency \\
 Data-movement diagnostic & HEFT vs bandit scheduler & disabled & copy bytes \\
 DVFS energy comparison & fixed placement layer & no-DVFS vs WinDVFS & energy and EDP \\
-Clock and power evidence & fixed placement layer & no-DVFS vs WinDVFS & SM clock and power \\
+End-to-end comparison & HEFT vs bandit scheduler & disabled vs WinDVFS & latency, energy, and EDP \\
 Overhead diagnostic & selected scheduler/control rows & mixed diagnostic rows & latency and energy \\
 \bottomrule
 \end{tabular}%
@@ -191,10 +191,10 @@ Overhead diagnostic & selected scheduler/control rows & mixed diagnostic rows & 
 The presentation follows this evidence order. The placement section reports
 latency relative to HEFT. The data-movement section examines
 whether these latency changes align with copy-volume reductions. The DVFS section
-reports energy relative to no-DVFS execution, and the clock, power, and
-guardrail section explains why the energy reductions are workload dependent.
-The chapter ends by separating diagnostic overhead measurements from the main
-performance and energy claims.
+reports energy relative to no-DVFS execution. The end-to-end section then
+combines placement and DVFS by comparing the final Bandit+WinDVFS configuration
+against HEFT. The chapter ends by separating diagnostic overhead measurements
+from the main performance and energy claims.
 
 \figResultsOverview
 
@@ -397,90 +397,59 @@ smaller EDP improvements for MiniWeather and Cholesky show the boundary of the
 effect: the policy is most useful when the energy reduction is large enough to
 remain visible after the latency term is included.
 
-\section{Clock, Power, and Guardrail Evidence}
-\label{sec:results-dvfs-clock-guardrail}
+\section{End-to-End Performance and Energy}
+\label{sec:results-end-to-end}
 
-Table~\ref{tab:results-dvfs-clock} reports representative clock and power data
-from WinDVFS runs. These rows explain the frequency-control behavior rather
-than recomputing the final energy--performance comparison in
-Section~\ref{sec:results-dvfs-energy}. Larger energy reductions coincide with
-lower average power and visible exposure to the middle SM clock.
-
-\begin{table}[!htbp]
-\centering
-\small
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-Benchmark & Base SM MHz & WinDVFS SM MHz & MID samples & Energy \(\Delta\) \\
-\midrule
-FDTD & 1931.442 & 1852.530 & 91.903\% & \(-3.829\%\) \\
-MiniWeather & 2040.000 & 2028.091 & 0.000\% & \(-3.079\%\) \\
-CG & 2032.581 & 1876.795 & 98.912\% & \(-5.587\%\) \\
-LU decomposition & 2040.000 & 1943.170 & 58.685\% & \(-3.287\%\) \\
-Cholesky & 2040.000 & 1943.222 & 58.654\% & \(-1.411\%\) \\
-\bottomrule
-\end{tabular}%
-}
-\caption{Representative clock and energy data for WinDVFS rows. MID samples report the fraction of benchmark-window samples at the middle SM clock level.}
-\label{tab:results-dvfs-clock}
-\end{table}
-
-\figMidEnergyScatter
-
-The clock data explains why the DVFS result is workload dependent. CG and FDTD
-have high middle-clock exposure and clear energy reductions. LU decomposition
-and Cholesky show partial middle-clock exposure; LU decomposition keeps the
-latency cost small, while Cholesky exposes the expected trade-off between lower
-power and longer runtime.
-
-MiniWeather is the main exception to a simple middle-clock residency
-explanation. Its MID-sample share is zero, but its average SM clock and average
-power are still slightly lower than the no-DVFS baseline. This suggests
-that the measured energy reduction may be influenced by short clock
-transitions, sampling granularity, or device-level power-management behavior
-rather than sustained residence at the nominal middle clock. For this reason,
-MiniWeather is treated as a measured energy-saving case, but not as the
-strongest evidence of sustained middle-clock execution.
-
-Table~\ref{tab:results-dvfs-guardrail} reports the realized commit and
-guardrail counters for the clock-evidence rows. These counters are not additional
-performance metrics. They show whether the clock outcome in
-Table~\ref{tab:results-dvfs-clock} comes from sustained MID commits, no
-committed clock change, or guardrail recovery to higher clocks.
+The previous sections isolate the two components of the system: placement is
+measured against HEFT with DVFS disabled, and frequency control is measured
+against the same placement layer without DVFS. Table~\ref{tab:results-end-to-end}
+combines the two effects by comparing HEFT directly with the final
+Bandit+WinDVFS configuration. This is the end-to-end view of the proposed
+runtime.
 
 \begin{table}[!htbp]
 \centering
-\small
+\scriptsize
+\setlength{\tabcolsep}{2.8pt}
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrrr@{}}
+\begin{tabular}{@{}lrrrrrrrrr@{}}
 \toprule
-Benchmark & Effective MID share & MID samples & Commit switches & Force-HIGH events & Slowdown events \\
+& \multicolumn{3}{c}{Latency (ms)}
+& \multicolumn{3}{c}{Energy (J)}
+& \multicolumn{3}{c}{EDP (J\(\cdot\)s)} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(l){8-10}
+Benchmark
+& HEFT & B+DVFS & \(\Delta\)
+& HEFT & B+DVFS & \(\Delta\)
+& HEFT & B+DVFS & \(\Delta\) \\
 \midrule
-FDTD & 1.000 & 91.903\% & 8 & 0 & 0 \\
-MiniWeather & 0.000 & 0.000\% & 0 & 0 & 0 \\
-CG & 0.333 & 98.912\% & 512 & 0 & 0 \\
-LU decomposition & 0.697 & 58.685\% & 290 & 127 & 127 \\
-Cholesky & 0.637 & 58.654\% & 57 & 23 & 23 \\
+FDTD & 6784.0 & 6407.0 & \(-5.56\%\) & 3256.7 & 2984.6 & \(-8.36\%\) & 22093.3 & 19122.0 & \(-13.45\%\) \\
+CG & 14301.0 & 12373.5 & \(-13.48\%\) & 3464.1 & 2766.9 & \(-20.13\%\) & 49540.8 & 34235.7 & \(-30.89\%\) \\
+MiniWeather & 15111.6 & 15119.0 & \(+0.05\%\) & 5080.7 & 4875.7 & \(-4.04\%\) & 76778.0 & 73715.7 & \(-3.99\%\) \\
+LU decomposition & 18591.6 & 15777.5 & \(-15.14\%\) & 4825.7 & 3842.6 & \(-20.37\%\) & 89716.8 & 60626.8 & \(-32.42\%\) \\
+Cholesky & 20672.9 & 18804.6 & \(-9.04\%\) & 5415.0 & 5145.5 & \(-4.98\%\) & 111943.7 & 96759.7 & \(-13.56\%\) \\
 \bottomrule
 \end{tabular}%
 }
-\caption{DVFS commit and guardrail counters for the final rows. Effective MID share is the committed-time share reported by the controller; MID samples are measured from benchmark-window clock samples.}
-\label{tab:results-dvfs-guardrail}
+\caption{End-to-end comparison between HEFT and the final Bandit+WinDVFS configuration. B+DVFS denotes the bandit scheduler with WinDVFS enabled.}
+\label{tab:results-end-to-end}
 \end{table}
 
-\figDvfsCommitShare
+The end-to-end comparison gives a geometric-mean latency ratio of 0.912049,
+which corresponds to an \(8.795\%\) latency reduction relative to HEFT. The
+geometric-mean energy ratio is 0.881255, corresponding to an \(11.874\%\)
+energy reduction. Because both latency and energy improve on most benchmarks,
+the EDP effect is stronger: the geometric-mean EDP ratio is 0.803748, or a
+\(19.625\%\) reduction.
 
-\figDvfsGuardrailEvents
-
-The commit and guardrail figures refine the clock evidence. FDTD and CG have
-high measured middle-clock exposure without slowdown recovery events. LU
-decomposition and Cholesky show partial MID exposure together with force-HIGH
-and slowdown events, so their rows are better read as guarded trade-offs than
-as unconstrained down-clocking. MiniWeather has no committed MID share in these
-measurements. The difference between controller-reported MID share and sampled
-MID share is expected: the former is a controller-side committed share, while
-the latter is observed only at NVML sampling timestamps.
+The per-benchmark distribution is also important. CG and LU decomposition are
+the strongest end-to-end cases because they benefit from both placement and
+frequency control. FDTD and Cholesky also improve substantially, although the
+source of the benefit differs: FDTD combines moderate latency reduction with a
+larger energy reduction, while Cholesky receives most of its benefit from
+placement and a smaller additional energy gain. MiniWeather remains the
+near-neutral latency control, but it still reduces energy and therefore lowers
+EDP.
 
 \section{Diagnostic Overheads and Claim Boundaries}
 \label{sec:results-overhead}
@@ -542,13 +511,17 @@ near-neutral workload remains close to HEFT.
 WinDVFS reduces geometric-mean energy by \(5.318\%\) with a \(0.479\%\)
 geometric-mean latency overhead. The geometric-mean EDP ratio improves to
 0.951354, and all five reported benchmarks remain below an EDP ratio of 1.0.
+When the two layers are evaluated end to end against HEFT, the final
+Bandit+WinDVFS configuration reduces geometric-mean latency by \(8.795\%\),
+energy by \(11.874\%\), and EDP by \(19.625\%\).
 
 The boundary of the claim is therefore explicit. The placement result is a
 locality-sensitive latency improvement, not a claim that every task graph
 benefits equally. The DVFS result is measured over the benchmark execution
 window on one eight-GPU L4 node, not as a full-system energy study. Within
 these boundaries,
-this chapter shows two measured outcomes: the placement layer improves
+this chapter shows three measured outcomes: the placement layer improves
 suite-level latency while preserving near-baseline behavior on
-low-opportunity workloads, and the DVFS layer reduces suite-level energy
-while keeping the geometric-mean latency overhead below one percent.
+low-opportunity workloads; the DVFS layer reduces suite-level energy while
+keeping the geometric-mean latency overhead below one percent; and the combined
+system improves the energy--delay product relative to HEFT.
