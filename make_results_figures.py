@@ -31,9 +31,6 @@ PLACEMENT_BANDIT_NORM = 100.0 + PLACEMENT_LAT_DELTA
 LOC_BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU"]
 COPY_DELTA = np.array([-12.030, -7.692, 0.0, -38.220, -23.905])
 LOC_LAT_DELTA = np.array([-6.530, -13.733, 0.019, -10.063, -18.539])
-DEV_BENCH = ["FDTD", "MiniWeather", "Cholesky", "LU"]
-DEV_RATE = np.array([0.249902, 0.0, 0.281154, 0.619305])
-DEV_LAT_DELTA = np.array([-6.530, 0.019, -10.063, -18.539])
 
 DVFS_BENCH = ["FDTD", "MiniWeather", "CG", "LU", "Cholesky"]
 DVFS_SHORT = ["FDTD", "MiniW.", "CG", "LU", "Chol."]
@@ -298,28 +295,6 @@ def copy_latency_scatter() -> None:
     save(fig, "copy_latency_scatter.pdf")
 
 
-def deviation_latency_scatter() -> None:
-    fig, ax = plt.subplots(figsize=(4.25, 2.9))
-    ax.scatter(DEV_RATE, DEV_LAT_DELTA, s=34, color=COLORS["latency"], edgecolor="white", linewidth=0.45, zorder=3)
-    ax.axhline(0, color="#333333", linewidth=0.7, linestyle="--")
-    ax.axvline(0, color="#333333", linewidth=0.7, linestyle="--")
-    offsets = {
-        "FDTD": (5, 5),
-        "MiniWeather": (5, -11),
-        "Cholesky": (5, 5),
-        "LU": (-22, 7),
-    }
-    for x, y, label in zip(DEV_RATE, DEV_LAT_DELTA, DEV_BENCH):
-        dx, dy = offsets[label]
-        ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
-    ax.set_xlabel("Non-HEFT deviation rate")
-    ax.set_ylabel("Latency delta (%)")
-    ax.set_xlim(-0.035, 0.68)
-    ax.set_ylim(-20.5, 2.1)
-    polish_axes(ax, grid_axis="both")
-    save(fig, "deviation_latency_scatter.pdf")
-
-
 def cholesky_local_copy_footprint() -> None:
     rows: list[dict[str, str]] = []
     with CHOLESKY_LOCAL_COPY_CSV.open(newline="", encoding="utf-8") as f:
@@ -547,7 +522,6 @@ def main() -> None:
     benchmark_copy_volume()
     placement_deltas()
     copy_latency_scatter()
-    deviation_latency_scatter()
     cholesky_local_copy_footprint()
     dvfs_deltas()
     dvfs_tradeoff()

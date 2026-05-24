@@ -139,11 +139,11 @@ whether energy savings still hold after accounting for runtime changes,
 especially for latency-sensitive workloads.
 
 \textbf{Data-movement and DVFS evidence:}
-Copy-byte reduction, copy-time reduction, and non-HEFT deviation rate are used
-as placement locality evidence. Average SM clock, middle-clock sample share,
-and commit or guardrail counters are used as DVFS evidence. These supporting
-measurements explain the observed latency and energy changes, but the primary
-claims are based on latency, energy consumption, and EDP.
+Copy-byte reduction is used as placement locality evidence. Average SM clock,
+middle-clock sample share, and commit or guardrail counters are used as DVFS
+evidence. These supporting measurements explain the observed latency and energy
+changes, but the primary claims are based on latency, energy consumption, and
+EDP.
 
 \textbf{Evidence roles:}
 The measurements in this chapter serve different evidential roles. Placement
@@ -158,9 +158,9 @@ diagnostic checks rather than production-overhead estimates.
 The evaluation separates placement from frequency control. The placement
 experiments compare HEFT with the bandit scheduler while DVFS is disabled. The
 DVFS experiments hold the placement layer fixed and compare WinDVFS with a
-no-DVFS baseline, using energy consumption and EDP as the main metrics. This separation is
-necessary because placement changes where work runs, whereas DVFS changes the
-frequency at which the selected GPUs execute the assigned work.
+no-DVFS baseline, using energy consumption and EDP as the main metrics. This
+separation is necessary because placement changes where work runs, whereas DVFS
+changes the frequency at which the selected GPUs execute the assigned work.
 
 Table~\ref{tab:results-eval-configs} summarizes the resulting configuration
 matrix. The placement-only measurements evaluate whether the residual scheduler
@@ -177,7 +177,7 @@ separately, with no-DVFS execution as the energy baseline.
 Experiment & Placement policy & DVFS policy & Main metric \\
 \midrule
 Placement-only & HEFT vs bandit scheduler & disabled & latency \\
-Data-movement diagnostic & HEFT vs bandit scheduler & disabled & copy bytes and copy time \\
+Data-movement diagnostic & HEFT vs bandit scheduler & disabled & copy bytes \\
 DVFS energy comparison & fixed placement layer & no-DVFS vs WinDVFS & energy and EDP \\
 Clock and power evidence & fixed placement layer & no-DVFS vs WinDVFS & SM clock and power \\
 Overhead diagnostic & selected scheduler/control rows & mixed diagnostic rows & latency and energy \\
@@ -257,28 +257,27 @@ consistent with reduced data movement.
 The copy-traffic measurements are used as explanatory evidence rather than as a
 separate performance objective. Table~\ref{tab:results-locality-attribution}
 uses the same latency deltas as the final placement result in
-Table~\ref{tab:results-placement-main}, and adds copy-traffic and deviation
-measurements where available for attribution. The purpose is to check whether
-the direction of the latency improvement is consistent with reduced data
-movement.
+Table~\ref{tab:results-placement-main}, and adds copy-traffic measurements for
+attribution. The purpose is to check whether the direction of the latency
+improvement is consistent with reduced data movement.
 
 \begin{table}[!htbp]
 \centering
 \small
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrr@{}}
+\begin{tabular}{@{}lrr@{}}
 \toprule
-Benchmark & Latency \(\Delta\) & Copy bytes \(\Delta\) & Copy time \(\Delta\) & Deviation rate \\
+Benchmark & Latency \(\Delta\) & Copy bytes \(\Delta\) \\
 \midrule
-FDTD & \(-6.530\%\) & \(-12.030\%\) & \(-12.025\%\) & 0.249902 \\
-CG & \(-13.733\%\) & \(-7.692\%\) & \(-7.688\%\) & -- \\
-MiniWeather & \(+0.019\%\) & \(0.000\%\) & \(0.000\%\) & 0.000000 \\
-Cholesky & \(-10.063\%\) & \(-38.220\%\) & \(-38.220\%\) & 0.281154 \\
-LU decomposition & \(-18.539\%\) & \(-23.905\%\) & \(-23.905\%\) & 0.619305 \\
+FDTD & \(-6.530\%\) & \(-12.030\%\) \\
+CG & \(-13.733\%\) & \(-7.692\%\) \\
+MiniWeather & \(+0.019\%\) & \(0.000\%\) \\
+Cholesky & \(-10.063\%\) & \(-38.220\%\) \\
+LU decomposition & \(-18.539\%\) & \(-23.905\%\) \\
 \bottomrule
 \end{tabular}%
 }
-\caption{Data-movement evidence for the placement result. Negative latency, copy-byte, and copy-time deltas indicate reductions relative to HEFT.}
+\caption{Data-movement evidence for the placement result. Negative latency and copy-byte deltas indicate reductions relative to HEFT.}
 \label{tab:results-locality-attribution}
 \end{table}
 
@@ -286,11 +285,9 @@ LU decomposition & \(-18.539\%\) & \(-23.905\%\) & \(-23.905\%\) & 0.619305 \\
 
 \figCholeskyLocalCopyFootprint
 
-\figDeviationLatencyScatter
-
 The locality data separates the benchmarks into copy-saving and near-neutral
-cases. LU decomposition, Cholesky, FDTD, and CG all reduce copy volume and copy
-time, and all four also reduce latency in the final placement table.
+cases. LU decomposition, Cholesky, FDTD, and CG all reduce copy volume, and all
+four also reduce latency in the final placement table.
 Figure~\ref{fig:results-copy-latency} visualizes this relationship: the
 copy-saving benchmarks lie in the latency-improvement region, while
 MiniWeather stays close to zero on both axes.
@@ -303,19 +300,11 @@ remove repeated tile transfers within a dense linear-algebra wavefront. This
 window-level example is used as attribution evidence, not to recompute the
 aggregate placement speedup.
 
-Figure~\ref{fig:results-deviation-latency} shows that the residual scheduler is
-selective, but the deviation rate should be interpreted as the frequency of
-non-HEFT decisions rather than as a direct predictor of speedup. The benefit
-depends on whether the deviations remove costly copies. LU decomposition has
-the highest deviation rate and the largest latency reduction in the final
-placement table, while Cholesky obtains a large copy reduction from a smaller
-deviation rate. FDTD is the moderate copy-saving case.
-
-MiniWeather provides the contrast case. Its deviation rate is zero, copy
-traffic is unchanged, and latency remains effectively at the HEFT baseline.
-This contrast supports the interpretation that the residual policy is
-selective: it changes placements when copy-saving opportunities are visible and
-otherwise remains close to HEFT-like behavior.
+MiniWeather provides the contrast case. Copy traffic is unchanged, and latency
+remains effectively at the HEFT baseline. This contrast supports the
+interpretation that the residual policy is selective: it changes placements
+when copy-saving opportunities are visible and otherwise remains close to
+HEFT-like behavior.
 
 \section{DVFS Energy--Performance Trade-off}
 \label{sec:results-dvfs-energy}
