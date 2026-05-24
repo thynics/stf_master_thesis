@@ -31,7 +31,7 @@
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.78\linewidth]{figures/copy_latency_scatter.pdf}
-\caption{Relationship between copy-byte reduction and placement latency reduction. CG uses copy counters from the placement measurements because the locality diagnostic set does not include a CG deviation-rate row.}
+\caption{Relationship between copy-byte reduction and placement latency reduction. The latency deltas match the final placement table, while the copy-byte deltas provide attribution evidence.}
 \label{fig:results-copy-latency}
 \end{figure}%
 }
@@ -40,7 +40,7 @@
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.78\linewidth]{figures/deviation_latency_scatter.pdf}
-\caption{Scheduler deviation rate and placement latency improvement in the locality diagnostic measurements. Deviation frequency is explanatory, not a direct linear predictor of speedup. CG is omitted because the diagnostic set does not contain its deviation-rate row.}
+\caption{Scheduler deviation rate versus final placement latency reduction. Deviation frequency is explanatory, not a direct linear predictor of speedup. CG is omitted because the available deviation-rate evidence does not cover CG.}
 \label{fig:results-deviation-latency}
 \end{figure}%
 }

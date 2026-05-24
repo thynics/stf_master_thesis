@@ -28,10 +28,10 @@ PLACEMENT_BANDIT_NORM = 100.0 + PLACEMENT_LAT_DELTA
 
 LOC_BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU"]
 COPY_DELTA = np.array([-12.030, -7.692, 0.0, -38.220, -23.905])
-LOC_LAT_DELTA = np.array([-3.135, -12.693, -0.0066, -9.269, -15.891])
+LOC_LAT_DELTA = np.array([-6.530, -13.733, 0.019, -10.063, -18.539])
 DEV_BENCH = ["FDTD", "MiniWeather", "Cholesky", "LU"]
 DEV_RATE = np.array([0.249902, 0.0, 0.281154, 0.619305])
-DEV_LAT_DELTA = np.array([-3.135, -0.0066, -9.269, -15.891])
+DEV_LAT_DELTA = np.array([-6.530, 0.019, -10.063, -18.539])
 
 DVFS_BENCH = ["FDTD", "MiniWeather", "CG", "LU", "Cholesky"]
 DVFS_SHORT = ["FDTD", "MiniW.", "CG", "LU", "Chol."]
@@ -291,7 +291,7 @@ def copy_latency_scatter() -> None:
     ax.set_xlabel("Copy bytes delta (%)")
     ax.set_ylabel("Latency delta (%)")
     ax.set_xlim(-42, 4)
-    ax.set_ylim(-17.2, 2.1)
+    ax.set_ylim(-20.5, 2.1)
     polish_axes(ax, grid_axis="both")
     save(fig, "copy_latency_scatter.pdf")
 
@@ -313,7 +313,7 @@ def deviation_latency_scatter() -> None:
     ax.set_xlabel("Non-HEFT deviation rate")
     ax.set_ylabel("Latency delta (%)")
     ax.set_xlim(-0.035, 0.68)
-    ax.set_ylim(-17.2, 2.1)
+    ax.set_ylim(-20.5, 2.1)
     polish_axes(ax, grid_axis="both")
     save(fig, "deviation_latency_scatter.pdf")
 

@@ -255,36 +255,30 @@ consistent with reduced data movement.
 \label{sec:results-locality-attribution}
 
 The copy-traffic measurements are used as explanatory evidence rather than as a
-separate performance objective. When reduced latency coincides with reduced
-copy volume or copy time, the result is consistent with a locality-driven
-explanation of the placement benefit rather than an isolated timing fluctuation.
-
-Table~\ref{tab:results-locality-attribution} relates the placement result to
-copy traffic. Most rows come from instrumented locality diagnostics, so their
-latency deltas are not used to compute the primary speedup reported in
-Table~\ref{tab:results-placement-main}. They are used to check whether the
-direction of the placement effect is consistent with reduced copy traffic. CG
-was not included in the locality diagnostic set; its row therefore uses copy
-counters from the placement measurements and omits the diagnostic deviation
-rate.
+separate performance objective. Table~\ref{tab:results-locality-attribution}
+uses the same latency deltas as the final placement result in
+Table~\ref{tab:results-placement-main}, and adds copy-traffic and deviation
+measurements where available for attribution. The purpose is to check whether
+the direction of the latency improvement is consistent with reduced data
+movement.
 
 \begin{table}[!htbp]
 \centering
 \small
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrrcl@{}}
+\begin{tabular}{@{}lrrrr@{}}
 \toprule
-Benchmark & Latency \(\Delta\) & Speedup & Copy bytes \(\Delta\) & Copy time \(\Delta\) & Deviation rate & Source \\
+Benchmark & Latency \(\Delta\) & Copy bytes \(\Delta\) & Copy time \(\Delta\) & Deviation rate \\
 \midrule
-FDTD & \(-3.135\%\) & \(1.0324\times\) & \(-12.030\%\) & \(-12.025\%\) & 0.249902 & Locality diagnostic \\
-CG & \(-12.693\%\) & \(1.1454\times\) & \(-7.692\%\) & \(-7.688\%\) & -- & Placement measurement \\
-MiniWeather & \(-0.0066\%\) & \(1.0001\times\) & \(0.000\%\) & \(0.000\%\) & 0.000000 & Locality diagnostic \\
-Cholesky & \(-9.269\%\) & \(1.1022\times\) & \(-38.220\%\) & \(-38.220\%\) & 0.281154 & Locality diagnostic \\
-LU decomposition & \(-15.891\%\) & \(1.1889\times\) & \(-23.905\%\) & \(-23.905\%\) & 0.619305 & Locality diagnostic \\
+FDTD & \(-6.530\%\) & \(-12.030\%\) & \(-12.025\%\) & 0.249902 \\
+CG & \(-13.733\%\) & \(-7.692\%\) & \(-7.688\%\) & -- \\
+MiniWeather & \(+0.019\%\) & \(0.000\%\) & \(0.000\%\) & 0.000000 \\
+Cholesky & \(-10.063\%\) & \(-38.220\%\) & \(-38.220\%\) & 0.281154 \\
+LU decomposition & \(-18.539\%\) & \(-23.905\%\) & \(-23.905\%\) & 0.619305 \\
 \bottomrule
 \end{tabular}%
 }
-\caption{Data-movement evidence for the placement result. Negative latency, copy-byte, and copy-time deltas indicate reductions relative to HEFT. CG uses placement copy counters; the other rows are locality diagnostic rows.}
+\caption{Data-movement evidence for the placement result. Negative latency, copy-byte, and copy-time deltas indicate reductions relative to HEFT.}
 \label{tab:results-locality-attribution}
 \end{table}
 
@@ -292,23 +286,20 @@ LU decomposition & \(-15.891\%\) & \(1.1889\times\) & \(-23.905\%\) & \(-23.905\
 
 \figDeviationLatencyScatter
 
-The locality data separates the benchmarks into two groups. For LU
-decomposition, Cholesky, and FDTD, the diagnostic rows show that latency
-improvements coincide with lower copy volume and lower measured copy time. CG
-shows the same direction in the placement copy counters. Because CG does not
-have a diagnostic deviation-rate row, it is treated as placement-performance
-evidence rather than as a full locality-attribution case.
-Figure~\ref{fig:results-copy-latency} visualizes this relationship. Workloads
-without copy reduction remain close to zero latency change, while workloads
-with copy reduction move into the latency-improvement region.
+The locality data separates the benchmarks into copy-saving and near-neutral
+cases. LU decomposition, Cholesky, FDTD, and CG all reduce copy volume and copy
+time, and all four also reduce latency in the final placement table.
+Figure~\ref{fig:results-copy-latency} visualizes this relationship: the
+copy-saving benchmarks lie in the latency-improvement region, while
+MiniWeather stays close to zero on both axes.
 
 Figure~\ref{fig:results-deviation-latency} shows that the residual scheduler is
 selective, but the deviation rate should be interpreted as the frequency of
 non-HEFT decisions rather than as a direct predictor of speedup. The benefit
-depends on whether the deviations remove costly copies. LU decomposition
-deviates most often and has the strongest locality-driven speedup, while
-Cholesky obtains a large copy reduction from a smaller deviation rate. FDTD is
-the weaker copy-saving case, but still follows the same direction.
+depends on whether the deviations remove costly copies. LU decomposition has
+the highest deviation rate and the largest latency reduction in the final
+placement table, while Cholesky obtains a large copy reduction from a smaller
+deviation rate. FDTD is the moderate copy-saving case.
 
 MiniWeather provides the contrast case. Its deviation rate is zero, copy
 traffic is unchanged, and latency remains effectively at the HEFT baseline.
