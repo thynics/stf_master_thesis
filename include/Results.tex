@@ -317,7 +317,7 @@ interpreted as a final-configuration energy--performance measurement rather
 than as a repeated-run statistical comparison. The analysis therefore
 emphasizes multi-percent energy changes and treats sub-percent changes as
 near-neutral unless they are supported by power, clock, or trade-off evidence.
-Figure~\ref{fig:results-dvfs-deltas} reports latency, energy, and power
+Figure~\ref{fig:results-dvfs-deltas} reports latency, energy, and EDP
 together, and Table~\ref{tab:results-dvfs-energy} gives the exact values.
 
 \figDvfsDeltas
@@ -325,37 +325,40 @@ together, and Table~\ref{tab:results-dvfs-energy} gives the exact values.
 \begin{table}[!htbp]
 \centering
 \small
-\begin{tabular}{@{}lrrr@{}}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{@{}llll@{}}
 \toprule
-Benchmark & Latency \(\Delta\) & Energy \(\Delta\) & Power \(\Delta\) \\
+Benchmark & Latency & Energy & EDP \\
 \midrule
-FDTD & \(-0.604\%\) & \(-3.829\%\) & \(-3.230\%\) \\
-MiniWeather & \(+0.073\%\) & \(-3.079\%\) & \(-3.150\%\) \\
-CG & \(+0.953\%\) & \(-5.587\%\) & \(-6.478\%\) \\
-LU decomposition & \(+0.662\%\) & \(-3.287\%\) & \(-3.968\%\) \\
-Cholesky & \(+2.817\%\) & \(-1.411\%\) & \(-4.389\%\) \\
+FDTD & \(6398.667 \rightarrow 6407.000\) ms (\(+0.130\%\)) & \(3182.112 \rightarrow 2984.556\) J (\(-6.208\%\)) & \(20361.273 \rightarrow 19122.048\) J\(\cdot\)s (\(-6.086\%\)) \\
+CG & \(12432.000 \rightarrow 12373.500\) ms (\(-0.471\%\)) & \(3077.927 \rightarrow 2766.860\) J (\(-10.106\%\)) & \(38264.785 \rightarrow 34235.747\) J\(\cdot\)s (\(-10.529\%\)) \\
+MiniWeather & \(15126.500 \rightarrow 15119.000\) ms (\(-0.050\%\)) & \(4957.807 \rightarrow 4875.699\) J (\(-1.656\%\)) & \(74994.269 \rightarrow 73715.700\) J\(\cdot\)s (\(-1.705\%\)) \\
+LU decomposition & \(15544.650 \rightarrow 15777.500\) ms (\(+1.498\%\)) & \(4044.087 \rightarrow 3842.609\) J (\(-4.982\%\)) & \(62863.910 \rightarrow 60626.757\) J\(\cdot\)s (\(-3.559\%\)) \\
+Cholesky & \(18562.650 \rightarrow 18804.600\) ms (\(+1.303\%\)) & \(5327.811 \rightarrow 5145.532\) J (\(-3.421\%\)) & \(98898.294 \rightarrow 96759.678\) J\(\cdot\)s (\(-2.162\%\)) \\
 \bottomrule
-\end{tabular}
-\caption{Final WinDVFS result relative to no-DVFS execution. Energy and power are computed from NVML samples over the benchmark execution window.}
+\end{tabular}%
+}
+\caption{Final WinDVFS result relative to no-DVFS execution. Each cell reports the no-DVFS value, the WinDVFS value, and the relative delta.}
 \label{tab:results-dvfs-energy}
 \end{table}
 
 Across the five benchmarks, the geometric-mean energy ratio is
-0.965520, corresponding to \(3.448\%\) lower normalized energy. The
-geometric-mean latency ratio is 1.007737, corresponding to a \(0.774\%\)
-latency overhead. This is the main DVFS result: guarded window-level frequency
-control reduces energy on this benchmark set while keeping the
-aggregate latency cost below one percent.
+0.946816, corresponding to \(5.318\%\) lower normalized energy. The
+geometric-mean latency ratio is 1.004793, corresponding to a \(0.479\%\)
+latency overhead. The geometric-mean EDP ratio is 0.951354, corresponding to a
+\(4.865\%\) improvement. This is the main DVFS result: guarded window-level
+frequency control reduces energy and EDP on this benchmark set while keeping
+the aggregate latency cost below one percent.
 
 \figDvfsTradeoff
 
 Figure~\ref{fig:results-dvfs-tradeoff} shows why the aggregate result needs to
-be read as a trade-off. FDTD is close to the ideal lower-latency and
-lower-energy region. MiniWeather, CG, and LU decomposition reduce energy with
-less than one percent latency overhead. Cholesky is the main less-favorable
-case: its average power decreases by \(4.389\%\), but the \(2.817\%\)
-latency increase offsets much of the power saving, leaving a \(1.411\%\)
-energy reduction.
+be read as a trade-off. CG provides the strongest row, with slightly lower
+latency and a \(10.106\%\) energy reduction. FDTD is close to latency-neutral
+while still reducing energy by \(6.208\%\). MiniWeather is also nearly
+latency-neutral, but its energy reduction is smaller. LU decomposition and
+Cholesky accept modest latency overheads of \(1.498\%\) and \(1.303\%\),
+respectively, while still improving both energy and EDP.
 
 \begin{table}[!htbp]
 \centering
@@ -364,13 +367,13 @@ energy reduction.
 \toprule
 Benchmark & EDP ratio \\
 \midrule
-FDTD & 0.955902 \\
-MiniWeather & 0.969913 \\
-CG & 0.953132 \\
-LU decomposition & 0.973536 \\
-Cholesky & 1.013666 \\
+FDTD & 0.939138 \\
+CG & 0.894706 \\
+MiniWeather & 0.982951 \\
+LU decomposition & 0.964413 \\
+Cholesky & 0.978376 \\
 \midrule
-Geometric mean & 0.972990 \\
+Geometric mean & 0.951354 \\
 \bottomrule
 \end{tabular}
 \caption{DVFS energy--delay ratios computed from the energy and latency ratios in Table~\ref{tab:results-dvfs-energy}. Values below 1.0 indicate improvement.}
@@ -379,17 +382,20 @@ Geometric mean & 0.972990 \\
 
 \figDvfsEdpRatios
 
-The EDP ratios support the same conclusion. The suite-level energy--delay
-product improves, but Cholesky exceeds 1.0 because its latency overhead is
-large enough to dominate the modest energy saving. Cholesky is therefore a
-latency-sensitive trade-off case rather than a primary DVFS benefit case.
+The EDP ratios support the same conclusion. All five benchmarks improve after
+runtime is accounted for, and the largest EDP improvement appears on CG. The
+smaller EDP improvements for MiniWeather and Cholesky show the boundary of the
+effect: the policy is most useful when the energy reduction is large enough to
+remain visible after the latency term is included.
 
 \section{Clock, Power, and Guardrail Evidence}
 \label{sec:results-dvfs-clock-guardrail}
 
-Table~\ref{tab:results-dvfs-clock} reports the clock and power data behind the
-DVFS result. Larger energy reductions coincide with lower average power
-and visible exposure to the middle SM clock.
+Table~\ref{tab:results-dvfs-clock} reports representative clock and power data
+from WinDVFS runs. These rows explain the frequency-control behavior rather
+than recomputing the final energy--performance comparison in
+Section~\ref{sec:results-dvfs-energy}. Larger energy reductions coincide with
+lower average power and visible exposure to the middle SM clock.
 
 \begin{table}[!htbp]
 \centering
@@ -407,7 +413,7 @@ Cholesky & 2040.000 & 1943.222 & 58.654\% & \(-1.411\%\) \\
 \bottomrule
 \end{tabular}%
 }
-\caption{Clock and energy data for the WinDVFS rows. MID samples report the fraction of benchmark-window samples at the middle SM clock level.}
+\caption{Representative clock and energy data for WinDVFS rows. MID samples report the fraction of benchmark-window samples at the middle SM clock level.}
 \label{tab:results-dvfs-clock}
 \end{table}
 
@@ -421,7 +427,7 @@ power and longer runtime.
 
 MiniWeather is the main exception to a simple middle-clock residency
 explanation. Its MID-sample share is zero, but its average SM clock and average
-average power is still slightly lower than the no-DVFS baseline. This suggests
+power are still slightly lower than the no-DVFS baseline. This suggests
 that the measured energy reduction may be influenced by short clock
 transitions, sampling granularity, or device-level power-management behavior
 rather than sustained residence at the nominal middle clock. For this reason,
@@ -429,7 +435,7 @@ MiniWeather is treated as a measured energy-saving case, but not as the
 strongest evidence of sustained middle-clock execution.
 
 Table~\ref{tab:results-dvfs-guardrail} reports the realized commit and
-guardrail counters for the final DVFS rows. These counters are not additional
+guardrail counters for the clock-evidence rows. These counters are not additional
 performance metrics. They show whether the clock outcome in
 Table~\ref{tab:results-dvfs-clock} comes from sustained MID commits, no
 committed clock change, or guardrail recovery to higher clocks.
@@ -524,10 +530,9 @@ data-movement results are consistent with a locality-driven explanation of
 these gains: the strongest placement cases reduce copy traffic, while the
 near-neutral workload remains close to HEFT.
 
-WinDVFS reduces geometric-mean energy by \(3.448\%\) with a \(0.774\%\)
-geometric-mean latency overhead. The EDP ratio also improves at the suite
-level, but the benchmark-level trade-off remains important: Cholesky shows
-that lower power can be partly offset by longer runtime.
+WinDVFS reduces geometric-mean energy by \(5.318\%\) with a \(0.479\%\)
+geometric-mean latency overhead. The geometric-mean EDP ratio improves to
+0.951354, and all five reported benchmarks remain below an EDP ratio of 1.0.
 
 The boundary of the claim is therefore explicit. The placement result is a
 locality-sensitive latency improvement, not a claim that every task graph

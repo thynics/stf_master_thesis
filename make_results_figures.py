@@ -32,17 +32,21 @@ LOC_BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU"]
 COPY_DELTA = np.array([-12.030, -7.692, 0.0, -38.220, -23.905])
 LOC_LAT_DELTA = np.array([-6.530, -13.733, 0.019, -10.063, -18.539])
 
-DVFS_BENCH = ["FDTD", "MiniWeather", "CG", "LU", "Cholesky"]
-DVFS_SHORT = ["FDTD", "MiniW.", "CG", "LU", "Chol."]
-LAT_DELTA = np.array([-0.604, 0.073, 0.953, 0.662, 2.817])
-ENERGY_DELTA = np.array([-3.829, -3.079, -5.587, -3.287, -1.411])
-POWER_DELTA = np.array([-3.230, -3.150, -6.478, -3.968, -4.389])
-MID_SAMPLES = np.array([91.903, 0.0, 98.912, 58.685, 58.654])
-EDP = np.array([0.955902, 0.969913, 0.953132, 0.973536, 1.013666])
-EFF_MID_SHARE = np.array([1.000, 0.000, 0.333, 0.697, 0.637])
-COMMIT_SWITCHES = np.array([8, 0, 512, 290, 57])
-FORCE_HIGH = np.array([0, 0, 0, 127, 23])
-SLOWDOWN = np.array([0, 0, 0, 127, 23])
+DVFS_BENCH = ["FDTD", "CG", "MiniWeather", "LU", "Cholesky"]
+DVFS_SHORT = ["FDTD", "CG", "MiniW.", "LU", "Chol."]
+LAT_DELTA = np.array([0.130, -0.471, -0.050, 1.498, 1.303])
+ENERGY_DELTA = np.array([-6.208, -10.106, -1.656, -4.982, -3.421])
+EDP_DELTA = np.array([-6.086, -10.529, -1.705, -3.559, -2.162])
+EDP = np.array([0.939138, 0.894706, 0.982951, 0.964413, 0.978376])
+
+CLOCK_BENCH = ["FDTD", "MiniWeather", "CG", "LU", "Cholesky"]
+CLOCK_SHORT = ["FDTD", "MiniW.", "CG", "LU", "Chol."]
+CLOCK_ENERGY_DELTA = np.array([-3.829, -3.079, -5.587, -3.287, -1.411])
+CLOCK_MID_SAMPLES = np.array([91.903, 0.0, 98.912, 58.685, 58.654])
+CLOCK_EFF_MID_SHARE = np.array([1.000, 0.000, 0.333, 0.697, 0.637])
+CLOCK_COMMIT_SWITCHES = np.array([8, 0, 512, 290, 57])
+CLOCK_FORCE_HIGH = np.array([0, 0, 0, 127, 23])
+CLOCK_SLOWDOWN = np.array([0, 0, 0, 127, 23])
 
 OVER_BENCH = ["FDTD", "LU"]
 COMPACT_LOG = np.array([-0.159, 1.559])
@@ -188,7 +192,7 @@ def results_overview() -> None:
     fig, ax = plt.subplots(figsize=(4.35, 2.4))
     labels = ["Placement\nlatency", "DVFS\nenergy"]
     baseline = np.array([1.0, 1.0])
-    optimized = np.array([0.900113, 0.965520])
+    optimized = np.array([0.900113, 0.946816])
     x = np.array([0.0, 1.35])
     bw = 0.18
     ax.bar(x - bw / 2, baseline, width=bw, color=COLORS["baseline"], edgecolor="#333333", linewidth=0.35, label="Baseline")
@@ -199,7 +203,7 @@ def results_overview() -> None:
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     polish_axes(ax)
-    for bar, text in zip(bars, ["9.989% lower", "3.448% lower"]):
+    for bar, text in zip(bars, ["9.989% lower", "5.318% lower"]):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 0.004,
@@ -380,10 +384,10 @@ def dvfs_deltas() -> None:
         [
             ("Latency", LAT_DELTA, COLORS["latency"]),
             ("Energy", ENERGY_DELTA, COLORS["energy"]),
-            ("Power", POWER_DELTA, COLORS["power"]),
+            ("EDP", EDP_DELTA, COLORS["power"]),
         ],
         "Delta vs no-DVFS (%)",
-        ylim=(-7.2, 3.4),
+        ylim=(-11.5, 2.4),
         width=5.75,
         height=2.65,
     )
@@ -408,8 +412,8 @@ def dvfs_tradeoff() -> None:
         ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
     ax.set_xlabel("Latency delta (%)")
     ax.set_ylabel("Energy delta (%)")
-    ax.set_xlim(-1.0, 3.25)
-    ax.set_ylim(-6.25, 0.55)
+    ax.set_xlim(-1.0, 2.15)
+    ax.set_ylim(-10.9, 0.55)
     polish_axes(ax, grid_axis="both")
     save(fig, "dvfs_tradeoff.pdf")
 
@@ -422,7 +426,7 @@ def dvfs_edp_ratios() -> None:
             ("EDP", EDP, COLORS["energy"]),
         ],
         "Ratio to no-DVFS",
-        ylim=(0.94, 1.052),
+        ylim=(0.88, 1.018),
         hline=1.0,
         width=4.95,
         height=2.55,
@@ -431,7 +435,7 @@ def dvfs_edp_ratios() -> None:
 
 def mid_energy_scatter() -> None:
     fig, ax = plt.subplots(figsize=(4.25, 2.9))
-    ax.scatter(MID_SAMPLES, ENERGY_DELTA, s=36, color=COLORS["energy"], edgecolor="white", linewidth=0.45, zorder=3)
+    ax.scatter(CLOCK_MID_SAMPLES, CLOCK_ENERGY_DELTA, s=36, color=COLORS["energy"], edgecolor="white", linewidth=0.45, zorder=3)
     ax.axhline(0, color="#333333", linewidth=0.7, linestyle="--")
     ax.axvline(0, color="#333333", linewidth=0.7, linestyle="--")
     offsets = {
@@ -441,7 +445,7 @@ def mid_energy_scatter() -> None:
         "LU": (5, -10),
         "Cholesky": (5, 5),
     }
-    for x, y, label in zip(MID_SAMPLES, ENERGY_DELTA, DVFS_BENCH):
+    for x, y, label in zip(CLOCK_MID_SAMPLES, CLOCK_ENERGY_DELTA, CLOCK_BENCH):
         dx, dy = offsets[label]
         ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
     ax.set_xlabel("Middle-clock samples (%)")
@@ -455,10 +459,10 @@ def mid_energy_scatter() -> None:
 def dvfs_commit_share() -> None:
     grouped_bars(
         "dvfs_commit_share.pdf",
-        DVFS_SHORT,
+        CLOCK_SHORT,
         [
-            ("Committed MID share", EFF_MID_SHARE * 100.0, COLORS["mid"]),
-            ("Measured MID samples", MID_SAMPLES, COLORS["power"]),
+            ("Committed MID share", CLOCK_EFF_MID_SHARE * 100.0, COLORS["mid"]),
+            ("Measured MID samples", CLOCK_MID_SAMPLES, COLORS["power"]),
         ],
         "Share (%)",
         ylim=(0, 110),
@@ -470,12 +474,12 @@ def dvfs_commit_share() -> None:
 
 def dvfs_guardrail_events() -> None:
     fig, ax = plt.subplots(figsize=(5.55, 2.55))
-    x = np.arange(len(DVFS_SHORT))
+    x = np.arange(len(CLOCK_SHORT))
     bw = 0.22
     series = [
-        ("Commit switches", COMMIT_SWITCHES, COLORS["latency"]),
-        ("Force-HIGH", FORCE_HIGH, COLORS["guard"]),
-        ("Slowdown", SLOWDOWN, COLORS["power"]),
+        ("Commit switches", CLOCK_COMMIT_SWITCHES, COLORS["latency"]),
+        ("Force-HIGH", CLOCK_FORCE_HIGH, COLORS["guard"]),
+        ("Slowdown", CLOCK_SLOWDOWN, COLORS["power"]),
     ]
     for i, (label, values, color) in enumerate(series):
         ax.bar(
@@ -493,7 +497,7 @@ def dvfs_guardrail_events() -> None:
     ax.set_yticklabels(["0", "1", "10", "100", "500"])
     ax.set_ylabel("Event count")
     ax.set_xticks(x)
-    ax.set_xticklabels(DVFS_SHORT, rotation=18, ha="right", rotation_mode="anchor")
+    ax.set_xticklabels(CLOCK_SHORT, rotation=18, ha="right", rotation_mode="anchor")
     polish_axes(ax)
     ax.legend(frameon=False, ncols=3, loc="upper center", bbox_to_anchor=(0.5, 1.12), columnspacing=0.9)
     save(fig, "dvfs_guardrail_events.pdf")
