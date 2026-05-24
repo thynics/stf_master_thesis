@@ -11,11 +11,11 @@ the most important directions for extending the work.
 \label{sec:future-broader-evaluation}
 
 The first priority is broader evaluation. The current results are from one
-eight-GPU node and six benchmarks. Future experiments should repeat the
+eight-GPU node and five reported benchmarks. Future experiments should repeat the
 placement and DVFS evaluation on different GPU generations, different
 interconnect topologies, and different problem sizes. This would test whether
 the locality improvements remain stable when peer-copy bandwidth, copy-engine
-contention, memory capacity, and kernel execution time change.
+contention, memory capacity, and computation time change.
 
 The benchmark suite should also be expanded. The current workloads include
 strong locality winners and neutral controls, but a larger suite would make it
@@ -60,9 +60,9 @@ of the scheduler.
 \section{Richer DVFS Objectives}
 \label{sec:future-dvfs-objectives}
 
-The WinDVFS layer in this thesis focuses on guarded kernel-energy
-reduction with bounded latency overhead. Future work could extend the
-committer to optimize different objectives, such as EDP, ED$^2$P, or a
+The WinDVFS layer in this thesis focuses on guarded energy reduction over the
+benchmark execution window with bounded latency overhead. Future work could
+extend the committer to optimize different objectives, such as EDP or a
 user-defined energy budget. The same proposal--commit structure could support
 these objectives by changing the reward or eligibility rule used at window
 boundaries.
@@ -90,13 +90,13 @@ where transitions become visible in the CUDASTF execution timeline. If the
 runtime can schedule transitions during communication, synchronization, or
 other slack periods, the visible latency cost of DVFS could be reduced.
 
-Instrumentation overhead should also be reduced. The overhead diagnostics show
-that compact placement logging is usually small but that diagnostic
-DVFS-control rows can be costly in some cases. A production-oriented
-implementation should separate low-overhead counters used during normal
-execution from detailed trace logging used only for debugging and thesis-style
-attribution. This would keep the scheduler explainable without making detailed
-logs part of the critical path.
+Instrumentation overhead should also be reduced. The static-replay diagnostic
+in this thesis suggests that online Bandit decision overhead is small at
+benchmark scale, but the replay experiment is still only an approximation of a
+zero-overhead scheduler. A production-oriented implementation should separate
+low-overhead counters used during normal execution from detailed trace logging
+used only for debugging and thesis-style attribution. This would keep the
+scheduler explainable without making detailed logs part of the critical path.
 
 \section{Reproducibility and Deployment}
 \label{sec:future-reproducibility}

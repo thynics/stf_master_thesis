@@ -185,7 +185,7 @@ E_{\mathrm{app}} \approx \sum_i P_i \Delta t_i.
 \label{eq:application_energy_sampled}
 \end{equation}
 
-\subsection{Energy--Delay Product and Related Metrics}
+\subsection{Energy--Delay Product}
 \label{subsec:edp_metrics}
 
 Energy--delay product combines energy and runtime:
@@ -193,13 +193,10 @@ Energy--delay product combines energy and runtime:
 \mathrm{EDP} = E_{\mathrm{app}} \cdot T_{\mathrm{app}}.
 \label{eq:edp}
 \end{equation}
-A more performance-sensitive form is
-\begin{equation}
-\mathrm{ED}^{2}\mathrm{P} = E_{\mathrm{app}} \cdot T_{\mathrm{app}}^2.
-\label{eq:ed2p}
-\end{equation}
 
-EDP is useful when both energy and runtime matter. ED$^2$P penalizes runtime degradation more strongly and is therefore useful when performance loss must be kept small.
+EDP is useful when both energy and runtime matter. In this thesis, energy,
+latency, and EDP are reported separately so that the energy--performance
+trade-off remains explicit.
 
 \subsection{Bounded Slowdown}
 \label{subsec:bounded_slowdown}

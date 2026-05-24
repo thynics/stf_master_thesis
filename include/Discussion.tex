@@ -18,23 +18,22 @@ Chapter~\ref{ch:theory}.
 The placement results support the main design choice of this thesis: HEFT
 should remain the performance anchor, while locality-aware deviations should be
 admitted only when there is sufficient copy-saving evidence. In the placement
-performance experiment,
-the bandit scheduler improves geometric-mean kernel latency by
-\(7.146\%\) across six benchmarks using mean latencies. The improvement is not
-uniform. CG, Cholesky, and LU decomposition show
-stable gains, whereas MiniWeather and Blocked N-body are
-near neutral and FDTD is more fragile.
+performance experiment, the bandit scheduler improves geometric-mean latency
+by \(9.989\%\) across the five reported benchmarks. The improvement is not
+uniform. CG, Cholesky, and LU decomposition show the strongest gains, FDTD is a
+moderate positive case, and MiniWeather remains near neutral.
 
 This non-uniformity is expected for a residual placement policy. The scheduler
 does not try to replace HEFT with a globally different placement strategy.
 Instead, it asks whether a non-HEFT GPU can reduce predicted copy cost while
 keeping the local finish-time penalty bounded. The locality-attribution
 analysis confirms that this behavior is visible in the measurements. The
-largest improvements coincide with large copy
-byte reductions: Cholesky reduces copy bytes by \(38.220\%\), and
-LU decomposition reduces copy bytes by \(23.905\%\). The neutral
-benchmarks have zero deviation rate and zero copy-byte reduction, which
-explains why they remain close to HEFT.
+largest improvements coincide with large copy byte reductions: Cholesky reduces
+copy bytes by \(38.220\%\), LU decomposition reduces copy bytes by \(23.905\%\),
+and CG reduces copy bytes by \(7.692\%\). MiniWeather keeps the same measured
+copy footprint and remains close to HEFT, which is consistent with the
+interpretation that residual placement is useful only when the task graph
+exposes reducible data movement.
 
 The placement result should therefore be read as a workload-dependent locality
 result rather than as a uniform scheduler replacement. This matters for a
@@ -47,23 +46,24 @@ than one that pursues aggressive deviations everywhere.
 
 The WinDVFS result should be interpreted as a conservative
 energy-control result rather than as a universal energy optimum. Across the
-six final rows, WinDVFS reduces geometric-mean kernel energy by
-\(2.904\%\) with a geometric-mean kernel-latency overhead of \(0.626\%\).
-Four benchmarks show clear kernel-energy reductions, Cholesky shows
-a smaller reduction with a larger latency trade-off, and
-Blocked N-body remains near neutral.
+five final rows, WinDVFS reduces geometric-mean energy by \(5.318\%\) with a
+geometric-mean latency overhead of \(0.479\%\). The geometric-mean EDP ratio is
+0.951354. FDTD, CG, MiniWeather, LU decomposition, and Cholesky all reduce EDP
+relative to their no-DVFS counterparts, but the size of the benefit remains
+workload dependent.
 
 This outcome is consistent with the proposal--commit design. The DVFS layer
 does not directly optimize each task in isolation. It accumulates task-level
 frequency intents into per-GPU windows and commits a lower frequency only when
-guardrails indicate that the performance risk is acceptable. The DVFS clock and power
-analysis shows that the larger energy reductions are associated with lower kernel
-average power and, in most cases, lower active SM clock exposure. At the same
-time, the
-Blocked N-body row shows why the guardrails are necessary: when the
-benchmark offers little useful DVFS opportunity, the final behavior remains
-near the no-DVFS baseline instead of forcing an aggressive lower-frequency
-choice.
+guardrails indicate that the performance risk is acceptable. The DVFS clock and
+power analysis shows that the larger energy reductions are associated with
+lower average power and, in most cases, lower active SM clock exposure.
+Cholesky is the clearest trade-off case: it reduces energy, but its latency
+increase limits the EDP improvement. MiniWeather provides a contrasting case
+where latency remains essentially unchanged and the energy reduction is
+smaller. These differences show that the controller should be interpreted as a
+guarded trade-off mechanism, not as a rule that every workload should be
+down-clocked in the same way.
 
 The DVFS evidence is therefore best viewed as showing that task-graph runtime
 information can support safe, window-level frequency control. It does not show
@@ -86,12 +86,11 @@ workloads while remaining close to HEFT on neutral workloads.
 The second research question asks whether observed latency changes can be
 attributed to concrete locality behavior. The locality-attribution experiment
 provides the strongest evidence for this question. The benchmarks with the
-largest latency improvements also show substantial copy-byte reductions and
-non-zero deviation rates. Conversely,
-the neutral benchmarks show no copy-byte reduction and no deviation. This
-alignment does not prove that copy traffic explains every millisecond of
-runtime variation, but it gives a clear data-movement account of the
-main placement improvements.
+largest latency improvements also show substantial copy-byte reductions.
+Conversely, the near-neutral benchmark shows no measured copy-byte reduction.
+This alignment does not prove that copy traffic explains every millisecond of
+runtime variation, but it gives a clear data-movement account of the main
+placement improvements.
 
 The third research question asks how GPU DVFS decisions can be integrated into
 the task scheduler without unstable per-task control. The proposal--commit
@@ -102,18 +101,21 @@ and only after guardrail checks.
 
 The fourth research question asks whether the two-level policy can improve
 energy while keeping runtime degradation bounded. The final DVFS result gives
-a qualified positive answer. Kernel energy decreases by \(2.904\%\)
-geometric mean, while kernel latency increases by only \(0.626\%\) geometric
-mean. The result is workload dependent, so the correct conclusion is that the
-runtime can extract energy savings on several benchmarks without large
-aggregate slowdown, not that DVFS is always beneficial.
+a qualified positive answer. Energy decreases by \(5.318\%\) geometric mean,
+while latency increases by only \(0.479\%\) geometric mean under the fixed
+Bandit placement layer. The EDP ratio improves to 0.951354. The result is
+workload dependent, so the correct conclusion is that the runtime can extract
+energy savings on the reported benchmarks without large aggregate slowdown, not
+that DVFS is always beneficial.
 
 The fifth research question concerns overhead. The overhead diagnostics show
-that compact placement logging is close to noise-scale for two of the three
-diagnostic benchmarks, but that instrumentation and compact DVFS control are
-not free. This supports the experimental choice to use no-log or validation
-rows for final performance claims and to treat diagnostic rows as supporting
-evidence rather than as final timing results.
+that the dynamic Bandit scheduler and the static-replay diagnostic differ by
+only \(-0.766\%\) to \(+1.439\%\) in latency across the five reported
+benchmarks, with a geometric-mean static-replay delta of \(+0.169\%\). This
+supports the interpretation that online Bandit decision overhead is small at
+benchmark scale. The HEFT replay sanity check is less clean, so static replay
+is treated as diagnostic evidence rather than as an exact zero-overhead
+scheduler.
 
 \section{Practical Implications}
 \label{sec:discussion-practical-implications}
@@ -131,10 +133,9 @@ events.
 The results also suggest that non-regression behavior is as important as peak
 improvement. A scheduler that improves only a subset of benchmarks is still
 useful if it reliably avoids harming low-opportunity workloads. In this thesis,
-MiniWeather and Blocked N-body are important precisely
-because they are neutral controls. They show that the scheduler does not need
-to force deviations or frequency changes where the measured opportunity is
-small.
+MiniWeather is important precisely because it is a near-neutral control. It
+shows that the scheduler does not need to force placement changes where the
+measured locality opportunity is small.
 
 \section{Limitations}
 \label{sec:discussion-limitations}
@@ -146,24 +147,24 @@ particular, data-locality benefits depend on the relative cost of computation,
 copy traffic, and queueing. A topology with different peer bandwidth or copy
 engine behavior may change the magnitude of the placement gains.
 
-The workload set is also limited. The six benchmarks cover several useful
-cases, including strong locality cases, neutral controls, and DVFS-positive
-rows, but they do not exhaust the range of CUDASTF applications. The
-FDTD results also show that benchmark-level noise can affect median
-and mean conclusions differently. This is why the thesis treats
-FDTD as a fragile locality case rather than as a primary proof point.
+The workload set is also limited. The five reported benchmarks cover several
+useful cases, including strong locality cases, a near-neutral placement
+control, and DVFS-positive rows, but they do not exhaust the range of CUDASTF
+applications. The FDTD results also show that benchmark-level noise can affect
+the apparent magnitude of small effects. This is why the thesis treats FDTD as
+a moderate placement case rather than as the primary proof point.
 
 The placement model uses a lightweight residency and copy-cost approximation.
 This is appropriate for an online scheduler, but it cannot perfectly model
 peer-copy overlap, copy-engine contention, topology-dependent bandwidth, or
-all interactions with kernel launch overheads. Similarly, the criticality
+all interactions with launch overheads. Similarly, the criticality
 proxy used by placement and DVFS is local rather than a full dynamic critical
 path computation. These simplifications keep the method practical, but they
 also limit how precisely the scheduler can predict future global makespan.
 
-Finally, the DVFS evaluation uses kernel-window energy as the primary metric.
-This is the most relevant metric for the frequency-control effect studied in
-this thesis, but it is not a full-system energy study. A complete deployment
-evaluation would need longer runs, more hardware platforms, full-system power
-measurements, and a more detailed analysis of transition costs and background
-runtime overhead.
+Finally, the DVFS evaluation uses energy measured over the benchmark execution
+window as the primary energy metric. This is the most relevant metric for the
+frequency-control effect studied in this thesis, but it is not a full-system
+energy study. A complete deployment evaluation would need longer runs, more
+hardware platforms, full-system power measurements, and a more detailed
+analysis of transition costs and background runtime overhead.
