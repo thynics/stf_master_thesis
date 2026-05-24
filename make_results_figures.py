@@ -48,10 +48,9 @@ CLOCK_COMMIT_SWITCHES = np.array([8, 0, 512, 290, 57])
 CLOCK_FORCE_HIGH = np.array([0, 0, 0, 127, 23])
 CLOCK_SLOWDOWN = np.array([0, 0, 0, 127, 23])
 
-OVER_LABELS = ["Compact\nlog", "Force-\nnoop", "All-HIGH\nno-request"]
-OVER_LATENCY = np.array([0.724, -1.144, -0.884])
-OVER_ENERGY = np.array([0.620, -0.574, -0.494])
-OVER_EDP = np.array([0.790, -0.925, 0.126])
+OVER_BENCH = ["FDTD", "CG", "MiniW.", "Chol.", "LU"]
+OVER_HEFT_LAT = np.array([-10.272, 12.438, -0.056, -0.077, -0.280])
+OVER_BANDIT_LAT = np.array([-0.573, 1.439, -0.060, -0.766, 0.822])
 
 
 COLORS = {
@@ -189,24 +188,24 @@ def grouped_bars(
 
 
 def results_overview() -> None:
-    fig, ax = plt.subplots(figsize=(4.35, 2.4))
-    labels = ["Placement\nlatency", "DVFS\nenergy"]
-    baseline = np.array([1.0, 1.0])
-    optimized = np.array([0.900113, 0.946816])
-    x = np.array([0.0, 1.35])
+    fig, ax = plt.subplots(figsize=(5.15, 2.5))
+    labels = ["Placement\nlatency", "DVFS\nenergy", "End-to-end\nEDP"]
+    baseline = np.ones(3)
+    optimized = np.array([0.900113, 0.946816, 0.803748])
+    x = np.array([0.0, 1.35, 2.70])
     bw = 0.18
     ax.bar(x - bw / 2, baseline, width=bw, color=COLORS["baseline"], edgecolor="#333333", linewidth=0.35, label="Baseline")
     bars = ax.bar(x + bw / 2, optimized, width=bw, color=COLORS["optimized"], edgecolor="#333333", linewidth=0.35, label="Optimized")
     ax.axhline(1.0, color="#333333", linewidth=0.7, linestyle="--")
-    ax.set_ylim(0.90, 1.028)
+    ax.set_ylim(0.78, 1.04)
     ax.set_ylabel("Normalized value")
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     polish_axes(ax)
-    for bar, text in zip(bars, ["9.989% lower", "5.318% lower"]):
+    for bar, text in zip(bars, ["9.989% lower", "5.318% lower", "19.625% lower"]):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + 0.004,
+            bar.get_height() + 0.010,
             text,
             ha="center",
             va="bottom",
@@ -506,17 +505,16 @@ def dvfs_guardrail_events() -> None:
 def overhead_snapshot() -> None:
     grouped_bars(
         "overhead_snapshot.pdf",
-        OVER_LABELS,
+        OVER_BENCH,
         [
-            ("Latency", OVER_LATENCY, COLORS["latency"]),
-            ("Energy", OVER_ENERGY, COLORS["energy"]),
-            ("EDP", OVER_EDP, COLORS["power"]),
+            ("HEFT static replay", OVER_HEFT_LAT, COLORS["baseline"]),
+            ("Bandit static replay", OVER_BANDIT_LAT, COLORS["latency"]),
         ],
-        "Delta vs baseline (%)",
-        ylim=(-1.7, 1.2),
-        width=5.15,
-        height=2.45,
-        legend_cols=3,
+        "Latency delta vs dynamic run (%)",
+        ylim=(-12.8, 13.8),
+        width=5.35,
+        height=2.65,
+        legend_cols=2,
     )
 
 

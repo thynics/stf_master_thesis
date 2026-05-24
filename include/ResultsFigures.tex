@@ -4,7 +4,7 @@
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.86\linewidth]{figures/results_overview.pdf}
-\caption{Overview of the two main evaluation outcomes. Placement reports normalized latency relative to HEFT, while DVFS reports normalized energy relative to no-DVFS execution. The y-axis is truncated to make the normalized differences visible.}
+\caption{Overview of the main evaluation outcomes. Placement reports normalized latency relative to HEFT, DVFS reports normalized energy relative to no-DVFS execution under the Bandit placement layer, and the end-to-end result reports normalized EDP relative to HEFT. The y-axis is truncated to make the normalized differences visible.}
 \label{fig:results-overview}
 \end{figure}%
 }
@@ -103,7 +103,7 @@
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.86\linewidth]{figures/overhead_snapshot.pdf}
-\caption{Aggregate diagnostic overhead snapshot over the five reported benchmarks. Each bar reports the geometric-mean delta relative to the no-log Bandit baseline. The rows isolate compact placement logging, a force-noop WinDVFS path, and an all-HIGH WinDVFS path with no frequency requests.}
+\caption{Static-replay overhead diagnostic. Bars report the latency delta of static replay relative to the corresponding dynamic run. The Bandit replay row is the main overhead diagnostic; the HEFT replay row is shown only as a trace-replay sanity check.}
 \label{fig:results-overhead-snapshot}
 \end{figure}%
 }

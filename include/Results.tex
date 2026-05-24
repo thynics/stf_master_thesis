@@ -155,18 +155,20 @@ diagnostic checks rather than production-overhead estimates.
 \section{Evaluation Plan}
 \label{sec:results-plan}
 
-The evaluation separates placement from frequency control. The placement
-experiments compare HEFT with the bandit scheduler while DVFS is disabled. The
-DVFS experiments hold the placement layer fixed and compare WinDVFS with a
-no-DVFS baseline, using energy consumption and EDP as the main metrics. This
-separation is necessary because placement changes where work runs, whereas DVFS
-changes the frequency at which the selected GPUs execute the assigned work.
+The evaluation is organized as a sequence of controlled comparisons. Placement
+is evaluated first, with DVFS disabled, so that the effect of the residual
+scheduler can be measured against HEFT without frequency-control effects. The
+locality analysis then explains the placement result through copy traffic.
+Frequency control is evaluated in the next step by holding the placement layer
+fixed and comparing WinDVFS with a no-DVFS execution of the same scheduler.
+The final end-to-end comparison combines the two layers and compares the full
+Bandit+WinDVFS configuration against HEFT.
 
-Table~\ref{tab:results-eval-configs} summarizes the resulting configuration
-matrix. The placement-only measurements evaluate whether the residual scheduler
-improves latency. The data-movement diagnostics examine whether the latency
-changes are consistent with locality. The DVFS measurements are reported
-separately, with no-DVFS execution as the energy baseline.
+Table~\ref{tab:results-eval-configs} summarizes how the sections in this
+chapter connect to these comparisons. The purpose of the table is not to define
+separate benchmarks, but to keep the baseline of each result explicit. This is
+important because placement, data movement, DVFS, end-to-end behavior, and
+overhead diagnostics answer different parts of the evaluation.
 
 \begin{table}[!htbp]
 \centering
@@ -174,27 +176,24 @@ separately, with no-DVFS execution as the energy baseline.
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{@{}llll@{}}
 \toprule
-Experiment & Placement policy & DVFS policy & Main metric \\
+Section & Role in the evaluation & Comparison & Reported evidence \\
 \midrule
-Placement-only & HEFT vs bandit scheduler & disabled & latency \\
-Data-movement diagnostic & HEFT vs bandit scheduler & disabled & copy bytes \\
-DVFS energy comparison & fixed placement layer & no-DVFS vs WinDVFS & energy and EDP \\
-End-to-end comparison & HEFT vs bandit scheduler & disabled vs WinDVFS & latency, energy, and EDP \\
-Overhead diagnostic & selected scheduler/control rows & mixed diagnostic rows & latency and energy \\
+Placement performance & Scheduler effect & HEFT vs Bandit, DVFS disabled & latency \\
+Placement locality evidence & Attribution of scheduler gains & HEFT vs Bandit, DVFS disabled & copy footprint and latency \\
+DVFS trade-off & Frequency-control effect & Bandit no-DVFS vs Bandit+WinDVFS & latency, energy, and EDP \\
+End-to-end comparison & Combined system effect & HEFT vs Bandit+WinDVFS & latency, energy, and EDP \\
+Overhead diagnostic & Control-path sanity check & Dynamic scheduling vs static replay & latency, energy, and EDP \\
 \bottomrule
 \end{tabular}%
 }
-\caption{Evaluation configuration matrix.}
+\caption{Evaluation structure and baselines used in the Results chapter.}
 \label{tab:results-eval-configs}
 \end{table}
 
-The presentation follows this evidence order. The placement section reports
-latency relative to HEFT. The data-movement section examines
-whether these latency changes align with copy-volume reductions. The DVFS section
-reports energy relative to no-DVFS execution. The end-to-end section then
-combines placement and DVFS by comparing the final Bandit+WinDVFS configuration
-against HEFT. The chapter ends by separating diagnostic overhead measurements
-from the main performance and energy claims.
+The figure that follows gives the high-level outcome of the same evidence
+chain. It reports the normalized placement latency, the normalized DVFS energy,
+and the normalized end-to-end EDP. The detailed sections then expand each
+aggregate number with per-benchmark measurements and supporting diagnostics.
 
 \figResultsOverview
 
@@ -454,59 +453,63 @@ EDP.
 \section{Diagnostic Overheads and Claim Boundaries}
 \label{sec:results-overhead}
 
-Table~\ref{tab:results-overhead} reports the overhead diagnostic used to
-separate measurement and control costs from the main performance results. The
-baseline is the no-log Bandit configuration. The three diagnostic rows isolate
-compact placement logging, a force-noop WinDVFS path, and an all-HIGH WinDVFS
-path that does not issue frequency requests. The experiment uses the same five
-benchmarks reported in the main results and repeats each row twice.
+The overhead analysis uses static replay as a diagnostic control. A dynamic
+Bandit run first records the final device assignment of each task. The
+static-replay scheduler then reuses that trace and bypasses the online Bandit
+device-selection logic. This comparison does not replace the dynamic scheduler,
+because the replay trace is produced in a separate run and cannot reproduce
+all runtime state. It is nevertheless useful for checking whether the online
+scheduling path introduces a visible cost at the scale of the reported
+benchmarks.
 
 \begin{table}[!htbp]
 \centering
 \small
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}llrrrr@{}}
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-Diagnostic row & Isolated path & Geomean latency \(\Delta\) & Median latency \(\Delta\) & Geomean energy \(\Delta\) & Geomean EDP \(\Delta\) \\
+Benchmark & Dynamic latency & Static-replay latency & Latency \(\Delta\) & Energy \(\Delta\) & EDP \(\Delta\) \\
 \midrule
-Compact placement log & Bandit with compact placement summaries & \(+0.724\%\) & \(-0.056\%\) & \(+0.620\%\) & \(+0.790\%\) \\
-WinDVFS force-noop & WinDVFS scheduler path with proposer skipped & \(-1.144\%\) & \(-0.268\%\) & \(-0.574\%\) & \(-0.925\%\) \\
-WinDVFS all-HIGH & All-HIGH WinDVFS path without frequency requests & \(-0.884\%\) & \(+0.013\%\) & \(-0.494\%\) & \(+0.126\%\) \\
+FDTD & 6283.000 ms & 6247.000 ms & \(-0.573\%\) & \(-0.508\%\) & \(+3.681\%\) \\
+CG & 12404.000 ms & 12582.500 ms & \(+1.439\%\) & \(+0.957\%\) & \(+2.758\%\) \\
+MiniWeather & 15101.000 ms & 15092.000 ms & \(-0.060\%\) & \(+0.134\%\) & \(-0.084\%\) \\
+Cholesky & 18701.450 ms & 18558.250 ms & \(-0.766\%\) & \(+0.047\%\) & \(-0.129\%\) \\
+LU decomposition & 15389.700 ms & 15516.200 ms & \(+0.822\%\) & \(+1.056\%\) & \(+3.047\%\) \\
 \bottomrule
 \end{tabular}%
 }
-\caption{Diagnostic overhead snapshot over the five reported benchmarks. All rows are relative to the no-log Bandit baseline and are used only to bound measurement and control-path costs.}
+\caption{Static-replay overhead diagnostic for the Bandit scheduler. Deltas are computed for static replay relative to the corresponding dynamic Bandit run; values close to zero indicate that online scheduling cost is not visible at benchmark scale.}
 \label{tab:results-overhead}
 \end{table}
 
 \figOverheadSnapshot
 
-The compact placement-log row has a near-zero median latency delta
-\((-0.056\%)\). Its small positive geometric mean is dominated by one FDTD
-outlier, so the result should be interpreted as a diagnostic bound rather than
-as a stable production overhead estimate. The two WinDVFS rows do not show a
-consistent positive latency tax when frequency requests are disabled. The
-force-noop path has a \(-1.144\%\) geometric-mean latency delta, and the
-all-HIGH no-request path has a \(-0.884\%\) geometric-mean latency delta with a
-median latency delta of only \(+0.013\%\). This indicates that, under this
-configuration, the no-frequency control path is close to the measurement-noise
-regime.
+The Bandit replay rows are the cleanest diagnostic for scheduling overhead.
+Across the five benchmarks, the latency delta between dynamic Bandit and
+static replay ranges from \(-0.766\%\) to \(+1.439\%\), with a geometric-mean
+static-replay delta of \(+0.169\%\). Energy deltas remain between
+\(-0.508\%\) and \(+1.056\%\). These values are small relative to the
+placement gains reported in Section~\ref{sec:results-placement-performance},
+which indicates that the online Bandit decision path is not the source of the
+measured latency improvements.
 
-These overhead rows are therefore kept separate from the main placement and
-DVFS claims. They support the use of compact logging for attribution and show
-that no-frequency WinDVFS control does not introduce a stable positive overhead
-in this diagnostic pass. They do not replace the no-log performance rows or the
-final DVFS comparison rows used for the headline results.
+Figure~\ref{fig:results-overhead-snapshot} also shows a HEFT static-replay
+sanity check. This row is less clean: FDTD and CG show larger mismatches,
+which suggests that trace replay is sensitive to run-to-run effects and should
+not be treated as an exact zero-overhead scheduler. For this reason, the
+overhead claim is intentionally narrow. Static replay supports the conclusion
+that dynamic Bandit overhead is small at benchmark scale, but it is used only
+as a diagnostic check and not as a replacement for the main dynamic execution
+results.
 
 The evaluation has four main limitations. First, all results are measured on a
 single eight-GPU node, so the magnitude of the results may change with GPU
 generation, interconnect topology, driver behavior, and benchmark scale.
-Second, the overhead diagnostic uses two runs per row and should be read as a
-bounded stress check rather than as a precise production-overhead estimate.
-Third, FDTD has higher run-to-run variation than the linear-algebra workloads
-and contributes the main compact-logging outlier in the overhead diagnostic.
-Fourth, the DVFS conclusion is based on energy and latency measured over the
-benchmark execution window; it does not replace a full-system power study.
+Second, static replay is a diagnostic approximation and does not reproduce all
+online scheduler state. Third, FDTD remains more sensitive to run-to-run
+variation than the linear-algebra workloads. Fourth, the DVFS conclusion is
+based on energy and latency measured over the benchmark execution window; it
+does not replace a full-system power study.
 
 \section{Results Summary}
 \label{sec:results-summary}
@@ -528,10 +531,11 @@ energy by \(11.874\%\), and EDP by \(19.625\%\).
 The boundary of the claim is therefore explicit. The placement result is a
 locality-sensitive latency improvement, not a claim that every task graph
 benefits equally. The DVFS result is measured over the benchmark execution
-window on one eight-GPU L4 node, not as a full-system energy study. Within
-these boundaries,
-this chapter shows three measured outcomes: the placement layer improves
-suite-level latency while preserving near-baseline behavior on
+window on one eight-GPU L4 node, not as a full-system energy study. The
+static-replay overhead diagnostic further indicates that online Bandit
+scheduling cost is small compared with the measured placement gains. Within
+these boundaries, this chapter shows three measured outcomes: the placement
+layer improves suite-level latency while preserving near-baseline behavior on
 low-opportunity workloads; the DVFS layer reduces suite-level energy while
 keeping the geometric-mean latency overhead below one percent; and the combined
 system improves the energy--delay product relative to HEFT.
