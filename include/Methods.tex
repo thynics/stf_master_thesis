@@ -45,6 +45,7 @@ where $A(s,g)$ is the predicted time at which $s$ is available on $g$, and $X(s,
 
 \begin{table}[t]
 \centering
+\footnotesize
 \begin{tabular}{@{}lp{0.67\linewidth}@{}}
 \toprule
 Symbol or state & Meaning \\
@@ -143,8 +144,8 @@ A larger $\beta_C$ makes the scheduler treat long-running kernels as more critic
 
 \begin{table}[t]
 \centering
-\small
-\begin{tabular}{@{}lll@{}}
+\footnotesize
+\begin{tabular}{@{}lp{0.54\linewidth}l@{}}
 \toprule
 Parameter & Role & Evaluation default \\
 \midrule
@@ -194,6 +195,7 @@ p\in\{\mathrm{default},\mathrm{aggressive}\}.
 Each profile defines a maximum normalized finish-time penalty and a minimum normalized copy gain. The gate uses separate thresholds for critical and non-critical tasks. With the default parameterization,
 \begin{table}[t]
 \centering
+\footnotesize
 \begin{tabular}{@{}lcccc@{}}
 \toprule
 Profile & $\delta_{\mathrm{crit}}$ & $\delta_{\mathrm{noncrit}}$ & $\tau_{\mathrm{crit}}$ & $\tau_{\mathrm{noncrit}}$ \\
@@ -521,8 +523,8 @@ where the weights are listed in Table~\ref{tab:dvfs-proposer-hyperparameters}. T
 
 \begin{table}[t]
 \centering
-\small
-\begin{tabular}{@{}lll@{}}
+\footnotesize
+\begin{tabular}{@{}lp{0.55\linewidth}l@{}}
 \toprule
 Parameter & Role & Evaluation default \\
 \midrule
@@ -591,8 +593,8 @@ and only when mid is already eligible and low-frequency operation is enabled. Th
 
 \begin{table}[t]
 \centering
-\small
-\begin{tabular}{@{}lll@{}}
+\footnotesize
+\begin{tabular}{@{}lp{0.55\linewidth}l@{}}
 \toprule
 Parameter & Role & Evaluation default \\
 \midrule
@@ -654,8 +656,8 @@ the average backlog, and the heavy-task fraction.
 
 \begin{table}[t]
 \centering
-\small
-\begin{tabular}{@{}lll@{}}
+\scriptsize
+\begin{tabular}{@{}lp{0.56\linewidth}l@{}}
 \toprule
 Parameter & Role & Evaluation default \\
 \midrule
@@ -762,8 +764,8 @@ After each per-GPU commit, the runtime updates exponential moving averages for t
 
 \begin{table}[t]
 \centering
-\small
-\begin{tabular}{@{}lll@{}}
+\footnotesize
+\begin{tabular}{@{}lp{0.55\linewidth}l@{}}
 \toprule
 Parameter & Role & Evaluation default \\
 \midrule

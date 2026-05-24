@@ -25,7 +25,7 @@ and library configuration fixed across all measurements.
 
 \begin{table}[!htbp]
 \centering
-\small
+\footnotesize
 \begin{tabular}{@{}ll@{}}
 \toprule
 Component & Configuration \\
@@ -64,8 +64,9 @@ low-opportunity cases close to the baseline.
 
 \begin{table}[!htbp]
 \centering
-\small
-\resizebox{\linewidth}{!}{%
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}llrr@{}}
 \toprule
 Benchmark & Problem size / input & Tasks & Baseline copy bytes \\
@@ -77,7 +78,7 @@ Cholesky & 49152, 2048 & 2600 & 15221178776 \\
 LU decomposition & 25088, 256 & 318549 & 22258961026 \\
 \bottomrule
 \end{tabular}%
-}
+\endgroup
 \caption{Benchmark characteristics from the placement raw data.}
 \label{tab:results-benchmark-characteristics}
 \end{table}
@@ -172,9 +173,10 @@ overhead diagnostics answer different parts of the evaluation.
 
 \begin{table}[!htbp]
 \centering
-\small
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}llll@{}}
+\begingroup
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}p{0.21\linewidth}p{0.24\linewidth}p{0.30\linewidth}p{0.17\linewidth}@{}}
 \toprule
 Section & Role in the evaluation & Comparison & Reported evidence \\
 \midrule
@@ -185,7 +187,7 @@ End-to-end comparison & Combined system effect & HEFT vs Bandit+WinDVFS & latenc
 Overhead diagnostic & Control-path sanity check & Dynamic scheduling vs static replay & latency, energy, and EDP \\
 \bottomrule
 \end{tabular}%
-}
+\endgroup
 \caption{Evaluation structure and baselines used in the Results chapter.}
 \label{tab:results-eval-configs}
 \end{table}
@@ -214,7 +216,7 @@ placement alternatives.
 
 \begin{table}[!htbp]
 \centering
-\small
+\footnotesize
 \begin{tabular}{@{}lrrr@{}}
 \toprule
 Benchmark & HEFT latency & Bandit latency & Latency \(\Delta\) \\
@@ -324,6 +326,7 @@ absolute values and relative deltas.
 
 \begin{table}[!htbp]
 \centering
+\begingroup
 \scriptsize
 \setlength{\tabcolsep}{2.8pt}
 \resizebox{\linewidth}{!}{%
@@ -346,6 +349,7 @@ Cholesky & 18562.7 & 18804.6 & \(+1.30\%\) & 5327.8 & 5145.5 & \(-3.42\%\) & 988
 \bottomrule
 \end{tabular}%
 }
+\endgroup
 \caption{Final WinDVFS result relative to no-DVFS execution. Base denotes the no-DVFS baseline. Absolute values are rounded to one decimal place, while relative deltas are computed from the underlying measurements.}
 \label{tab:results-dvfs-energy}
 \end{table}
@@ -370,7 +374,7 @@ respectively, while still improving both energy and EDP.
 
 \begin{table}[!htbp]
 \centering
-\small
+\footnotesize
 \begin{tabular}{@{}lr@{}}
 \toprule
 Benchmark & EDP ratio \\
@@ -408,6 +412,7 @@ runtime.
 
 \begin{table}[!htbp]
 \centering
+\begingroup
 \scriptsize
 \setlength{\tabcolsep}{2.8pt}
 \resizebox{\linewidth}{!}{%
@@ -430,6 +435,7 @@ Cholesky & 20672.9 & 18804.6 & \(-9.04\%\) & 5415.0 & 5145.5 & \(-4.98\%\) & 111
 \bottomrule
 \end{tabular}%
 }
+\endgroup
 \caption{End-to-end comparison between HEFT and the final Bandit+WinDVFS configuration. B+DVFS denotes the bandit scheduler with WinDVFS enabled.}
 \label{tab:results-end-to-end}
 \end{table}
@@ -464,7 +470,9 @@ benchmarks.
 
 \begin{table}[!htbp]
 \centering
-\small
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{3pt}
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{@{}lrrrrr@{}}
 \toprule
@@ -478,6 +486,7 @@ LU decomposition & 15389.700 ms & 15516.200 ms & \(+0.822\%\) & \(+1.056\%\) & \
 \bottomrule
 \end{tabular}%
 }
+\endgroup
 \caption{Static-replay overhead diagnostic for the Bandit scheduler. Deltas are computed for static replay relative to the corresponding dynamic Bandit run; values close to zero indicate that online scheduling cost is not visible at benchmark scale.}
 \label{tab:results-overhead}
 \end{table}
