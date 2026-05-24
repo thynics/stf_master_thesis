@@ -263,8 +263,7 @@ improvement is consistent with reduced data movement.
 
 \begin{table}[!htbp]
 \centering
-\small
-\resizebox{\linewidth}{!}{%
+\footnotesize
 \begin{tabular}{@{}lrr@{}}
 \toprule
 Benchmark & Latency \(\Delta\) & Copy bytes \(\Delta\) \\
@@ -275,8 +274,7 @@ MiniWeather & \(+0.019\%\) & \(0.000\%\) \\
 Cholesky & \(-10.063\%\) & \(-38.220\%\) \\
 LU decomposition & \(-18.539\%\) & \(-23.905\%\) \\
 \bottomrule
-\end{tabular}%
-}
+\end{tabular}
 \caption{Data-movement evidence for the placement result. Negative latency and copy-byte deltas indicate reductions relative to HEFT.}
 \label{tab:results-locality-attribution}
 \end{table}
