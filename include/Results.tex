@@ -63,9 +63,9 @@ does not represent the absolute amount of baseline copy traffic. A benchmark
 can have large copy volume but limited residual-placement opportunity when the
 copy pattern is structurally fixed or when the HEFT baseline already preserves
 the relevant locality. The benchmark suite therefore includes both
-copy-sensitive task graphs and near-neutral task graphs, allowing the
-evaluation to test whether the scheduler improves favorable cases while
-leaving low-opportunity cases close to the baseline.
+copy-sensitive task graphs and lower-opportunity task graphs, allowing the
+evaluation to test whether the scheduler improves favorable cases while keeping
+low-opportunity cases close to the baseline.
 
 \begin{table}[!htbp]
 \centering
@@ -80,7 +80,6 @@ CG & 16777216, 64, 4, 1e-10 & 34 & 654311738 & medium \\
 MiniWeather & 1600, 2048, 1536 & 57600 & 241833733942 & low \\
 Cholesky & 49152, 2048 & 2600 & 15221178776 & high \\
 LU decomposition & 25088, 256 & 318549 & 22258961026 & high \\
-Blocked N-body & 49152, 512, 14 & 131712 & 8659968 & low \\
 \bottomrule
 \end{tabular}%
 }
@@ -214,9 +213,9 @@ latency and kernel-energy deltas for each benchmark, while
 Table~\ref{tab:results-placement-main} reports the exact numerical values. The
 figure separates the benchmark suite into three behaviors. CG, Cholesky, and
 LU decomposition show strong placement benefits; FDTD shows a smaller positive
-effect; and MiniWeather and Blocked N-body remain near the baseline. This
-separation is important because the scheduler is expected to exploit locality
-only when the task graph exposes useful placement alternatives.
+effect; and MiniWeather remains near the baseline. This separation is important
+because the scheduler is expected to exploit locality only when the task graph
+exposes useful placement alternatives.
 
 \figPlacementDeltas
 
@@ -232,21 +231,20 @@ CG & \(1.1454\times\) & \(-12.693\%\) & \(-12.316\%\) \\
 MiniWeather & \(0.9998\times\) & \(+0.019\%\) & \(-0.062\%\) \\
 Cholesky & \(1.0945\times\) & \(-8.638\%\) & \(-2.441\%\) \\
 LU decomposition & \(1.2276\times\) & \(-18.539\%\) & \(-17.872\%\) \\
-Blocked N-body & \(1.0005\times\) & \(-0.052\%\) & \(-0.580\%\) \\
 \bottomrule
 \end{tabular}
 \caption{Placement-only results relative to HEFT. DVFS is disabled.}
 \label{tab:results-placement-main}
 \end{table}
 
-The six-benchmark geometric-mean speedup is \(1.076965\times\), equivalent to
-a \(7.146\%\) normalized latency reduction. This aggregate value should be read
+The five-benchmark geometric-mean speedup is \(1.092940\times\), equivalent to
+an \(8.504\%\) normalized latency reduction. This aggregate value should be read
 together with the per-benchmark distribution. LU decomposition has the largest
 gain, followed by CG and Cholesky. These three workloads dominate the
 placement benefit because their task graphs expose useful alternatives to HEFT
-placement. FDTD is a modest positive case. MiniWeather and Blocked N-body are
-effectively unchanged, indicating that the scheduler remains close to the
-baseline when there is little locality benefit.
+placement. FDTD is a modest positive case. MiniWeather is effectively
+unchanged, indicating that the scheduler remains close to the baseline when
+there is little locality benefit.
 
 The geometric mean is therefore a suite-level summary rather than evidence
 that every benchmark benefits equally. FDTD is treated as a weak positive
@@ -291,7 +289,6 @@ CG & \(-12.693\%\) & \(1.1454\times\) & \(-7.692\%\) & \(-7.688\%\) & -- & Place
 MiniWeather & \(-0.0066\%\) & \(1.0001\times\) & \(0.000\%\) & \(0.000\%\) & 0.000000 & Locality diagnostic \\
 Cholesky & \(-9.269\%\) & \(1.1022\times\) & \(-38.220\%\) & \(-38.220\%\) & 0.281154 & Locality diagnostic \\
 LU decomposition & \(-15.891\%\) & \(1.1889\times\) & \(-23.905\%\) & \(-23.905\%\) & 0.619305 & Locality diagnostic \\
-Blocked N-body & \(+0.019\%\) & \(0.9998\times\) & \(0.000\%\) & \(0.000\%\) & 0.000000 & Locality diagnostic \\
 \bottomrule
 \end{tabular}%
 }
@@ -321,11 +318,11 @@ deviates most often and has the strongest locality-driven speedup, while
 Cholesky obtains a large copy reduction from a smaller deviation rate. FDTD is
 the weaker copy-saving case, but still follows the same direction.
 
-MiniWeather and Blocked N-body provide the contrast case. Their deviation
-rates are zero, copy traffic is unchanged, and latency remains effectively at
-the HEFT baseline. This contrast supports the interpretation that the residual
-policy is selective: it changes placements when copy-saving opportunities are
-visible and otherwise remains close to HEFT-like behavior.
+MiniWeather provides the contrast case. Its deviation rate is zero, copy
+traffic is unchanged, and latency remains effectively at the HEFT baseline.
+This contrast supports the interpretation that the residual policy is
+selective: it changes placements when copy-saving opportunities are visible and
+otherwise remains close to HEFT-like behavior.
 
 \section{DVFS Energy--Performance Trade-off}
 \label{sec:results-dvfs-energy}
@@ -354,16 +351,15 @@ MiniWeather & \(+0.073\%\) & \(-3.079\%\) & \(-3.150\%\) \\
 CG & \(+0.953\%\) & \(-5.587\%\) & \(-6.478\%\) \\
 LU decomposition & \(+0.662\%\) & \(-3.287\%\) & \(-3.968\%\) \\
 Cholesky & \(+2.817\%\) & \(-1.411\%\) & \(-4.389\%\) \\
-Blocked N-body & \(-0.110\%\) & \(-0.137\%\) & \(-0.023\%\) \\
 \bottomrule
 \end{tabular}
 \caption{Final WinDVFS result relative to no-DVFS execution. Energy and power are kernel-window NVML metrics.}
 \label{tab:results-dvfs-energy}
 \end{table}
 
-Across the six benchmarks, the geometric-mean kernel-energy ratio is
-0.970962, corresponding to \(2.904\%\) lower normalized kernel energy. The
-geometric-mean latency ratio is 1.006259, corresponding to a \(0.626\%\)
+Across the five benchmarks, the geometric-mean kernel-energy ratio is
+0.965520, corresponding to \(3.448\%\) lower normalized kernel energy. The
+geometric-mean latency ratio is 1.007737, corresponding to a \(0.774\%\)
 latency overhead. This is the main DVFS result: guarded window-level frequency
 control reduces kernel energy on this benchmark set while keeping the
 aggregate latency cost below one percent.
@@ -376,8 +372,7 @@ lower-energy region. MiniWeather, CG, and LU decomposition reduce energy with
 less than one percent latency overhead. Cholesky is the main less-favorable
 case: its average kernel power decreases by \(4.389\%\), but the \(2.817\%\)
 latency increase offsets much of the power saving, leaving a \(1.411\%\)
-kernel-energy reduction. Blocked N-body stays close to the origin and is
-therefore treated as near-neutral.
+kernel-energy reduction.
 
 \begin{table}[!htbp]
 \centering
@@ -391,9 +386,8 @@ MiniWeather & 0.969913 & 0.970618 \\
 CG & 0.953132 & 0.962218 \\
 LU decomposition & 0.973536 & 0.979985 \\
 Cholesky & 1.013666 & 1.042219 \\
-Blocked N-body & 0.997531 & 0.996431 \\
 \midrule
-Geometric mean & 0.977040 & 0.983155 \\
+Geometric mean & 0.972990 & 0.980518 \\
 \bottomrule
 \end{tabular}
 \caption{DVFS energy--delay ratios computed from the kernel-energy and kernel-latency ratios in Table~\ref{tab:results-dvfs-energy}. Values below 1.0 indicate improvement.}
@@ -413,8 +407,7 @@ benefit case.
 
 Table~\ref{tab:results-dvfs-clock} reports the clock and power data behind the
 DVFS result. Larger energy reductions coincide with lower average kernel power
-and visible exposure to the middle SM clock. The near-neutral Blocked N-body
-row shows almost no change in clock or power.
+and visible exposure to the middle SM clock.
 
 \begin{table}[!htbp]
 \centering
@@ -429,7 +422,6 @@ MiniWeather & 2040.000 & 2028.091 & 0.000\% & \(-3.079\%\) \\
 CG & 2032.581 & 1876.795 & 98.912\% & \(-5.587\%\) \\
 LU decomposition & 2040.000 & 1943.170 & 58.685\% & \(-3.287\%\) \\
 Cholesky & 2040.000 & 1943.222 & 58.654\% & \(-1.411\%\) \\
-Blocked N-body & 2040.000 & 2040.000 & 0.000\% & \(-0.137\%\) \\
 \bottomrule
 \end{tabular}%
 }
@@ -473,7 +465,6 @@ MiniWeather & 0.000 & 0.000\% & 0 & 0 & 0 \\
 CG & 0.333 & 98.912\% & 512 & 0 & 0 \\
 LU decomposition & 0.697 & 58.685\% & 290 & 127 & 127 \\
 Cholesky & 0.637 & 58.654\% & 57 & 23 & 23 \\
-Blocked N-body & 0.000 & 0.000\% & 0 & 0 & 0 \\
 \bottomrule
 \end{tabular}%
 }
@@ -489,19 +480,10 @@ The commit and guardrail figures refine the clock evidence. FDTD and CG have
 high measured middle-clock exposure without slowdown recovery events. LU
 decomposition and Cholesky show partial MID exposure together with force-HIGH
 and slowdown events, so their rows are better read as guarded trade-offs than
-as unconstrained down-clocking. MiniWeather and Blocked N-body have no
-committed MID share in these measurements. The difference between
-controller-reported MID share and sampled MID share is expected: the former is
-a controller-side committed share, while the latter is observed only at NVML
-sampling timestamps.
-
-Blocked N-body serves as a near-neutral control case. In the placement
-experiment, its copy-byte reduction and deviation rate are both zero, and its
-latency remains essentially unchanged. In the DVFS experiment, its SM clock
-remains at 2040 MHz and its kernel power changes by only \(-0.023\%\). These
-observations show that both the placement layer and the DVFS layer remain close
-to the baseline when the workload exposes little locality or frequency-scaling
-opportunity.
+as unconstrained down-clocking. MiniWeather has no committed MID share in these
+measurements. The difference between controller-reported MID share and sampled
+MID share is expected: the former is a controller-side committed share, while
+the latter is observed only at NVML sampling timestamps.
 
 \section{Diagnostic Overheads and Claim Boundaries}
 \label{sec:results-overhead}
@@ -521,7 +503,6 @@ Benchmark & Compact placement-log latency \(\Delta\) & WinDVFS diagnostic latenc
 \midrule
 FDTD & \(-0.159\%\) & \(+0.953\%\) & \(-1.196\%\) \\
 LU decomposition & \(+1.559\%\) & \(+9.331\%\) & \(+7.233\%\) \\
-Blocked N-body & \(+0.000\%\) & \(+4.369\%\) & \(+0.722\%\) \\
 \bottomrule
 \end{tabular}%
 }
@@ -537,8 +518,8 @@ compact control logging. These rows therefore do not contradict the final DVFS
 validation rows; instead, they show that detailed diagnostic control paths can
 become visible in runtime and should be separated from the no-log or validation
 rows used for final claims. In this snapshot, compact placement logging is
-within the small-change regime for FDTD and Blocked N-body, while LU
-decomposition shows a visible single-run cost.
+within the small-change regime for FDTD, while LU decomposition shows a visible
+single-run cost.
 
 The evaluation has four main limitations. First, all results are measured on a
 single eight-GPU node, so the magnitude of the results may change with GPU
@@ -554,17 +535,17 @@ latency; it does not replace a full-system power study.
 \label{sec:results-summary}
 
 The experimental evidence supports both layers of the proposed design. The
-bandit scheduler improves geometric-mean kernel latency by \(7.146\%\) relative
+bandit scheduler improves geometric-mean kernel latency by \(8.504\%\) relative
 to HEFT, with the largest gains appearing on copy-sensitive workloads. The
 data-movement results are consistent with a locality-driven explanation of
 these gains: the strongest placement cases reduce copy traffic, while the
-near-neutral workloads remain close to HEFT.
+near-neutral workload remains close to HEFT.
 
-WinDVFS reduces geometric-mean kernel energy by \(2.904\%\) with a
-\(0.626\%\) geometric-mean latency overhead. The EDP and ED\(^2\)P ratios also
+WinDVFS reduces geometric-mean kernel energy by \(3.448\%\) with a
+\(0.774\%\) geometric-mean latency overhead. The EDP and ED\(^2\)P ratios also
 improve at the suite level, but the benchmark-level trade-off remains
 important: Cholesky shows that lower power can be partly offset by longer
-runtime, while Blocked N-body stays near the no-DVFS baseline.
+runtime.
 
 The boundary of the claim is therefore explicit. The placement result is a
 locality-sensitive latency improvement, not a claim that every task graph

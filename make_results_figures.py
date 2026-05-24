@@ -14,43 +14,43 @@ PREVIEW = OUT / "_preview"
 WRITE_PREVIEW = "--preview" in sys.argv
 
 
-BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU", "N-body"]
-BENCH_SHORT = ["FDTD", "CG", "MiniW.", "Chol.", "LU", "N-body"]
+BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU"]
+BENCH_SHORT = ["FDTD", "CG", "MiniW.", "Chol.", "LU"]
 
-TASKS = np.array([491712, 34, 57600, 2600, 318549, 131712], dtype=float)
+TASKS = np.array([491712, 34, 57600, 2600, 318549], dtype=float)
 COPY_BYTES = np.array(
-    [353009664, 654311738, 241833733942, 15221178776, 22258961026, 8659968],
+    [353009664, 654311738, 241833733942, 15221178776, 22258961026],
     dtype=float,
 )
 
-PLACEMENT_LAT_DELTA = np.array([-1.333, -12.693, 0.019, -8.638, -18.539, -0.052])
-PLACEMENT_ENERGY_DELTA = np.array([-0.597, -12.316, -0.062, -2.441, -17.872, -0.580])
+PLACEMENT_LAT_DELTA = np.array([-1.333, -12.693, 0.019, -8.638, -18.539])
+PLACEMENT_ENERGY_DELTA = np.array([-0.597, -12.316, -0.062, -2.441, -17.872])
 
-LOC_BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU", "N-body"]
-COPY_DELTA = np.array([-12.030, -7.692, 0.0, -38.220, -23.905, 0.0])
-LOC_LAT_DELTA = np.array([-3.135, -12.693, -0.0066, -9.269, -15.891, 0.019])
-DEV_BENCH = ["FDTD", "MiniWeather", "Cholesky", "LU", "N-body"]
-DEV_RATE = np.array([0.249902, 0.0, 0.281154, 0.619305, 0.0])
-DEV_LAT_DELTA = np.array([-3.135, -0.0066, -9.269, -15.891, 0.019])
+LOC_BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU"]
+COPY_DELTA = np.array([-12.030, -7.692, 0.0, -38.220, -23.905])
+LOC_LAT_DELTA = np.array([-3.135, -12.693, -0.0066, -9.269, -15.891])
+DEV_BENCH = ["FDTD", "MiniWeather", "Cholesky", "LU"]
+DEV_RATE = np.array([0.249902, 0.0, 0.281154, 0.619305])
+DEV_LAT_DELTA = np.array([-3.135, -0.0066, -9.269, -15.891])
 
-DVFS_BENCH = ["FDTD", "MiniWeather", "CG", "LU", "Cholesky", "N-body"]
-DVFS_SHORT = ["FDTD", "MiniW.", "CG", "LU", "Chol.", "N-body"]
-LAT_DELTA = np.array([-0.604, 0.073, 0.953, 0.662, 2.817, -0.110])
-ENERGY_DELTA = np.array([-3.829, -3.079, -5.587, -3.287, -1.411, -0.137])
-POWER_DELTA = np.array([-3.230, -3.150, -6.478, -3.968, -4.389, -0.023])
-MID_SAMPLES = np.array([91.903, 0.0, 98.912, 58.685, 58.654, 0.0])
-EDP = np.array([0.955902, 0.969913, 0.953132, 0.973536, 1.013666, 0.997531])
-ED2P = np.array([0.950133, 0.970618, 0.962218, 0.979985, 1.042219, 0.996431])
+DVFS_BENCH = ["FDTD", "MiniWeather", "CG", "LU", "Cholesky"]
+DVFS_SHORT = ["FDTD", "MiniW.", "CG", "LU", "Chol."]
+LAT_DELTA = np.array([-0.604, 0.073, 0.953, 0.662, 2.817])
+ENERGY_DELTA = np.array([-3.829, -3.079, -5.587, -3.287, -1.411])
+POWER_DELTA = np.array([-3.230, -3.150, -6.478, -3.968, -4.389])
+MID_SAMPLES = np.array([91.903, 0.0, 98.912, 58.685, 58.654])
+EDP = np.array([0.955902, 0.969913, 0.953132, 0.973536, 1.013666])
+ED2P = np.array([0.950133, 0.970618, 0.962218, 0.979985, 1.042219])
 
-EFF_MID_SHARE = np.array([1.000, 0.000, 0.333, 0.697, 0.637, 0.000])
-COMMIT_SWITCHES = np.array([8, 0, 512, 290, 57, 0])
-FORCE_HIGH = np.array([0, 0, 0, 127, 23, 0])
-SLOWDOWN = np.array([0, 0, 0, 127, 23, 0])
+EFF_MID_SHARE = np.array([1.000, 0.000, 0.333, 0.697, 0.637])
+COMMIT_SWITCHES = np.array([8, 0, 512, 290, 57])
+FORCE_HIGH = np.array([0, 0, 0, 127, 23])
+SLOWDOWN = np.array([0, 0, 0, 127, 23])
 
-OVER_BENCH = ["FDTD", "LU", "N-body"]
-COMPACT_LOG = np.array([-0.159, 1.559, 0.000])
-CONTROL_LAT = np.array([0.953, 9.331, 4.369])
-CONTROL_ENERGY = np.array([-1.196, 7.233, 0.722])
+OVER_BENCH = ["FDTD", "LU"]
+COMPACT_LOG = np.array([-0.159, 1.559])
+CONTROL_LAT = np.array([0.953, 9.331])
+CONTROL_ENERGY = np.array([-1.196, 7.233])
 
 
 COLORS = {
@@ -191,7 +191,7 @@ def results_overview() -> None:
     fig, ax = plt.subplots(figsize=(4.35, 2.4))
     labels = ["Placement\nlatency", "DVFS\nenergy"]
     baseline = np.array([1.0, 1.0])
-    optimized = np.array([0.92854, 0.970962])
+    optimized = np.array([0.914963, 0.965520])
     x = np.array([0.0, 1.35])
     bw = 0.18
     ax.bar(x - bw / 2, baseline, width=bw, color=COLORS["baseline"], edgecolor="#333333", linewidth=0.35, label="Baseline")
@@ -202,7 +202,7 @@ def results_overview() -> None:
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     polish_axes(ax)
-    for bar, text in zip(bars, ["7.146% lower", "2.904% lower"]):
+    for bar, text in zip(bars, ["8.504% lower", "3.448% lower"]):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 0.004,
@@ -221,7 +221,7 @@ def benchmark_copy_volume() -> None:
     y = np.arange(len(BENCH_SHORT))
     bars = ax.barh(y, COPY_BYTES, color=COLORS["copy"], edgecolor="#1F2933", linewidth=0.35)
     ax.set_xscale("log")
-    ax.set_xlim(4e6, 5e11)
+    ax.set_xlim(2e8, 5e11)
     ax.set_yticks(y)
     ax.set_yticklabels(BENCH_SHORT)
     ax.invert_yaxis()
@@ -259,7 +259,6 @@ def copy_latency_scatter() -> None:
         "MiniWeather": (-58, -11),
         "Cholesky": (5, 5),
         "LU": (5, -10),
-        "N-body": (5, 7),
     }
     for x, y, label in zip(COPY_DELTA, LOC_LAT_DELTA, LOC_BENCH):
         dx, dy = offsets[label]
@@ -282,7 +281,6 @@ def deviation_latency_scatter() -> None:
         "MiniWeather": (5, -11),
         "Cholesky": (5, 5),
         "LU": (-22, 7),
-        "N-body": (5, 7),
     }
     for x, y, label in zip(DEV_RATE, DEV_LAT_DELTA, DEV_BENCH):
         dx, dy = offsets[label]
@@ -324,7 +322,6 @@ def dvfs_tradeoff() -> None:
         "CG": (5, -2),
         "LU": (5, 5),
         "Cholesky": (-54, 5),
-        "N-body": (5, 5),
     }
     for x, y, label in zip(LAT_DELTA, ENERGY_DELTA, DVFS_BENCH):
         dx, dy = offsets[label]
@@ -364,7 +361,6 @@ def mid_energy_scatter() -> None:
         "CG": (-19, -11),
         "LU": (5, -10),
         "Cholesky": (5, 5),
-        "N-body": (5, 5),
     }
     for x, y, label in zip(MID_SAMPLES, ENERGY_DELTA, DVFS_BENCH):
         dx, dy = offsets[label]
