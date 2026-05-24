@@ -485,7 +485,7 @@ The copy-wait ratio is
 \end{equation}
 Large $\omega(t)$ indicates that the task is dominated by copy or queue waiting rather than by compute time, so reducing core frequency is less likely to harm performance.
 
-The proposer also detects heavy kernels. A task is marked heavy if its estimated cost exceeds the heavy-task threshold or if its task symbol matches compute-intensive kernels such as \texttt{GEMM}, \texttt{SYRK}, \texttt{TRSM}, \texttt{POTRF}, or \texttt{POTRS}. A heavy task is marked urgent-heavy when it is heavy and has low slack.
+The proposer also detects heavy kernels. A task is marked heavy if its estimated cost exceeds the heavy-task threshold or if its task symbol matches compute-intensive kernels such as GEMM, SYRK, TRSM, POTRF, or POTRS. A heavy task is marked urgent-heavy when it is heavy and has low slack.
 
 The proposal weight accumulated by the window committer is
 \begin{equation}
