@@ -236,7 +236,7 @@ def placement_deltas() -> None:
         "placement_deltas.pdf",
         BENCH_SHORT,
         [
-            ("Kernel latency", PLACEMENT_LAT_DELTA, COLORS["latency"]),
+            ("Latency", PLACEMENT_LAT_DELTA, COLORS["latency"]),
             ("Energy", PLACEMENT_ENERGY_DELTA, COLORS["energy"]),
         ],
         "Delta vs HEFT (%)",
@@ -262,7 +262,7 @@ def copy_latency_scatter() -> None:
         dx, dy = offsets[label]
         ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
     ax.set_xlabel("Copy bytes delta (%)")
-    ax.set_ylabel("Kernel latency delta (%)")
+    ax.set_ylabel("Latency delta (%)")
     ax.set_xlim(-42, 4)
     ax.set_ylim(-17.2, 2.1)
     polish_axes(ax, grid_axis="both")
@@ -284,7 +284,7 @@ def deviation_latency_scatter() -> None:
         dx, dy = offsets[label]
         ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
     ax.set_xlabel("Non-HEFT deviation rate")
-    ax.set_ylabel("Kernel latency delta (%)")
+    ax.set_ylabel("Latency delta (%)")
     ax.set_xlim(-0.035, 0.68)
     ax.set_ylim(-17.2, 2.1)
     polish_axes(ax, grid_axis="both")
@@ -296,9 +296,9 @@ def dvfs_deltas() -> None:
         "dvfs_deltas.pdf",
         DVFS_SHORT,
         [
-            ("Kernel latency", LAT_DELTA, COLORS["latency"]),
+            ("Latency", LAT_DELTA, COLORS["latency"]),
             ("Energy", ENERGY_DELTA, COLORS["energy"]),
-            ("Kernel power", POWER_DELTA, COLORS["power"]),
+            ("Power", POWER_DELTA, COLORS["power"]),
         ],
         "Delta vs no-DVFS (%)",
         ylim=(-7.2, 3.4),
@@ -324,7 +324,7 @@ def dvfs_tradeoff() -> None:
     for x, y, label in zip(LAT_DELTA, ENERGY_DELTA, DVFS_BENCH):
         dx, dy = offsets[label]
         ax.annotate(label, (x, y), xytext=(dx, dy), textcoords="offset points", fontsize=6.4)
-    ax.set_xlabel("Kernel latency delta (%)")
+    ax.set_xlabel("Latency delta (%)")
     ax.set_ylabel("Energy delta (%)")
     ax.set_xlim(-1.0, 3.25)
     ax.set_ylim(-6.25, 0.55)
