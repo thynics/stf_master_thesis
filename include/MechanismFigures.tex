@@ -200,26 +200,35 @@
 \begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}[x=1cm,y=1cm]
-  \node[thesis box, fill=ThesisGrayLight, text width=2.2cm] (task) at (5.4,4.80) {Ready task $t$};
-  \node[thesis box, fill=ThesisBlueLight, draw=ThesisBlue, text width=4.2cm] (eval) at (5.4,3.95) {Select profile $p_W$ and evaluate all GPU candidates};
-  \node[thesis box, fill=ThesisBlueLight, draw=ThesisBlue, text width=4.2cm] (base) at (5.4,3.10) {Choose HEFT baseline $g_0$ and compute $q(t)$};
-  \node[thesis box, fill=ThesisVioletLight, draw=ThesisViolet, text width=2.6cm] (crit) at (5.4,2.25) {$q(t)>\theta_q$?};
-  \node[thesis box, fill=ThesisTealLight, draw=ThesisTeal, text width=2.4cm] (cg) at (2.2,1.45) {Critical gate\\small $\delta$, high $\tau$};
-  \node[thesis box, fill=ThesisBlueLight, draw=ThesisBlue, text width=2.5cm] (ng) at (8.6,1.45) {Non-critical gate\\larger $\delta$, lower $\tau$};
-  \node[thesis box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=5.3cm] (filter) at (5.4,0.65) {Filter candidates with $\rho_F\leq\delta$ and $\rho_K\geq\tau$};
-  \node[thesis box, fill=ThesisGrayLight, text width=2.25cm] (heft) at (2.4,-0.20) {empty set:\\$g^*=g_0$};
-  \node[thesis box, fill=ThesisGreenLight, draw=ThesisGreen, text width=2.75cm] (best) at (8.4,-0.20) {feasible set:\\$g^*=\arg\max H(t,g)$};
+  \node[thesis box, fill=ThesisGrayLight, text width=2.4cm] (task) at (5.7,7.70) {Ready task $t$};
+  \node[thesis box, fill=ThesisBlueLight, draw=ThesisBlue, text width=5.2cm] (eval) at (5.7,6.45) {Select profile $p_W$ and\\evaluate all GPU candidates};
+  \node[thesis box, fill=ThesisBlueLight, draw=ThesisBlue, text width=5.2cm] (base) at (5.7,5.15) {Choose HEFT baseline $g_0$\\and compute $q(t)$};
+  \node[thesis box, fill=ThesisVioletLight, draw=ThesisViolet, text width=2.7cm] (crit) at (5.7,3.85) {$q(t)>\theta_q$?};
+  \node[thesis box, fill=ThesisTealLight, draw=ThesisTeal, text width=2.7cm] (cg) at (2.25,2.25) {Critical gate\\small $\delta$, high $\tau$};
+  \node[thesis box, fill=ThesisBlueLight, draw=ThesisBlue, text width=2.9cm] (ng) at (9.15,2.25) {Non-critical gate\\larger $\delta$, lower $\tau$};
+  \node[thesis box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=6.4cm] (filter) at (5.7,0.72) {Filter candidates with $\rho_F\leq\delta$ and $\rho_K\geq\tau$};
+  \node[thesis box, fill=ThesisGrayLight, text width=2.45cm] (heft) at (2.35,-0.78) {empty set:\\$g^*=g_0$};
+  \node[thesis box, fill=ThesisGreenLight, draw=ThesisGreen, text width=3.15cm] (best) at (9.05,-0.78) {feasible set:\\$g^*=\arg\max H(t,g)$};
 
   \draw[thesis arrow] (task) -- (eval);
   \draw[thesis arrow] (eval) -- (base);
   \draw[thesis arrow] (base) -- (crit);
-  \draw[thesis arrow] (crit.west) -| node[pos=0.25, above, font=\scriptsize, text=ThesisMuted] {yes} (cg.north);
-  \draw[thesis arrow] (crit.east) -| node[pos=0.25, above, font=\scriptsize, text=ThesisMuted] {no} (ng.north);
-  \draw[thesis arrow] (cg.south) |- (filter.west);
-  \draw[thesis arrow] (ng.south) |- (filter.east);
-  \draw[thesis arrow] (filter.south west) -- (heft.north);
-  \draw[thesis arrow] (filter.south east) -- (best.north);
-  \node[font=\scriptsize, text=ThesisMuted] at (5.4,-0.20) {$H(t,g)=\rho_K(t,g)$ in the copy-only configuration};
+  \coordinate (critSplit) at (5.7,3.05);
+  \draw[draw=ThesisInk!75, line width=0.45pt] (crit.south) -- (critSplit);
+  \draw[thesis arrow] (critSplit) -| (cg.north);
+  \draw[thesis arrow] (critSplit) -| (ng.north);
+  \node[font=\scriptsize, text=ThesisMuted] at (3.25,3.14) {yes};
+  \node[font=\scriptsize, text=ThesisMuted] at (8.15,3.14) {no};
+  \coordinate (gateMerge) at (5.7,1.35);
+  \draw[draw=ThesisInk!75, line width=0.45pt] (cg.south) -- ++(0,-0.36) -| (gateMerge);
+  \draw[draw=ThesisInk!75, line width=0.45pt] (ng.south) -- ++(0,-0.36) -| (gateMerge);
+  \draw[thesis arrow] (gateMerge) -- (filter.north);
+  \coordinate (filterSplit) at (5.7,-0.08);
+  \draw[draw=ThesisInk!75, line width=0.45pt] (filter.south) -- (filterSplit);
+  \draw[thesis arrow] (filterSplit) -| (heft.north);
+  \draw[thesis arrow] (filterSplit) -| (best.north);
+  \node[font=\scriptsize, text=ThesisMuted, align=center] at (5.7,-1.88)
+    {$H(t,g)=\rho_K(t,g)$ in the copy-only configuration};
 \end{tikzpicture}
 \caption{HEFT-relative residual placement decision. The scheduler first obtains the HEFT baseline, then accepts a non-baseline GPU only if it passes the finish-time and copy-gain thresholds of the active profile. If no candidate passes, the scheduler falls back to HEFT.}
 \label{fig:methods-residual-flow}
