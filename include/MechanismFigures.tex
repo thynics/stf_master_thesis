@@ -34,20 +34,6 @@
     inner sep=2.5pt,
     minimum height=6mm
   },
-  overview box/.style={
-    draw=ThesisInk!60,
-    rounded corners=2pt,
-    align=center,
-    inner sep=2.4pt,
-    minimum height=5.5mm,
-    font=\scriptsize
-  },
-  overview panel/.style={
-    draw=ThesisInk!35,
-    rounded corners=4pt,
-    fill=ThesisGrayLight,
-    inner sep=0pt
-  },
   thesis arrow/.style={
     -{Latex[length=2.0mm,width=1.4mm]},
     draw=ThesisInk!75,
@@ -204,102 +190,7 @@
 \newcommand{\figMethodsRuntimePipeline}{%
 \begin{figure}[!htbp]
 \centering
-\begin{tikzpicture}[x=1cm,y=1cm]
-  \node[font=\footnotesize\bfseries, text=ThesisInk, anchor=west] at (0.0,8.15)
-    {Two-layer runtime scheduler for multi-GPU task graphs};
-  \node[font=\scriptsize, text=ThesisMuted, anchor=west] at (0.0,7.78)
-    {HEFT-relative residual placement followed by guarded window-level DVFS control};
-
-  \node[overview panel, minimum width=2.55cm, minimum height=6.65cm] (inputp) at (1.30,4.35) {};
-  \node[overview panel, draw=ThesisBlue!65, fill=ThesisBlueLight!28, minimum width=4.85cm, minimum height=6.65cm] (placep) at (4.95,4.35) {};
-  \node[overview panel, draw=ThesisTeal!65, fill=ThesisTealLight!28, minimum width=3.55cm, minimum height=6.65cm] (dvfsp) at (9.30,4.35) {};
-  \node[overview panel, minimum width=2.35cm, minimum height=6.65cm] (execp) at (12.55,4.35) {};
-
-  \node[font=\scriptsize\bfseries, text=ThesisInk, anchor=west] at (0.25,7.20) {Input runtime view};
-  \node[font=\tiny, text=ThesisMuted, anchor=west] at (0.25,6.92) {CUDASTF graph and state};
-  \node[overview box, fill=ThesisBlueLight, draw=ThesisBlue, text width=1.9cm] (dag) at (1.30,6.20)
-    {\textbf{Task DAG}\\$G=(V,E)$\\ready tasks\\data dependencies};
-  \node[overview box, fill=ThesisTealLight, draw=ThesisTeal, text width=1.9cm] (state) at (1.30,4.65)
-    {\textbf{Scheduler state}\\$M[s,g]$ residency\\$R[g]$ ready time\\$C(t),d(t),B_{\mathrm{in}}$};
-  \node[overview box, fill=white, text width=1.65cm] (ready) at (1.30,2.55) {Ready task $t$};
-
-  \node[font=\scriptsize\bfseries, text=ThesisBlue, anchor=west] at (2.80,7.20)
-    {Layer 1: HEFT-relative residual placement};
-  \node[font=\tiny, text=ThesisMuted, anchor=west] at (2.80,6.92) {Choose GPU; keep HEFT as fallback};
-  \node[overview box, fill=white, draw=ThesisBlue, text width=1.75cm] (cand) at (3.80,6.05)
-    {\textbf{Candidate}\\\textbf{evaluation}\\$\xi(t,g)=(R,D,K,S,F,Q)$};
-  \node[overview box, fill=ThesisGreenLight, draw=ThesisGreen, text width=1.75cm] (crit) at (6.05,6.05)
-    {\textbf{Criticality}\\$q(t)$ from cost, fan-in, bytes};
-  \node[overview box, fill=ThesisGrayLight, text width=1.75cm] (heft) at (3.80,4.75)
-    {\textbf{HEFT baseline}\\$g_0=\arg\min_g F(t,g)$};
-  \node[overview box, fill=ThesisVioletLight, draw=ThesisViolet, text width=1.75cm] (bandit) at (6.05,4.75)
-    {\textbf{Window bandit}\\selects gate profile $p(W)$};
-  \node[overview box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=3.65cm] (gate) at (4.95,3.45)
-    {\textbf{Copy-only residual gate}\\$\rho_F\leq\delta(p,t)$ and $\rho_K\geq\tau(p,t)$\\score $H(t,g)=\rho_K$};
-  \node[overview box, fill=white, draw=ThesisBlue, text width=2.25cm] (sel) at (4.95,2.30)
-    {Selected GPU $g^*$\\HEFT fallback if no candidate passes};
-
-  \node[font=\scriptsize\bfseries, text=ThesisTeal, anchor=west] at (7.75,7.20)
-    {Layer 2: guarded proposal--commit DVFS};
-  \node[font=\tiny, text=ThesisMuted, anchor=west] at (7.75,6.92) {Choose frequency after placement; commit by window};
-  \node[overview box, fill=white, draw=ThesisTeal, text width=1.55cm] (prop) at (8.40,6.05)
-    {\textbf{Task-level}\\\textbf{proposer}\\score$(t)\rightarrow$ intent$(t)$};
-  \node[overview box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=1.30cm] (intent) at (10.35,6.05)
-    {\textbf{Intent}\\HIGH\\MID\\LOW};
-  \node[overview box, fill=ThesisVioletLight, draw=ThesisViolet, text width=1.75cm] (window) at (8.65,4.55)
-    {\textbf{Per-GPU}\\\textbf{commit window}\\intent shares\\critical mass\\slack budget};
-  \node[overview box, fill=ThesisRedLight, draw=ThesisRed, text width=1.15cm] (guard) at (10.65,4.55)
-    {\textbf{Guardrails}\\critical\\backlog\\slowdown};
-  \node[overview box, fill=white, draw=ThesisTeal, text width=1.65cm] (commit) at (8.65,3.15)
-    {\textbf{Window}\\\textbf{committer}\\$\ell_g\in\{\mathrm{HIGH},\mathrm{MID},\mathrm{LOW}\}$};
-  \node[overview box, fill=ThesisGrayLight, text width=1.20cm] (annot) at (10.55,3.15)
-    {\textbf{Frequency}\\annotation\\$(f_g,f_m)$};
-
-  \node[font=\scriptsize\bfseries, text=ThesisInk, anchor=west] at (11.65,7.20) {CUDASTF execution};
-  \node[font=\tiny, text=ThesisMuted, anchor=west] at (11.65,6.92) {single-node multi-GPU runtime};
-  \node[overview box, fill=white, text width=1.70cm] (node) at (12.55,5.70)
-    {\textbf{8 GPU node}\\per-GPU committed\\frequency levels};
-  \node[overview box, fill=ThesisGreenLight, draw=ThesisGreen, text width=1.70cm] (evid) at (12.55,3.35)
-    {\textbf{Execution evidence}\\latency, energy, EDP\\copy bytes, clocks\\guardrail events};
-
-  \node[overview panel, minimum width=6.6cm, minimum height=0.95cm] (feedp) at (6.75,1.10) {};
-  \node[font=\scriptsize\bfseries, text=ThesisInk, anchor=west] at (3.75,1.43) {Feedback and state update};
-  \node[overview box, fill=ThesisTealLight, draw=ThesisTeal, text width=1.35cm] (fr) at (4.30,0.92) {$R[g^*]\gets F(t,g^*)$};
-  \node[overview box, fill=ThesisTealLight, draw=ThesisTeal, text width=1.35cm] (fm) at (5.85,0.92) {MSI residency};
-  \node[overview box, fill=ThesisVioletLight, draw=ThesisViolet, text width=1.25cm] (fb) at (7.40,0.92) {bandit reward};
-  \node[overview box, fill=ThesisRedLight, draw=ThesisRed, text width=1.45cm] (fs) at (9.05,0.92) {slowdown EMA};
-
-  \node[overview panel, minimum width=13.4cm, minimum height=0.72cm] at (6.65,0.05) {};
-  \node[font=\scriptsize\bfseries, text=ThesisInk, anchor=west] at (0.35,0.18) {Runtime objective};
-  \node[overview box, fill=ThesisBlueLight, draw=ThesisBlue, text width=1.75cm] at (2.85,0.18) {$\min J(E_{\mathrm{app}},T_{\mathrm{app}})$};
-  \node[overview box, fill=ThesisGreenLight, draw=ThesisGreen, text width=1.90cm] at (5.15,0.18) {$T_{\mathrm{app}}\leq(1+\epsilon)T_{\mathrm{base}}$};
-  \node[overview box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=1.60cm] at (7.45,0.18) {copy-aware locality};
-  \node[overview box, fill=ThesisVioletLight, draw=ThesisViolet, text width=1.60cm] at (9.55,0.18) {window stability};
-  \node[overview box, fill=ThesisRedLight, draw=ThesisRed, text width=1.35cm] at (11.55,0.18) {safe fallback};
-
-  \draw[thesis arrow] (ready.east) -- ++(0.62,0) |- (cand.west);
-  \draw[thesis arrow] (state.east) -- ++(0.55,0) |- (cand.west);
-  \draw[thesis arrow] (cand) -- (heft);
-  \draw[thesis arrow] (cand) -- (crit);
-  \draw[thesis arrow] (crit) -- (bandit);
-  \draw[thesis arrow] (heft) -- (gate);
-  \draw[thesis arrow] (bandit) -- (gate);
-  \draw[thesis arrow] (gate) -- (sel);
-  \draw[thesis arrow] (sel.east) -- ++(0.60,0) |- (prop.west);
-  \draw[thesis arrow] (prop) -- (intent);
-  \draw[thesis arrow] (prop) -- (window);
-  \draw[thesis arrow] (intent) -- (window);
-  \draw[thesis arrow] (window) -- (commit);
-  \draw[thesis arrow] (guard) -- (commit);
-  \draw[thesis arrow] (commit) -- (annot);
-  \draw[thesis arrow] (annot.east) -- ++(0.52,0) |- (node.west);
-  \draw[thesis arrow] (node) -- (evid);
-
-  \draw[thesis arrow, dashed, ThesisMuted] (sel.south) |- (fb.north);
-  \draw[thesis arrow, dashed, ThesisMuted] (annot.south) |- (fs.north);
-  \draw[thesis arrow, dashed, ThesisMuted] (evid.south) |- (fs.east);
-  \draw[thesis arrow, dashed, ThesisMuted] (feedp.west) -| (state.south);
-\end{tikzpicture}
+\includegraphics[width=\linewidth]{figures/system_overview.png}
 \caption{Overview of the proposed two-layer runtime scheduler. CUDASTF exposes a task graph and runtime state to the placement layer, which applies a HEFT-relative residual gate. The selected GPU is then passed to the guarded proposal--commit DVFS layer, and execution feedback updates ready times, data residency, bandit rewards, and slowdown guardrails.}
 \label{fig:methods-runtime-pipeline}
 \end{figure}%
