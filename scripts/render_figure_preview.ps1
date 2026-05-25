@@ -48,7 +48,7 @@ New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 \usepackage[paperwidth=$PaperWidth,paperheight=$PaperHeight,margin=4mm]{geometry}
 \usepackage{xcolor}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,decorations.markings}
+\usetikzlibrary{arrows.meta,calc,decorations.markings}
 \usepackage{graphicx}
 \pagestyle{empty}
 \input{../include/MechanismFigures.tex}

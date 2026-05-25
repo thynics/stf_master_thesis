@@ -222,14 +222,18 @@
   \node[thesis box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=6.4cm] (filter) at (5.7,0.42) {Filter candidates with $\rho_F\leq\delta$ and $\rho_K\geq\tau$};
   \node[thesis box, fill=ThesisGrayLight, text width=2.45cm] (heft) at (2.35,-0.90) {empty set:\\$g^*=g_0$};
   \node[thesis box, fill=ThesisGreenLight, draw=ThesisGreen, text width=3.15cm] (best) at (9.05,-0.90) {feasible set:\\$g^*=\arg\max H(t,g)$};
+  \coordinate (cgEntry) at ($(cg.north)+(-0.70,0)$);
+  \coordinate (ngEntry) at ($(ng.north)+(0.70,0)$);
+  \coordinate (heftEntry) at ($(heft.north)+(-0.68,0)$);
+  \coordinate (bestEntry) at ($(best.north)+(0.74,0)$);
 
   \draw[thesis arrow] (task.south) -- (eval.north);
   \draw[thesis arrow] (eval.south) -- (base.north);
   \draw[thesis arrow] (base.south) -- (crit.north);
   \coordinate (critSplit) at (5.7,2.62);
   \draw[thesis flow line] (crit.south) -- (critSplit);
-  \draw[thesis arrow] (critSplit) -| (cg.north);
-  \draw[thesis arrow] (critSplit) -| (ng.north);
+  \draw[thesis arrow] (critSplit) -| (cgEntry);
+  \draw[thesis arrow] (critSplit) -| (ngEntry);
   \node[font=\scriptsize, text=ThesisMuted] at (3.25,2.72) {yes};
   \node[font=\scriptsize, text=ThesisMuted] at (8.15,2.72) {no};
   \coordinate (gateMerge) at (5.7,1.04);
@@ -238,8 +242,8 @@
   \draw[thesis arrow] (gateMerge) -- (filter.north);
   \coordinate (filterSplit) at (5.7,-0.22);
   \draw[thesis flow line] (filter.south) -- (filterSplit);
-  \draw[thesis arrow] (filterSplit) -| (heft.north);
-  \draw[thesis arrow] (filterSplit) -| (best.north);
+  \draw[thesis arrow] (filterSplit) -| (heftEntry);
+  \draw[thesis arrow] (filterSplit) -| (bestEntry);
   \node[font=\scriptsize, text=ThesisMuted, align=center] at (5.7,-1.88)
     {$H(t,g)=\rho_K(t,g)$ in the copy-only configuration};
 \end{tikzpicture}
