@@ -7,7 +7,8 @@ param(
 
   [string]$PaperWidth = '15cm',
   [string]$PaperHeight = '12cm',
-  [double]$Scale = 2.5
+  [double]$Scale = 2.5,
+  [int]$Dpi = 0
 )
 
 $ErrorActionPreference = 'Stop'
@@ -50,6 +51,7 @@ New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,calc,decorations.markings}
 \usepackage{graphicx}
+\graphicspath{{../}}
 \pagestyle{empty}
 \input{../include/MechanismFigures.tex}
 \begin{document}
@@ -62,6 +64,10 @@ try {
   & $tectonic $texPath --outdir $outDir --keep-logs
   if ($LASTEXITCODE -ne 0) {
     throw "Tectonic failed with exit code $LASTEXITCODE"
+  }
+
+  if ($Dpi -gt 0) {
+    $Scale = $Dpi / 72.0
   }
 
   $convertScript = @"

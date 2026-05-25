@@ -209,9 +209,7 @@
 \end{figure}%
 }
 
-\newcommand{\figMethodsResidualFlow}{%
-\begin{figure}[!htb]
-\centering
+\newcommand{\figMethodsResidualFlowTikz}{%
 \begin{tikzpicture}[x=1cm,y=1cm]
   \node[thesis box, fill=ThesisGrayLight, text width=2.4cm] (task) at (5.7,7.15) {Ready task $t$};
   \node[thesis box, fill=ThesisBlueLight, draw=ThesisBlue, text width=5.2cm] (eval) at (5.7,5.95) {Select profile $p_W$ and\\evaluate all GPU candidates};
@@ -247,6 +245,12 @@
   \node[font=\scriptsize, text=ThesisMuted, align=center] at (5.7,-2.34)
     {$H(t,g)=\rho_K(t,g)$ in the copy-only configuration};
 \end{tikzpicture}
+}
+
+\newcommand{\figMethodsResidualFlow}{%
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.92\linewidth,height=0.54\textheight,keepaspectratio]{figures/methods_residual_flow.png}
 \caption{HEFT-relative residual placement decision. The scheduler accepts a non-baseline GPU only when the active profile's finish-time and copy-gain gates pass; otherwise it falls back to HEFT.}
 \label{fig:methods-residual-flow}
 \end{figure}%
