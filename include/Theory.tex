@@ -208,7 +208,7 @@ T_{\mathrm{app}} \leq (1 + \epsilon) T_{\mathrm{base}},
 \end{equation}
 where $\epsilon$ is the maximum allowed slowdown. The baseline may be fixed maximum-frequency execution or another user-selected reference policy.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \begin{tabular}{@{}ll@{}}
@@ -385,7 +385,7 @@ The scheduler can use two sets of thresholds. For critical tasks, the allowed en
 
 A gate profile is a parameterized policy that controls how willing the scheduler is to deviate from HEFT. Table~\ref{tab:gate_profiles_theory} gives a conceptual example.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \begin{tabular}{@{}llll@{}}
@@ -463,7 +463,7 @@ DVFS can be applied at different granularities. Very fine-grained control may ch
 
 Table~\ref{tab:dvfs_granularity} summarizes common DVFS granularities.
 
-\begin{table}[H]
+\begin{table}[!htbp]
 \centering
 \footnotesize
 \begin{tabular}{@{}lll@{}}
@@ -628,7 +628,7 @@ Algorithm~\ref{alg:proposal_commit_pipeline} formalizes one scheduling step with
 \State $d_{\mathrm{exec}} \gets \Call{ResidualGate}{v,d_{\mathrm{base}},\{\xi(v,d)\}_{d\in D}}$
 \State $\kappa(v) \gets \Call{CriticalityProxy}{v}$
 \State $p_v \gets \Call{ProposeLevel}{v,d_{\mathrm{exec}},\kappa(v),\xi(v,d_{\mathrm{base}})}$
-\State $\Call{AccumulateIntent}{W_{d_{\mathrm{exec}}},p_v,v}$
+\State $\mathrm{AccumulateIntent}(W_{d_{\mathrm{exec}}},p_v,v)$
 \State $\ell_v \gets \Call{CommittedLevel}{W_{d_{\mathrm{exec}}}}$
 \State $\varphi_v \gets \Call{FrequencyPair}{d_{\mathrm{exec}},\ell_v}$
 \State $\Call{AnnotateFrequency}{v,\varphi_v}$
@@ -636,7 +636,7 @@ Algorithm~\ref{alg:proposal_commit_pipeline} formalizes one scheduling step with
 \If{$\Call{WindowComplete}{W_{d_{\mathrm{exec}}}}$}
     \State $m \gets \Call{AggregateWindowMetrics}{W_{d_{\mathrm{exec}}}}$
     \State $\ell_{\mathrm{next}} \gets \Call{CommitLevelWithGuardrails}{m}$
-    \State $\Call{ResetWindow}{W_{d_{\mathrm{exec}}},\ell_{\mathrm{next}}}$
+    \State $\mathrm{ResetWindow}(W_{d_{\mathrm{exec}}},\ell_{\mathrm{next}})$
 \EndIf
 \State \Return $(d_{\mathrm{exec}},\ell_v)$
 \end{algorithmic}

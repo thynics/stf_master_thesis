@@ -1,3 +1,64 @@
 % CREATED BY DAVID FRISK, 2016
-\chapter{Appendix 1}
+\chapter{Supplementary Result Tables}
+\label{app:supplementary-results}
+
+This appendix reports the absolute measurements behind the compact delta tables
+in Chapter~\ref{chap:results}. Values are rounded to one decimal place in the
+same way as the corresponding Results tables.
+
+\begin{table}[!htbp]
+\centering
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{Latency (ms)}
+& \multicolumn{2}{c}{Energy (J)}
+& \multicolumn{2}{c}{EDP (J\(\cdot\)s)} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(l){6-7}
+Benchmark
+& Base & WinDVFS
+& Base & WinDVFS
+& Base & WinDVFS \\
+\midrule
+FDTD & 6398.7 & 6407.0 & 3182.1 & 2984.6 & 20361.3 & 19122.0 \\
+CG & 12432.0 & 12373.5 & 3077.9 & 2766.9 & 38264.8 & 34235.7 \\
+MiniWeather & 15126.5 & 15119.0 & 4957.8 & 4875.7 & 74994.3 & 73715.7 \\
+LU decomposition & 15544.7 & 15777.5 & 4044.1 & 3842.6 & 62863.9 & 60626.8 \\
+Cholesky & 18562.7 & 18804.6 & 5327.8 & 5145.5 & 98898.3 & 96759.7 \\
+\bottomrule
+\end{tabular}
+\endgroup
+\caption{Absolute measurements for the WinDVFS comparison in Table~\ref{tab:results-dvfs-energy}. Base denotes the no-DVFS baseline under the same placement layer.}
+\label{tab:appendix-dvfs-absolute}
+\end{table}
+
+\begin{table}[!htbp]
+\centering
+\begingroup
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{Latency (ms)}
+& \multicolumn{2}{c}{Energy (J)}
+& \multicolumn{2}{c}{EDP (J\(\cdot\)s)} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(l){6-7}
+Benchmark
+& HEFT & B+DVFS
+& HEFT & B+DVFS
+& HEFT & B+DVFS \\
+\midrule
+FDTD & 6784.0 & 6407.0 & 3256.7 & 2984.6 & 22093.3 & 19122.0 \\
+CG & 14301.0 & 12373.5 & 3464.1 & 2766.9 & 49540.8 & 34235.7 \\
+MiniWeather & 15111.6 & 15119.0 & 5080.7 & 4875.7 & 76778.0 & 73715.7 \\
+LU decomposition & 18591.6 & 15777.5 & 4825.7 & 3842.6 & 89716.8 & 60626.8 \\
+Cholesky & 20672.9 & 18804.6 & 5415.0 & 5145.5 & 111943.7 & 96759.7 \\
+\bottomrule
+\end{tabular}
+\endgroup
+\caption{Absolute measurements for the end-to-end comparison in Table~\ref{tab:results-end-to-end}. B+DVFS denotes the bandit scheduler with WinDVFS enabled.}
+\label{tab:appendix-end-to-end-absolute}
+\end{table}
 

@@ -321,37 +321,28 @@ emphasizes multi-percent energy changes and treats sub-percent changes as
 near-neutral unless they are supported by power, clock, or trade-off evidence.
 Figure~\ref{fig:results-dvfs-deltas} reports latency, energy, and EDP
 together, and Table~\ref{tab:results-dvfs-energy} gives the corresponding
-absolute values and relative deltas.
+relative deltas. The absolute values used to compute the deltas are reported
+in Appendix~\ref{app:supplementary-results}.
 
 \figDvfsDeltas
 
 \begin{table}[!htbp]
 \centering
 \begingroup
-\scriptsize
-\setlength{\tabcolsep}{2.8pt}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrrrrrrr@{}}
+\footnotesize
+\begin{tabular}{@{}lrrr@{}}
 \toprule
-& \multicolumn{3}{c}{Latency (ms)}
-& \multicolumn{3}{c}{Energy (J)}
-& \multicolumn{3}{c}{EDP (J\(\cdot\)s)} \\
-\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(l){8-10}
-Benchmark
-& Base & WinDVFS & \(\Delta\)
-& Base & WinDVFS & \(\Delta\)
-& Base & WinDVFS & \(\Delta\) \\
+Benchmark & Latency \(\Delta\) & Energy \(\Delta\) & EDP \(\Delta\) \\
 \midrule
-FDTD & 6398.7 & 6407.0 & \(+0.13\%\) & 3182.1 & 2984.6 & \(-6.21\%\) & 20361.3 & 19122.0 & \(-6.09\%\) \\
-CG & 12432.0 & 12373.5 & \(-0.47\%\) & 3077.9 & 2766.9 & \(-10.11\%\) & 38264.8 & 34235.7 & \(-10.53\%\) \\
-MiniWeather & 15126.5 & 15119.0 & \(-0.05\%\) & 4957.8 & 4875.7 & \(-1.66\%\) & 74994.3 & 73715.7 & \(-1.70\%\) \\
-LU decomposition & 15544.7 & 15777.5 & \(+1.50\%\) & 4044.1 & 3842.6 & \(-4.98\%\) & 62863.9 & 60626.8 & \(-3.56\%\) \\
-Cholesky & 18562.7 & 18804.6 & \(+1.30\%\) & 5327.8 & 5145.5 & \(-3.42\%\) & 98898.3 & 96759.7 & \(-2.16\%\) \\
+FDTD & \(+0.13\%\) & \(-6.21\%\) & \(-6.09\%\) \\
+CG & \(-0.47\%\) & \(-10.11\%\) & \(-10.53\%\) \\
+MiniWeather & \(-0.05\%\) & \(-1.66\%\) & \(-1.70\%\) \\
+LU decomposition & \(+1.50\%\) & \(-4.98\%\) & \(-3.56\%\) \\
+Cholesky & \(+1.30\%\) & \(-3.42\%\) & \(-2.16\%\) \\
 \bottomrule
-\end{tabular}%
-}
+\end{tabular}
 \endgroup
-\caption{Final WinDVFS result relative to no-DVFS execution. Base denotes the no-DVFS baseline. Absolute values are rounded to one decimal place, while relative deltas are computed from the underlying measurements.}
+\caption{Final WinDVFS result relative to no-DVFS execution under the same placement layer. Negative values indicate reductions relative to the no-DVFS baseline.}
 \label{tab:results-dvfs-energy}
 \end{table}
 
@@ -408,36 +399,26 @@ The previous sections isolate the two components of the system: placement is
 measured against HEFT with DVFS disabled, and frequency control is measured
 against the same placement layer without DVFS. Table~\ref{tab:results-end-to-end}
 combines the two effects by comparing HEFT directly with the final
-Bandit+WinDVFS configuration. This is the end-to-end view of the proposed
-runtime.
+Bandit+WinDVFS configuration. The absolute values behind this end-to-end
+comparison are reported in Appendix~\ref{app:supplementary-results}.
 
 \begin{table}[!htbp]
 \centering
 \begingroup
-\scriptsize
-\setlength{\tabcolsep}{2.8pt}
-\resizebox{\linewidth}{!}{%
-\begin{tabular}{@{}lrrrrrrrrr@{}}
+\footnotesize
+\begin{tabular}{@{}lrrr@{}}
 \toprule
-& \multicolumn{3}{c}{Latency (ms)}
-& \multicolumn{3}{c}{Energy (J)}
-& \multicolumn{3}{c}{EDP (J\(\cdot\)s)} \\
-\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(l){8-10}
-Benchmark
-& HEFT & B+DVFS & \(\Delta\)
-& HEFT & B+DVFS & \(\Delta\)
-& HEFT & B+DVFS & \(\Delta\) \\
+Benchmark & Latency \(\Delta\) & Energy \(\Delta\) & EDP \(\Delta\) \\
 \midrule
-FDTD & 6784.0 & 6407.0 & \(-5.56\%\) & 3256.7 & 2984.6 & \(-8.36\%\) & 22093.3 & 19122.0 & \(-13.45\%\) \\
-CG & 14301.0 & 12373.5 & \(-13.48\%\) & 3464.1 & 2766.9 & \(-20.13\%\) & 49540.8 & 34235.7 & \(-30.89\%\) \\
-MiniWeather & 15111.6 & 15119.0 & \(+0.05\%\) & 5080.7 & 4875.7 & \(-4.04\%\) & 76778.0 & 73715.7 & \(-3.99\%\) \\
-LU decomposition & 18591.6 & 15777.5 & \(-15.14\%\) & 4825.7 & 3842.6 & \(-20.37\%\) & 89716.8 & 60626.8 & \(-32.42\%\) \\
-Cholesky & 20672.9 & 18804.6 & \(-9.04\%\) & 5415.0 & 5145.5 & \(-4.98\%\) & 111943.7 & 96759.7 & \(-13.56\%\) \\
+FDTD & \(-5.56\%\) & \(-8.36\%\) & \(-13.45\%\) \\
+CG & \(-13.48\%\) & \(-20.13\%\) & \(-30.89\%\) \\
+MiniWeather & \(+0.05\%\) & \(-4.04\%\) & \(-3.99\%\) \\
+LU decomposition & \(-15.14\%\) & \(-20.37\%\) & \(-32.42\%\) \\
+Cholesky & \(-9.04\%\) & \(-4.98\%\) & \(-13.56\%\) \\
 \bottomrule
-\end{tabular}%
-}
+\end{tabular}
 \endgroup
-\caption{End-to-end comparison between HEFT and the final Bandit+WinDVFS configuration. B+DVFS denotes the bandit scheduler with WinDVFS enabled.}
+\caption{End-to-end comparison between HEFT and the final Bandit+WinDVFS configuration. Negative values indicate reductions relative to HEFT.}
 \label{tab:results-end-to-end}
 \end{table}
 
@@ -474,19 +455,20 @@ benchmarks.
 \begingroup
 \scriptsize
 \setlength{\tabcolsep}{3pt}
-\resizebox{\linewidth}{!}{%
 \begin{tabular}{@{}lrrrrr@{}}
 \toprule
-Benchmark & Dynamic latency & Static-replay latency & Latency \(\Delta\) & Energy \(\Delta\) & EDP \(\Delta\) \\
+& \multicolumn{2}{c}{Latency (ms)}
+& \multicolumn{3}{c}{Relative delta} \\
+\cmidrule(lr){2-3}\cmidrule(l){4-6}
+Benchmark & Dynamic & Static replay & Latency & Energy & EDP \\
 \midrule
-FDTD & 6283.000 ms & 6247.000 ms & \(-0.573\%\) & \(-0.508\%\) & \(+3.681\%\) \\
-CG & 12404.000 ms & 12582.500 ms & \(+1.439\%\) & \(+0.957\%\) & \(+2.758\%\) \\
-MiniWeather & 15101.000 ms & 15092.000 ms & \(-0.060\%\) & \(+0.134\%\) & \(-0.084\%\) \\
-Cholesky & 18701.450 ms & 18558.250 ms & \(-0.766\%\) & \(+0.047\%\) & \(-0.129\%\) \\
-LU decomposition & 15389.700 ms & 15516.200 ms & \(+0.822\%\) & \(+1.056\%\) & \(+3.047\%\) \\
+FDTD & 6283.000 & 6247.000 & \(-0.573\%\) & \(-0.508\%\) & \(+3.681\%\) \\
+CG & 12404.000 & 12582.500 & \(+1.439\%\) & \(+0.957\%\) & \(+2.758\%\) \\
+MiniWeather & 15101.000 & 15092.000 & \(-0.060\%\) & \(+0.134\%\) & \(-0.084\%\) \\
+Cholesky & 18701.450 & 18558.250 & \(-0.766\%\) & \(+0.047\%\) & \(-0.129\%\) \\
+LU decomposition & 15389.700 & 15516.200 & \(+0.822\%\) & \(+1.056\%\) & \(+3.047\%\) \\
 \bottomrule
 \end{tabular}%
-}
 \endgroup
 \caption{Static-replay overhead diagnostic for the Bandit scheduler. Deltas are computed for static replay relative to the corresponding dynamic Bandit run; values close to zero indicate that online scheduling cost is not visible at benchmark scale.}
 \label{tab:results-overhead}

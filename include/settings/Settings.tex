@@ -23,7 +23,7 @@
 \usepackage{chemfig}								% Chemical structures
 \usepackage[top=3cm, bottom=3cm,
 			inner=3cm, outer=3cm]{geometry}			% Page margin lengths			
-\raggedbottom										% Avoid stretching paragraph and float spacing to force equal page heights
+\flushbottom										% Keep facing pages vertically balanced in the final thesis layout
 \usepackage{eso-pic}								% Create cover page background
 \newcommand{\backgroundpic}[3]{
 	\put(#1,#2){
@@ -32,7 +32,7 @@
 	\includegraphics[width=\paperwidth,height=\paperheight,keepaspectratio]{#3}}}}
 \usepackage{float} 									% Enables object position enforcement using [H]
 \usepackage[section]{placeins}						% Keeps floats within their section while allowing LaTeX to reduce whitespace
-\usepackage{parskip}								% Enables vertical spaces correctly 
+\usepackage[skip=4pt plus 1pt, indent=0pt]{parskip}	% Paragraph spacing with limited stretch
 \usepackage{datetime2} % date formatting tools - ISO-date YYYY-MM-DD
 \usepackage{microtype} % Microtypography - improves readability and appearance of text.
 \setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
@@ -58,8 +58,8 @@
 		 
 
 % Define the number of section levels to be included in the t.o.c. and numbered	(3 is default)	
-\setcounter{tocdepth}{5}							
-\setcounter{secnumdepth}{5}	
+\setcounter{tocdepth}{2}
+\setcounter{secnumdepth}{3}
 
 
 % Chapter title settings
