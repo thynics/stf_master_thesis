@@ -389,9 +389,10 @@ Only the active profile is updated for the completed window. Figure~\ref{fig:met
 
 Algorithms~\ref{alg:placement-decision} and~\ref{alg:state-update} summarize the placement procedure and the corresponding scheduler-state update. The first algorithm describes the HEFT-relative decision rule, while the second algorithm describes how the selected placement is made visible to subsequent tasks through the ready-time and residency states.
 
-\begin{algorithm}[t]
+\begin{algorithm}[!htbp]
 \caption{HEFT-relative placement decision}
 \label{alg:placement-decision}
+\footnotesize
 \begin{algorithmic}[1]
 \Require Ready task $t$, GPU set $\mathcal{G}$, ready times $R$, residency model $M$, active window state $W$
 \Ensure Selected GPU $g^{*}$
@@ -402,7 +403,7 @@ Algorithms~\ref{alg:placement-decision} and~\ref{alg:state-update} summarize the
 \State $C(t) \gets \Call{EstimateCost}{t}$
 \State $\mathcal{I}(t) \gets \Call{InputDependencies}{t}$
 \ForAll{$g\in\mathcal{G}$}
-    \State $\xi(t,g)\gets\Call{EvaluateCandidate}{t,g,R,M}$ \Comment{computes $D,K,S,F,Q$}
+    \State $\xi(t,g)\gets\Call{EvaluateCandidate}{t,g,R,M}$ \Comment{$D,K,S,F,Q$}
 \EndFor
 \State $g_0\gets\arg\min_{g\in\mathcal{G}}F(t,g)$ \Comment{HEFT baseline}
 \State $q(t)\gets\Call{CriticalityProxy}{C(t),d(t),B_{\mathrm{in}}(t)}$
@@ -416,7 +417,7 @@ Algorithms~\ref{alg:placement-decision} and~\ref{alg:state-update} summarize the
 \If{$\mathcal{F}=\emptyset$}
     \State $g^{*}\gets g_0$
 \Else
-    \State $g^{*}\gets\arg\max_{g\in\mathcal{F}}H(t,g)$ \Comment{ties use earlier finish time, then GPU id}
+    \State $g^{*}\gets\arg\max_{g\in\mathcal{F}}H(t,g)$ \Comment{tie: finish time, GPU id}
 \EndIf
 \State accumulate task reward and window statistics for $t$
 \If{the placement window is complete}
@@ -426,9 +427,10 @@ Algorithms~\ref{alg:placement-decision} and~\ref{alg:state-update} summarize the
 \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}[t]
+\begin{algorithm}[!htbp]
 \caption{Scheduler-state update after placement}
 \label{alg:state-update}
+\footnotesize
 \begin{algorithmic}[1]
 \Require Scheduled task $t$, selected GPU $g^{*}$, ready times $R$, residency model $M$
 \Ensure Updated $R$ and $M$
