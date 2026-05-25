@@ -16,7 +16,7 @@ Runtime-level energy optimization for multi-GPU task graphs requires a model of 
 \section{Multi-GPU Task Graph Execution}
 \label{sec:theory_task_graphs}
 
-Task-graph execution is the foundation of this thesis. Instead of viewing a GPU application as a flat sequence of kernel launches, a task-based runtime represents the application as a graph of computation and data-movement tasks. This graph exposes dependencies, communication, device placement choices, and possible slack that can be exploited by a scheduler.
+Task-graph execution is the foundation of this thesis. Instead of viewing a GPU application as a flat sequence of kernel launches, a task-based runtime represents the application as a graph of computation and data-movement tasks. Prior heterogeneous runtimes and multi-GPU task systems show that this abstraction can expose scheduling, load-balancing, and data-management opportunities that are difficult to express through flat kernel-launch interfaces~\cite{Augonnet2011StarPU,Chen2022CASE,John2024WorkSharing}. This graph exposes dependencies, communication, device placement choices, and possible slack that can be exploited by a scheduler.
 
 \subsection{Directed Acyclic Graph Representation}
 \label{subsec:dag_representation}
@@ -59,7 +59,7 @@ Slack is the opposite notion. A task has slack if it can be delayed, placed diff
 \subsubsection{Why Slack Matters for DVFS}
 \label{subsubsec:slack_for_dvfs}
 
-DVFS reduces energy only when the saved power outweighs the additional runtime and transition overhead. If a task is on the critical path, lowering its frequency may directly increase the application runtime. If the same task has slack, the runtime increase may be partially or fully hidden. Therefore, a DAG-aware DVFS policy should not make frequency decisions from task cost alone; it should also consider dependency structure, data movement, and criticality.
+DVFS reduces energy only when the saved power outweighs the additional runtime and transition overhead. If a task is on the critical path, lowering its frequency may directly increase the application runtime. If the same task has slack, the runtime increase may be partially or fully hidden. Prior work on energy-aware GPU and DAG scheduling similarly shows that frequency, power-cap, or resource decisions must be interpreted under workload structure, timing requirements, or data-movement behavior~\cite{Song2014MemoryGPGPU,Wang2021RealTimeGPU,Wang2022EnergyAware,Guo2019EnergyEfficient,Huang2020TaskBalance,DAviau2025PowerCapping,Chab2025GPUSchedulingSurvey}. Therefore, a DAG-aware DVFS policy should not make frequency decisions from task cost alone; it should also consider dependency structure, data movement, and criticality.
 
 \section{CUDASTF Execution Model}
 \label{sec:theory_cudastf}
@@ -99,7 +99,7 @@ These properties make CUDASTF a suitable setting for combining DAG scheduling wi
 \section{GPU DVFS and Energy--Performance Trade-offs}
 \label{sec:theory_dvfs}
 
-Dynamic voltage and frequency scaling (DVFS) is a hardware power-management mechanism that changes operating frequencies, and when supported, the corresponding voltages. On GPUs, DVFS is commonly exposed through core and memory frequency controls. Prior GPU DVFS studies show that the best frequency setting depends strongly on workload characteristics, and that maximum frequency is not always energy-optimal \cite{Mei2017Survey,Ali2022Optimal,Ali2023Portable,Wang2024DSO}.
+Dynamic voltage and frequency scaling (DVFS) is a hardware power-management mechanism that changes operating frequencies, and when supported, the corresponding voltages. On GPUs, DVFS is commonly exposed through core and memory frequency controls. Prior GPU DVFS studies show that the best frequency setting depends strongly on workload characteristics, and that maximum frequency is not always energy-optimal \cite{Mei2017Survey,Ali2022Optimal,Ali2023Portable,Guerreiro2018PowerModeling,Guerreiro2019CrossDomain,Wang2020FreqScaling,Wang2024DSO}.
 
 \subsection{GPU Core and Memory Frequency Domains}
 \label{subsec:core_memory_frequency}
@@ -155,12 +155,12 @@ where $P_v(\phi)$ is average power and $T_v(\phi)$ is execution time. The energy
 \end{equation}
 where $\Phi$ is the set of supported frequency configurations.
 
-However, minimizing per-task energy independently is not necessarily optimal at the application level. A task-level decision may increase the critical path, create queueing effects, or trigger excessive frequency transitions. Therefore, the thesis focuses on runtime-level decisions that consider both task characteristics and DAG structure.
+However, minimizing per-task energy independently is not necessarily optimal at the application level. A task-level decision may increase the critical path, create queueing effects, or trigger excessive frequency transitions. This distinction is consistent with recent energy-aware scheduling systems that combine frequency, phase, or task information rather than treating each kernel as an isolated optimization target~\cite{Chen2023JOSS,Chen2024SWEEP,Fan2023Synergy,Carpentieri2025Phase}. Therefore, the thesis focuses on runtime-level decisions that consider both task characteristics and DAG structure.
 
 \subsection{DVFS Transition Latency}
 \label{subsec:dvfs_transition_latency}
 
-Changing GPU frequency is not free. A transition may introduce latency, temporarily stall command execution, or interact with stream scheduling. If the runtime changes frequency before every short task, the accumulated transition cost can dominate the potential savings. A more practical approach is to amortize transitions over groups of tasks and to place transitions where their latency is least visible, such as during data transfers or non-critical work.
+Changing GPU frequency is not free. A transition may introduce latency, temporarily stall command execution, or interact with stream scheduling. Fine-grained DVFS mechanisms can be effective when they predict workload behavior accurately, but they also highlight the need to control the cost and timing of frequency changes~\cite{Bharadwaj2023Predict}. If the runtime changes frequency before every short task, the accumulated transition cost can dominate the potential savings. A more practical approach is to amortize transitions over groups of tasks and to place transitions where their latency is least visible, such as during data transfers or non-critical work.
 
 \section{Energy, EDP, and Bounded Slowdown Objectives}
 \label{sec:theory_metrics}
@@ -265,7 +265,7 @@ where $\kappa(v)$ is the local criticality proxy. This is not an exact critical-
 \subsection{Runtime Suitability}
 \label{subsec:runtime_suitability}
 
-The model must be inexpensive to evaluate and robust to imperfect estimates. For this reason, the thesis uses online proxies and guardrails rather than a large offline table of per-task frequency sensitivities. A task may request lower frequency only when multiple signals agree: it is not critical, not urgently heavy, not on a backlogged device, and has enough copy-wait time or slack to hide the expected slowdown. This conservative characterization supports the design goal of exposing an energy-control path without turning every task into a separate profiling problem.
+The model must be inexpensive to evaluate and robust to imperfect estimates. Frequency-selection studies demonstrate that accurate GPU energy tuning can use profiling, analytical models, or learned predictors, but such information is costly to apply for every online task decision inside a fine-grained scheduler~\cite{Ali2022Optimal,Ali2023Portable,Wang2020FreqScaling,Fan2019Predictable}. For this reason, the thesis uses online proxies and guardrails rather than a large offline table of per-task frequency sensitivities. A task may request lower frequency only when multiple signals agree: it is not critical, not urgently heavy, not on a backlogged device, and has enough copy-wait time or slack to hide the expected slowdown. This conservative characterization supports the design goal of exposing an energy-control path without turning every task into a separate profiling problem.
 
 \section{HEFT-Based DAG Scheduling}
 \label{sec:theory_heft}
@@ -484,7 +484,7 @@ Whole application & Simple and stable & Too coarse for heterogeneous DAGs \\
 \label{tab:dvfs_granularity}
 \end{table}
 
-Per-task DVFS can approximate the best frequency for each task but may trigger too many transitions. Phase-level DVFS is stable but may ignore short-term changes in task type, data movement, and GPU load. Region-level DVFS is a compromise: it allows the runtime to react to task-graph structure while limiting transition overhead.
+Per-task DVFS can approximate the best frequency for each task but may trigger too many transitions. Phase-level DVFS is stable but may ignore short-term changes in task type, data movement, and GPU load. Region-level DVFS is a compromise: it allows the runtime to react to task-graph structure while limiting transition overhead. This compromise is related to phase- and region-oriented energy-control approaches for heterogeneous systems, but the runtime window in this thesis is defined by CUDASTF scheduling events rather than by an external phase detector~\cite{Fan2023Synergy,Carpentieri2025Phase}.
 
 \subsection{Frequency Regions in Task Graphs}
 \label{subsec:frequency_regions}
@@ -656,7 +656,7 @@ The preceding sections describe the components required by the thesis framework.
 \subsection{Joint Placement and Frequency Control}
 \label{subsec:joint_placement_frequency}
 
-The runtime simultaneously considers device placement and frequency control, but it does not merge them into one large monolithic decision. Placement determines where the task should execute, using HEFT as a baseline and allowing controlled locality-driven deviations. DVFS then determines how aggressively the selected GPU can reduce frequency without violating criticality, backlog, and slack constraints.
+The runtime simultaneously considers device placement and frequency control, but it does not merge them into one large monolithic decision. Prior multi-GPU systems have explored compiler-assisted scheduling, dynamic work sharing, and energy-aware decomposition for heterogeneous devices~\cite{Chen2022CASE,John2024WorkSharing,Zamani2023GreenMD}. The design in this thesis follows a more conservative separation: placement determines where the task should execute, using HEFT as a baseline and allowing controlled locality-driven deviations. DVFS then determines how aggressively the selected GPU can reduce frequency without violating criticality, backlog, and slack constraints.
 
 \subsection{Optimization View}
 \label{subsec:optimization_view}
