@@ -239,27 +239,27 @@
 \begin{figure}[!htbp]
 \centering
 \begin{tikzpicture}[x=1cm,y=1cm]
-  \node[thesis box, fill=ThesisGrayLight, text width=1.9cm] (stats) at (1.1,2.75) {Completed window statistics};
-  \node[thesis box, fill=ThesisBlueLight, draw=ThesisBlue, text width=1.9cm] (ctx) at (3.55,2.75) {Context vector $x(W)$};
-  \node[thesis box, fill=ThesisBlueLight, draw=ThesisBlue, text width=1.8cm] (score) at (5.90,2.75) {LinUCB scores};
-  \node[thesis box, fill=ThesisVioletLight, draw=ThesisViolet, text width=1.9cm] (profile) at (8.25,2.75) {Gate profile for next window};
-  \node[thesis box, fill=ThesisGreenLight, draw=ThesisGreen, text width=2.1cm] (exec) at (6.85,0.95) {Residual gate executes tasks};
-  \node[thesis box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=1.8cm] (reward) at (4.10,0.95) {Relative reward};
-  \node[thesis box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=1.8cm] (update) at (1.45,0.95) {Update active arm};
+  \node[thesis box, fill=ThesisGrayLight, text width=2.25cm] (stats) at (1.30,4.30) {Completed window statistics};
+  \node[thesis box, fill=ThesisBlueLight, draw=ThesisBlue, text width=2.20cm] (ctx) at (4.25,4.30) {Context vector\\$x(W)$};
+  \node[thesis box, fill=ThesisBlueLight, draw=ThesisBlue, text width=2.05cm] (score) at (7.10,4.30) {LinUCB scores};
+  \node[thesis box, fill=ThesisVioletLight, draw=ThesisViolet, text width=2.55cm] (profile) at (10.25,4.30) {Gate profile for next window};
+  \node[thesis box, fill=ThesisGreenLight, draw=ThesisGreen, text width=2.55cm] (exec) at (8.65,2.25) {Residual gate executes tasks};
+  \node[thesis box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=2.10cm] (reward) at (5.20,2.25) {Relative reward};
+  \node[thesis box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=2.20cm] (update) at (1.30,2.25) {Update\\active arm};
 
   \draw[thesis arrow] (stats) -- (ctx);
   \draw[thesis arrow] (ctx) -- (score);
   \draw[thesis arrow] (score) -- (profile);
-  \draw[thesis arrow] (profile.south) |- (exec.east);
+  \draw[thesis arrow] (profile.east) -- ++(0.45,0) |- (exec.east);
   \draw[thesis arrow] (exec) -- (reward);
   \draw[thesis arrow] (reward) -- (update);
-  \draw[thesis arrow] (update.north) -- ++(0,0.75) -| (stats.south);
+  \draw[thesis arrow] (update.north) -- (stats.south);
 
-  \node[font=\scriptsize, align=center, text=ThesisMuted] at (3.55,3.55)
+  \node[font=\scriptsize, align=center, text=ThesisMuted] at (5.80,5.20)
     {$\overline{q}$, $\phi_{\mathrm{high}}$, $\overline{K}_0$, $\overline{B}_{\mathrm{in}}$, $\overline{d}$, $\overline{C}$, $\overline{L}_{\mathrm{imb}}$, $\phi_{\mathrm{dev}}$};
-  \node[thesis small box, fill=ThesisRedLight, draw=ThesisRed, text width=2.5cm] at (8.55,0.95)
+  \node[thesis small box, fill=ThesisRedLight, draw=ThesisRed, text width=3.05cm] at (8.65,0.92)
     {The bandit selects a profile, not a GPU.};
-  \node[font=\scriptsize, text=ThesisOrange] at (3.95,0.20) {$r^{\mathrm{rel}}=r^{\mathrm{active}}-r^{\mathrm{default}}$};
+  \node[font=\scriptsize, text=ThesisOrange] at (5.20,1.35) {$r^{\mathrm{rel}}=r^{\mathrm{active}}-r^{\mathrm{default}}$};
 \end{tikzpicture}
 \caption{Window-level contextual-bandit adaptation. Window statistics form the context for the next scheduling window; LinUCB selects the residual-gate profile, and the selected profile is updated using relative reward after the window completes.}
 \label{fig:methods-bandit-loop}
