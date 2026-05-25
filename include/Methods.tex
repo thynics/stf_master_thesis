@@ -387,7 +387,9 @@ Only the active profile is updated for the completed window. Figure~\ref{fig:met
 \section{Placement Procedure and State Update}
 \label{sec:methods-placement-procedure}
 
-Algorithms~\ref{alg:placement-decision} and~\ref{alg:state-update} summarize the placement procedure and the corresponding scheduler-state update. The first algorithm describes the HEFT-relative decision rule, while the second algorithm describes how the selected placement is made visible to subsequent tasks through the ready-time and residency states.
+Algorithms~\ref{alg:placement-decision} and~\ref{alg:state-update} summarize the placement procedure and the corresponding scheduler-state update. The first algorithm describes the HEFT-relative decision rule, while the second algorithm describes how the selected placement is made visible to subsequent tasks through the ready-time and residency states. The separation is intentional. Algorithm~\ref{alg:placement-decision} evaluates all candidate GPUs against the same pre-placement state, selects either the HEFT baseline or an accepted residual candidate, and records the information needed for the bandit update. Algorithm~\ref{alg:state-update} is applied only after this decision has been made, so that candidate evaluation is not affected by partially updated residency or ready-time information.
+
+This procedure is executed online for each task that becomes ready in the CUDASTF runtime. The scheduler does not build an offline schedule for the full DAG. Instead, it repeatedly observes the current ready task, estimates the candidate finish time and copy cost on each GPU, applies the active residual gate, and then commits the selected placement to the runtime state. This online structure is important because both device availability and logical-data residency change after every scheduled task. A placement that is attractive before a write-like task may become unattractive immediately afterward if that task invalidates copies on other GPUs.
 
 \begin{algorithm}[!htbp]
 \caption{HEFT-relative placement decision}
@@ -451,6 +453,10 @@ Algorithms~\ref{alg:placement-decision} and~\ref{alg:state-update} summarize the
 \end{algorithm}
 
 The state update after placement is essential because the next ready task observes the new device-ready time and the new data-residency state. Read accesses create or preserve shared valid copies on the executing GPU. Write-like accesses, including write, read-write, and reduction modes, make the executing GPU the modified owner and invalidate stale copies on other GPUs. Thus the residual gate always evaluates candidates against the current predicted data layout rather than against a static placement model.
+
+The update also defines the boundary between the placement layer and the later DVFS layer. Placement decides the GPU and updates the scheduling state; DVFS is then allowed to attach a frequency decision to the already placed task, but it does not rewrite the placement. This ordering keeps the two objectives separable in the evaluation: placement experiments can disable DVFS while still using the same HEFT-relative decision path, and DVFS experiments can reuse a fixed placement policy while changing only frequency behavior.
+
+Finally, the procedure produces the diagnostic fields used in the Results chapter. For each scheduled task, the runtime can record the HEFT baseline GPU, the selected GPU, whether the decision deviated from HEFT, the predicted copy volume and copy time under the baseline and selected placement, the active window profile, and the task-level reward contribution. These records make it possible to distinguish genuine locality-driven deviations from incidental latency variation, which is why the evaluation reports both performance outcomes and data-movement evidence.
 
 \section{DVFS Framework}
 \label{sec:methods-dvfs-framework}
