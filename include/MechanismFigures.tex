@@ -287,43 +287,38 @@
 \end{figure}%
 }
 
+\newcommand{\figMethodsDvfsStateMachineTikz}{%
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \node[font=\footnotesize\bfseries, text=ThesisTeal] at (1.85,4.65) {Task-level proposer};
+  \node[font=\footnotesize\bfseries, text=ThesisViolet] at (5.25,4.65) {Per-GPU window};
+  \node[font=\footnotesize\bfseries, text=ThesisBlue] at (9.35,4.65) {Committed level};
+
+  \node[thesis small box, fill=ThesisTealLight, draw=ThesisTeal, text width=2.70cm] (proposer) at (1.85,3.35)
+    {task features\\criticality, cost\\wait, slack\\intent: HIGH/MID/LOW};
+  \node[thesis small box, fill=ThesisVioletLight, draw=ThesisViolet, text width=2.90cm] (window) at (5.25,3.35)
+    {aggregate intents\\critical mass\\backlog and slack\\commit if stable};
+  \node[thesis small box, fill=ThesisRedLight, draw=ThesisRed, text width=2.20cm] (guard) at (7.45,1.75)
+    {guardrails\\slowdown\\or backlog};
+
+  \node[thesis small box, fill=ThesisGrayLight, text width=1.15cm] (high) at (8.75,3.35) {HIGH};
+  \node[thesis small box, fill=ThesisGreenLight, draw=ThesisGreen, text width=1.15cm] (mid) at (10.55,3.35) {MID};
+  \node[thesis small box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=1.15cm] (low) at (10.55,2.05) {LOW};
+
+  \node[thesis small box, fill=ThesisGrayLight, text width=6.80cm] (note) at (5.75,0.62)
+    {the current task uses the previously committed level;\\new intents affect a later window};
+
+  \draw[thesis arrow] (proposer.east) -- (window.west);
+  \draw[thesis arrow] (window.east) -- (high.west);
+  \draw[thesis arrow, ThesisGreen] (high.east) -- (mid.west);
+  \draw[thesis arrow, ThesisOrange] (mid.south) -- (low.north);
+  \draw[thesis flow line, ThesisRed, dashed] (guard.north) -- (high.south);
+\end{tikzpicture}
+}
+
 \newcommand{\figMethodsDvfsStateMachine}{%
 \begin{figure}[!htbp]
 \centering
-\begin{tikzpicture}[x=1cm,y=1cm]
-  \node[font=\footnotesize\bfseries, text=ThesisTeal] at (1.95,4.95) {Task-level proposer};
-  \node[font=\footnotesize\bfseries, text=ThesisViolet] at (5.65,4.95) {Window commit};
-  \node[font=\footnotesize\bfseries, text=ThesisBlue] at (9.70,4.95) {Committed level};
-
-  \node[thesis small box, fill=ThesisGrayLight, text width=2.45cm] (features) at (1.95,4.20)
-    {task features\\criticality, cost\\wait, slack};
-  \node[thesis small box, fill=ThesisTealLight, draw=ThesisTeal, text width=2.50cm] (proposer) at (1.95,3.10)
-    {guarded proposer\\force-high checks\\eligibility tests};
-  \node[thesis small box, fill=ThesisGreenLight, draw=ThesisGreen, text width=2.10cm] (intent) at (1.95,2.05)
-    {frequency intent\\HIGH / MID / LOW};
-
-  \node[thesis small box, fill=ThesisVioletLight, draw=ThesisViolet, text width=2.65cm] (window) at (5.65,3.35)
-    {per-GPU window\\intent shares\\critical mass\\backlog, slack};
-  \node[thesis small box, fill=ThesisRedLight, draw=ThesisRed, text width=2.40cm] (guard) at (5.65,2.05)
-    {guardrails\\slowdown, backlog\\critical mass};
-
-  \node[thesis small box, fill=ThesisGrayLight, text width=1.15cm] (high) at (8.55,4.05) {HIGH};
-  \node[thesis small box, fill=ThesisGreenLight, draw=ThesisGreen, text width=1.15cm] (mid) at (10.55,4.05) {MID};
-  \node[thesis small box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=1.15cm] (low) at (10.55,2.70) {LOW};
-  \node[thesis small box, fill=ThesisGrayLight, text width=4.20cm] (note) at (9.60,1.10)
-    {current tasks use the committed level; new intents affect a later window};
-
-  \draw[thesis arrow] (features) -- (proposer);
-  \draw[thesis arrow] (proposer) -- (intent);
-  \draw[thesis arrow] (intent.east) -- (window.west);
-  \draw[thesis arrow] (window.east) -- (high.west);
-  \draw[thesis arrow, ThesisRed] (guard.east) -- ++(1.00,0) |- (high.south);
-
-  \draw[thesis arrow, ThesisGreen] (high) -- (mid);
-  \draw[thesis arrow, ThesisOrange] (mid) -- (low);
-  \draw[thesis arrow, ThesisRed] (low.west) .. controls (9.65,2.35) and (8.65,2.75) .. (high.south);
-  \draw[thesis arrow, ThesisRed] (mid.south west) .. controls (9.70,3.45) and (8.70,3.15) .. (high.south);
-\end{tikzpicture}
+\includegraphics[width=\linewidth,height=0.36\textheight,keepaspectratio]{figures/methods_dvfs_state_machine.png}
 \caption{Guarded proposal--commit DVFS state machine. Task-level proposals are accumulated in per-GPU windows, while committed frequency levels change only when lower-frequency eligibility persists and no guardrail forces recovery to high frequency.}
 \label{fig:methods-dvfs-state-machine}
 \end{figure}%
