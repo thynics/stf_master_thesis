@@ -35,10 +35,11 @@ footprint and remains close to HEFT.
 The final DVFS evaluation shows a smaller but meaningful energy result.
 WinDVFS reduces geometric-mean energy by \(5.318\%\) with a geometric-mean
 latency overhead of \(0.479\%\) under the fixed Bandit placement layer. The
-geometric-mean EDP ratio improves to 0.951354, and all five reported DVFS rows
-remain below an EDP ratio of 1.0. The clock and power evidence shows that the
-largest energy reductions are associated with lower average power and, in most
-cases, lower active SM clock exposure.
+geometric-mean EDP ratio improves to 0.951354, and all five reported
+benchmarks remain below an EDP ratio of 1.0. The observed energy reductions
+are consistent with lower average power in the selected DVFS configurations,
+but the result should be interpreted as an energy--performance measurement
+rather than as a full clock-residency or full-system power study.
 
 The main conclusion is therefore that CUDASTF task-graph information can be
 used to make online scheduling both more locality aware and more energy aware,

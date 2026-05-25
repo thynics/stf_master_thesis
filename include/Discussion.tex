@@ -53,8 +53,10 @@ This outcome is consistent with the proposal--commit design. The DVFS layer
 does not directly optimize each task in isolation. It accumulates task-level
 frequency intents into per-GPU windows and commits a lower frequency only when
 guardrails indicate that the performance risk is acceptable. The DVFS clock and
-power analysis shows that the larger energy reductions are associated with
-lower average power and, in most cases, lower active SM clock exposure.
+power measurements are used as supporting diagnostics rather than as the main
+claim. The final DVFS measurements show that the larger energy reductions are
+consistent with lower average power in the selected configurations, but the
+primary evidence remains the measured energy, latency, and EDP trade-off.
 Cholesky is the clearest trade-off case: it reduces energy, but its latency
 increase limits the EDP improvement. MiniWeather provides a contrasting case
 where latency remains essentially unchanged and the energy reduction is
