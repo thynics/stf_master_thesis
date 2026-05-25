@@ -78,7 +78,14 @@ This model is useful for GPU applications because explicit synchronization is of
 
 In multi-GPU execution, dependencies are not only ordering constraints. They also determine where data are located and whether a task requires data migration. CUDASTF tracks data accesses and can therefore infer when a task needs a local copy, when data must be transferred between GPUs, and when multiple devices may share valid copies.
 
-For the scheduler, this information is essential. A device that appears fast from a compute perspective may be a poor choice if the required data are located elsewhere. Conversely, a slightly slower or more loaded device may be attractive if it already holds the necessary input data.
+For the scheduler, this information is essential. A device that appears fast from a compute perspective may be a poor choice if the required data are located elsewhere. Conversely, a slightly slower or more loaded device may be attractive if it already holds the necessary input data. Figure~\ref{fig:theory-task-residency} summarizes this task, data, and residency view of the runtime.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.96\linewidth]{figures/theory_task_residency_model.pdf}
+\caption{CUDASTF task-graph execution model. Tasks form a DAG with data-driven dependencies, while each GPU maintains a changing view of logical data residency. Candidate placement decisions differ in device readiness, data-ready time, copy cost, and predicted finish time.}
+\label{fig:theory-task-residency}
+\end{figure}
 
 \subsection{Runtime Scheduling Opportunities}
 \label{subsec:cudastf_scheduling_opportunities}
@@ -373,7 +380,14 @@ An alternative is accepted only if it satisfies a gate:
 G_C(d,v) &\geq \tau_C,
 \label{eq:residual_gate}
 \end{align}
-where $\tau_F$ is the allowed end-time penalty and $\tau_C$ is the required copy-gain threshold. Critical tasks should use stricter thresholds than non-critical tasks.
+where $\tau_F$ is the allowed end-time penalty and $\tau_C$ is the required copy-gain threshold. Critical tasks should use stricter thresholds than non-critical tasks. Figure~\ref{fig:theory-residual-gate-region} visualizes the resulting acceptance region.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.78\linewidth]{figures/theory_residual_gate_region.pdf}
+\caption{Acceptance region of the HEFT-relative residual gate. A non-HEFT candidate is accepted only when its normalized finish-time penalty remains below the active threshold and its normalized copy gain exceeds the required evidence threshold. Critical tasks use stricter gates than non-critical tasks.}
+\label{fig:theory-residual-gate-region}
+\end{figure}
 
 \subsubsection{Critical and Non-Critical Gates}
 \label{subsubsec:critical_noncritical_gates}
@@ -504,7 +518,14 @@ L_{\mathrm{visible}} = \max(0, L_{\mathrm{tr}} - L_{\mathrm{hidden}}),
 \end{equation}
 where $L_{\mathrm{hidden}}$ is the portion overlapped with communication, synchronization, or non-critical work.
 
-This is one of the main reasons to integrate DVFS with task-graph scheduling. A runtime that sees dependencies and data movement can choose transition points more intelligently than an external controller that only observes coarse application phases.
+This is one of the main reasons to integrate DVFS with task-graph scheduling. A runtime that sees dependencies and data movement can choose transition points more intelligently than an external controller that only observes coarse application phases. Figure~\ref{fig:theory-dvfs-timeline} illustrates this delayed application and transition-hiding argument.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.94\linewidth]{figures/theory_dvfs_timeline.pdf}
+\caption{Windowed proposal--commit DVFS and transition amortization. Task-level intents are accumulated over a per-GPU window, while the committed frequency level is applied to later tasks. Transition latency can be partially hidden by communication or slack.}
+\label{fig:theory-dvfs-timeline}
+\end{figure}
 
 \section{Windowed Proposal--Commit DVFS Control}
 \label{sec:theory_proposal_commit}
