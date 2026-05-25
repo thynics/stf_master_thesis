@@ -11,12 +11,7 @@ The proposed runtime scheduler targets single-node multi-GPU CUDASTF task graphs
 
 The placement policy studied in this work is a two-profile, copy-only, HEFT-relative residual gate with relative reward and an aggressive-profile bias. The term ``bandit'' should therefore be interpreted carefully: the bandit layer does not select a GPU for each task. GPU selection remains a HEFT-relative deterministic decision. The bandit layer selects the gate profile used over a scheduling window, thereby controlling how permissive the residual deviation from HEFT should be. Figure~\ref{fig:methods-runtime-pipeline} summarizes the complete runtime pipeline.
 
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=0.96\linewidth]{figures/methods_runtime_pipeline.pdf}
-\caption{End-to-end runtime scheduling pipeline. For each ready task, the scheduler first evaluates GPU candidates and applies a HEFT-relative residual placement gate. The selected placement is then passed to the DVFS proposer--committer path, while placement and DVFS diagnostics are recorded for evaluation.}
-\label{fig:methods-runtime-pipeline}
-\end{figure}
+\figMethodsRuntimePipeline
 
 \section{Runtime Model and Scheduler State}
 \label{sec:methods-runtime-model}
@@ -275,12 +270,7 @@ g_0(t), & \mathcal{F}(t,p_W)=\emptyset,\\[4pt]
 \end{equation}
 where $p_W$ is the profile selected for the current window and $\mathcal{F}(t,p_W)$ is the feasible set under that profile. Ties are resolved by earlier predicted finish time and then deterministically by GPU identifier. Figure~\ref{fig:methods-residual-flow} summarizes the decision flow.
 
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=0.86\linewidth]{figures/methods_residual_decision_flow.pdf}
-\caption{HEFT-relative residual placement decision. The scheduler first obtains the HEFT baseline, then accepts a non-baseline GPU only if it passes the finish-time and copy-gain thresholds of the active profile. If no candidate passes, the scheduler falls back to HEFT.}
-\label{fig:methods-residual-flow}
-\end{figure}
+\figMethodsResidualFlow
 
 \section{Window-Level Bandit Controller}
 \label{sec:methods-bandit-controller}
@@ -392,12 +382,7 @@ b_p\leftarrow b_p+r(W)x(W).
 \end{equation}
 Only the active profile is updated for the completed window. Figure~\ref{fig:methods-bandit-loop} shows the temporal loop between completed-window statistics, profile selection, execution, and reward update.
 
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=0.92\linewidth]{figures/methods_bandit_window_loop.pdf}
-\caption{Window-level contextual-bandit adaptation. Window statistics form the context for the next scheduling window; LinUCB selects the residual-gate profile, and the selected profile is updated using relative reward after the window completes.}
-\label{fig:methods-bandit-loop}
-\end{figure}
+\figMethodsBanditLoop
 
 \section{Placement Procedure and State Update}
 \label{sec:methods-placement-procedure}
@@ -746,12 +731,7 @@ with
 
 To avoid oscillation, the committer requires consecutive eligible windows before entering a lower level. The required counts are $n_{\mathrm{mid}}$ for $\mathrm{MID}$ and $n_{\mathrm{low}}$ for $\mathrm{LOW}$. If a forced-high condition is present, the committed level is $\mathrm{HIGH}$. If the previous level is $\mathrm{LOW}$ and low is no longer eligible, the committer returns to $\mathrm{HIGH}$. If the previous level is $\mathrm{MID}$ and mid is no longer eligible, it also returns to $\mathrm{HIGH}$. Otherwise, the committer enters $\mathrm{LOW}$ or $\mathrm{MID}$ only after the required consecutive eligibility count has been reached. Figure~\ref{fig:methods-dvfs-state-machine} summarizes the proposer--committer state machine.
 
-\begin{figure}[!htbp]
-\centering
-\includegraphics[width=0.94\linewidth]{figures/methods_dvfs_state_machine.pdf}
-\caption{Guarded proposal--commit DVFS state machine. Task-level proposals are accumulated in per-GPU windows, while committed frequency levels change only when lower-frequency eligibility persists and no guardrail forces recovery to high frequency.}
-\label{fig:methods-dvfs-state-machine}
-\end{figure}
+\figMethodsDvfsStateMachine
 
 \begin{algorithm}[t]
 \caption{Windowed DVFS proposal and commit}
