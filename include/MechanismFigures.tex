@@ -64,52 +64,9 @@
 }
 
 \newcommand{\figTheoryTaskResidency}{%
-\begin{figure}[!htbp]
+\begin{figure}[!ht]
 \centering
-\begin{tikzpicture}[x=1cm,y=1cm]
-  \node[font=\footnotesize\bfseries, text=ThesisBlue] at (1.6,4.15) {Task graph};
-  \node[font=\footnotesize\bfseries, text=ThesisTeal] at (5.4,4.15) {Logical data};
-  \node[font=\footnotesize\bfseries, text=ThesisOrange] at (10.3,4.15) {Residency state};
-
-  \node[thesis box, fill=ThesisBlueLight, text width=1.35cm] (t1) at (0.9,3.35) {$t_1$\\write A};
-  \node[thesis box, fill=ThesisBlueLight, text width=1.35cm] (t2) at (2.4,3.35) {$t_2$\\read A};
-  \node[thesis box, fill=ThesisBlueLight, text width=1.35cm] (t3) at (2.4,2.25) {$t_3$\\read B};
-  \node[thesis box, fill=ThesisVioletLight, text width=1.45cm] (tv) at (4.0,2.80) {ready\\task $v$};
-  \draw[thesis arrow, ThesisBlue] (t1) -- (t2);
-  \draw[thesis arrow, ThesisBlue] (t2.east) -- (tv.north west);
-  \draw[thesis arrow, ThesisBlue] (t3.east) -- (tv.south west);
-
-  \node[thesis small box, fill=ThesisTealLight, draw=ThesisTeal, text width=0.85cm] (a) at (5.7,3.55) {A};
-  \node[thesis small box, fill=ThesisTealLight, draw=ThesisTeal, text width=0.85cm] (b) at (5.7,2.80) {B};
-  \node[thesis small box, fill=ThesisTealLight, draw=ThesisTeal, text width=0.85cm] (c) at (5.7,2.05) {C};
-  \node[font=\scriptsize, align=center, text=ThesisMuted] at (5.7,1.35) {access modes:\\read / write / read-write};
-  \draw[thesis arrow, ThesisTeal] (tv.east) -- (a.west);
-  \draw[thesis arrow, ThesisTeal] (tv.east) -- (b.west);
-
-  \node[font=\scriptsize\bfseries] at (8.15,3.90) {GPU 0};
-  \node[font=\scriptsize\bfseries] at (9.55,3.90) {GPU 1};
-  \node[font=\scriptsize\bfseries] at (10.95,3.90) {GPU 2};
-  \node[font=\scriptsize\bfseries] at (7.20,3.25) {A};
-  \node[font=\scriptsize\bfseries] at (7.20,2.55) {B};
-  \node[font=\scriptsize\bfseries] at (7.20,1.85) {C};
-  \foreach \x/\y/\txt/\fc in {
-    8.15/3.25/M/ThesisGreenLight,9.55/3.25/S/ThesisGreenLight,10.95/3.25/I/white,
-    8.15/2.55/I/white,9.55/2.55/S/ThesisGreenLight,10.95/2.55/M/ThesisGreenLight,
-    8.15/1.85/S/ThesisGreenLight,9.55/1.85/I/white,10.95/1.85/I/white}
-    \node[thesis small box, fill=\fc, text width=0.55cm] at (\x,\y) {\txt};
-  \draw[rounded corners=2pt, ThesisInk!65] (7.55,1.45) rectangle (11.45,3.65);
-  \draw[thesis arrow, ThesisTeal] (a.east) -- (7.55,3.25);
-  \draw[thesis arrow, ThesisTeal] (b.east) -- (7.55,2.55);
-
-  \node[thesis box, fill=ThesisGrayLight, text width=3.0cm] at (2.0,0.55)
-    {candidate device $d$\\$R_d(v)$ readiness, $K(v,d)$ copy cost};
-  \node[thesis box, fill=ThesisGrayLight, text width=3.0cm] at (5.7,0.55)
-    {$S_d(v)=\max(A_d,R_d(v))$\\$F_d(v)=S_d(v)+T_d(v)$};
-  \node[thesis box, fill=ThesisOrangeLight, draw=ThesisOrange, text width=2.7cm] at (9.55,0.55)
-    {local data: low copy\\remote data: migration};
-  \draw[thesis arrow] (3.55,0.55) -- (4.15,0.55);
-  \draw[thesis arrow] (7.25,0.55) -- (8.15,0.55);
-\end{tikzpicture}
+\includegraphics[width=0.88\linewidth,height=0.25\textheight,keepaspectratio]{figures/theory_task_residency.png}
 \caption{CUDASTF task-graph execution model. Tasks form a DAG with data-driven dependencies, while each GPU maintains a changing view of logical data residency. Candidate placement decisions differ in device readiness, data-ready time, copy cost, and predicted finish time.}
 \label{fig:theory-task-residency}
 \end{figure}%
