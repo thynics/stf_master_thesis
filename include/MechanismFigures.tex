@@ -210,10 +210,10 @@
 }
 
 \newcommand{\figMethodsPlacementMotivation}{%
-\begin{figure}[!htbp]
+\begin{figure}[!ht]
 \centering
-\includegraphics[width=0.98\linewidth]{figures/methods_placement_motivation.png}
-\caption{Motivating example for HEFT-relative residual placement. HEFT selects the device with the earliest predicted finish time for the current task, but this local choice can move data away from later dependent tasks and introduce repeated downstream copies. The residual gate may accept a bounded local delay when doing so preserves data locality for the successor chain.}
+\includegraphics[width=0.82\linewidth,height=0.28\textheight,keepaspectratio]{figures/methods_placement_motivation.png}
+\caption{Motivating example for HEFT-relative residual placement. A HEFT-local earliest-finish decision can introduce downstream copies, while a bounded residual deviation can keep successor data local.}
 \label{fig:methods-placement-motivation}
 \end{figure}%
 }
