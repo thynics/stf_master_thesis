@@ -168,7 +168,11 @@ $\theta_q$ & Criticality split for residual gates & $0.60$ \\
 \section{Copy-Only HEFT-Relative Residual Gate}
 \label{sec:methods-copy-only-gate}
 
-The residual gate is the core placement mechanism. It asks whether any non-baseline GPU can reduce predicted copy time enough to justify a small local delay relative to HEFT. Let $c$ be a non-baseline candidate for task $t$, and let $c_0$ be the HEFT baseline candidate. The normalized finish-time penalty is
+The residual gate is the core placement mechanism. It asks whether any non-baseline GPU can reduce predicted copy time enough to justify a small local delay relative to HEFT. Figure~\ref{fig:methods-placement-motivation} illustrates the motivation. A locally optimal HEFT decision may place the current task on an idle GPU because that device gives the earliest predicted finish time, but the produced data may then be needed by successor tasks on the original GPU. In that case, the local finish-time improvement can create downstream copy traffic. The residual gate therefore treats a non-HEFT placement as acceptable only when the locality evidence is large enough and the predicted finish-time penalty remains bounded.
+
+\figMethodsPlacementMotivation
+
+Let $c$ be a non-baseline candidate for task $t$, and let $c_0$ be the HEFT baseline candidate. The normalized finish-time penalty is
 \begin{equation}
 \rho_F(t,c)
 =

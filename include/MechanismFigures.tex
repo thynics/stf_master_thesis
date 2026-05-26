@@ -209,6 +209,15 @@
 \end{figure}%
 }
 
+\newcommand{\figMethodsPlacementMotivation}{%
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.98\linewidth]{figures/methods_placement_motivation.png}
+\caption{Motivating example for HEFT-relative residual placement. HEFT selects the device with the earliest predicted finish time for the current task, but this local choice can move data away from later dependent tasks and introduce repeated downstream copies. The residual gate may accept a bounded local delay when doing so preserves data locality for the successor chain.}
+\label{fig:methods-placement-motivation}
+\end{figure}%
+}
+
 \newcommand{\figMethodsResidualFlowTikz}{%
 \begin{tikzpicture}[x=1cm,y=1cm]
   \node[thesis box, fill=ThesisGrayLight, text width=2.4cm] (task) at (5.7,7.15) {Ready task $t$};
