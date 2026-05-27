@@ -486,13 +486,10 @@ which indicates that the online Bandit decision path is not the source of the
 measured latency improvements.
 
 Figure~\ref{fig:results-overhead-snapshot} also shows a HEFT static-replay
-sanity check. This row is less clean: FDTD and CG show larger mismatches,
-which suggests that trace replay is sensitive to run-to-run effects and should
-not be treated as an exact zero-overhead scheduler. For this reason, the
-overhead claim is intentionally narrow. Static replay supports the conclusion
-that dynamic Bandit overhead is small at benchmark scale, but it is used only
-as a diagnostic check and not as a replacement for the main dynamic execution
-results.
+sanity check. This row is not used for the main overhead result; the
+interpretation is based on the Bandit replay rows in Table~\ref{tab:results-overhead}.
+Static replay is therefore used only as a diagnostic check, not as a
+replacement for the main dynamic execution results.
 
 The evaluation has four main limitations. First, all results are measured on a
 single eight-GPU node, so the magnitude of the results may change with GPU

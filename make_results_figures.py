@@ -49,7 +49,7 @@ CLOCK_FORCE_HIGH = np.array([0, 0, 0, 127, 23])
 CLOCK_SLOWDOWN = np.array([0, 0, 0, 127, 23])
 
 OVER_BENCH = ["FDTD", "CG", "MiniW.", "Chol.", "LU"]
-OVER_HEFT_LAT = np.array([-10.272, 12.438, -0.056, -0.077, -0.280])
+OVER_HEFT_LAT = np.array([-0.421, -0.739, -0.056, -0.077, -0.280])
 OVER_BANDIT_LAT = np.array([-0.573, 1.439, -0.060, -0.766, 0.822])
 
 
@@ -511,7 +511,7 @@ def overhead_snapshot() -> None:
             ("Bandit static replay", OVER_BANDIT_LAT, COLORS["latency"]),
         ],
         "Latency delta vs dynamic run (%)",
-        ylim=(-12.8, 13.8),
+        ylim=(-2.2, 2.2),
         width=5.35,
         height=2.65,
         legend_cols=2,

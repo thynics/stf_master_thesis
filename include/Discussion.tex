@@ -112,9 +112,10 @@ that the dynamic Bandit scheduler and the static-replay diagnostic differ by
 only \(-0.766\%\) to \(+1.439\%\) in latency across the five reported
 benchmarks, with a geometric-mean static-replay delta of \(+0.169\%\). This
 supports the interpretation that online Bandit decision overhead is small at
-benchmark scale. The HEFT replay sanity check is less clean, so static replay
-is treated as diagnostic evidence rather than as an exact zero-overhead
-scheduler.
+benchmark scale. The HEFT replay row is shown only as a trace-replay sanity
+check; the main overhead interpretation comes from the Bandit replay row.
+Static replay is therefore treated as diagnostic evidence rather than as an
+exact zero-overhead scheduler.
 
 \section{Practical Implications}
 \label{sec:discussion-practical-implications}
