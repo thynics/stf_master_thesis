@@ -7,7 +7,7 @@
 \chapter{Methods}
 \label{chap:methods}
 
-The proposed runtime scheduler targets single-node multi-GPU CUDASTF task graphs and is organized as two cooperating layers. The first layer is a placement scheduler. It uses HEFT as a deterministic earliest-finish-time baseline and then applies a residual locality gate that may redirect a task to a non-HEFT GPU only when the predicted data-movement saving is sufficiently large and the normalized finish-time penalty is bounded. The second layer is an optional DVFS extension. It does not change the placement decision directly; instead, it assigns frequency intents to scheduled tasks, aggregates those intents over per-GPU windows, and commits stable GPU frequency levels with guardrails against slowdown.
+The proposed runtime scheduler targets single-node multi-GPU \CUDASTF{} task graphs and is organized as two cooperating layers. The first layer is a placement scheduler. It uses HEFT as a deterministic earliest-finish-time baseline and then applies a residual locality gate that may redirect a task to a non-HEFT GPU only when the predicted data-movement saving is sufficiently large and the normalized finish-time penalty is bounded. The second layer is an optional DVFS extension. It does not change the placement decision directly; instead, it assigns frequency intents to scheduled tasks, aggregates those intents over per-GPU windows, and commits stable GPU frequency levels with guardrails against slowdown.
 
 The placement policy studied in this work is a two-profile, copy-only, HEFT-relative residual gate with relative reward and an aggressive-profile bias. The term ``bandit'' should therefore be interpreted carefully: the bandit layer does not select a GPU for each task. GPU selection remains a HEFT-relative deterministic decision. The bandit layer selects the gate profile used over a scheduling window, thereby controlling how permissive the residual deviation from HEFT should be. Figure~\ref{fig:methods-runtime-pipeline} summarizes the complete runtime pipeline.
 
@@ -20,7 +20,7 @@ Let
 \begin{equation}
 \mathcal{G}=\{0,1,\ldots,m-1\}
 \end{equation}
-denote the set of GPUs available to the runtime. A task $t$ becomes schedulable when all of its CUDASTF dependencies are known to the scheduler. For each task, the scheduler observes a set of dependency descriptors, their access modes, logical data sizes, and an estimated execution cost. The method uses calibrated task statistics when available and falls back to a default task cost otherwise. The estimated cost is denoted by
+denote the set of GPUs available to the runtime. A task $t$ becomes schedulable when all of its \CUDASTF{} dependencies are known to the scheduler. For each task, the scheduler observes a set of dependency descriptors, their access modes, logical data sizes, and an estimated execution cost. The method uses calibrated task statistics when available and falls back to a default task cost otherwise. The estimated cost is denoted by
 \begin{equation}
 C(t).
 \end{equation}
@@ -198,7 +198,7 @@ The gate has two profiles,
 \begin{equation}
 p\in\{\mathrm{default},\mathrm{aggressive}\}.
 \end{equation}
-Each profile defines a maximum normalized finish-time penalty and a minimum normalized copy gain. The gate uses separate thresholds for critical and non-critical tasks. With the default parameterization,
+Each profile defines a maximum normalized finish-time penalty and a minimum normalized copy gain. The gate uses separate thresholds for critical and non-critical tasks. Table~\ref{tab:gate-profiles} shows the default parameterization used in the evaluation.
 \begin{table}[t]
 \centering
 \footnotesize
@@ -213,7 +213,7 @@ $\mathrm{aggressive}$ & $0.004$ & $0.020$ & $0.20$ & $0.10$ \\
 \caption{Default residual-gate profiles used in the evaluation.}
 \label{tab:gate-profiles}
 \end{table}
-where $\delta$ denotes the allowed value of $\rho_F$ and $\tau$ denotes the required value of $\rho_K$. The aggressive profile is more permissive because it allows a slightly larger finish-time penalty and requires a smaller copy gain.
+In the default parameterization, $\delta$ denotes the allowed value of $\rho_F$, and $\tau$ denotes the required value of $\rho_K$. The aggressive profile is more permissive because it allows a slightly larger finish-time penalty and requires a smaller copy gain.
 
 The numeric thresholds in Table~\ref{tab:gate-profiles} are fixed method parameters, not per-benchmark adjustment points. They encode the intended asymmetry of the policy: latency-sensitive tasks receive a tighter finish-time bound and require stronger copy evidence, while non-critical tasks may accept slightly more predicted delay in exchange for locality. The same parameterization is used across the thesis evaluation, with concrete runtime configuration treated as reproducibility metadata.
 
@@ -393,7 +393,7 @@ Only the active profile is updated for the completed window. Figure~\ref{fig:met
 
 Algorithms~\ref{alg:placement-decision} and~\ref{alg:state-update} summarize the placement procedure and the corresponding scheduler-state update. The first algorithm describes the HEFT-relative decision rule, while the second algorithm describes how the selected placement is made visible to subsequent tasks through the ready-time and residency states. The separation is intentional. Algorithm~\ref{alg:placement-decision} evaluates all candidate GPUs against the same pre-placement state, selects either the HEFT baseline or an accepted residual candidate, and records the information needed for the bandit update. Algorithm~\ref{alg:state-update} is applied only after this decision has been made, so that candidate evaluation is not affected by partially updated residency or ready-time information.
 
-This procedure is executed online for each task that becomes ready in the CUDASTF runtime. The scheduler does not build an offline schedule for the full DAG. Instead, it repeatedly observes the current ready task, estimates the candidate finish time and copy cost on each GPU, applies the active residual gate, and then commits the selected placement to the runtime state. This online structure is important because both device availability and logical-data residency change after every scheduled task. A placement that is attractive before a write-like task may become unattractive immediately afterward if that task invalidates copies on other GPUs.
+This procedure is executed online for each task that becomes ready in the \CUDASTF{} runtime. The scheduler does not build an offline schedule for the full DAG. Instead, it repeatedly observes the current ready task, estimates the candidate finish time and copy cost on each GPU, applies the active residual gate, and then commits the selected placement to the runtime state. This online structure is important because both device availability and logical-data residency change after every scheduled task. A placement that is attractive before a write-like task may become unattractive immediately afterward if that task invalidates copies on other GPUs.
 
 \begin{algorithm}[!htbp]
 \caption{HEFT-relative placement decision}
@@ -811,7 +811,7 @@ where $f_{\mathrm{mem}}$ remains at the highest supported memory clock on the pr
 \section{Implementation and Instrumentation}
 \label{sec:methods-implementation-instrumentation}
 
-The method is implemented inside the CUDASTF scheduler rather than as an external controller. The placement-only configuration uses the HEFT-relative residual gate described above. The DVFS configuration reuses the same placement path and enables the per-device proposal--commit frequency controller. This keeps the experimental configurations comparable: the DVFS experiments evaluate the additional frequency-control layer on top of the same placement mechanism, rather than mixing placement changes with frequency changes.
+The method is implemented inside the \CUDASTF{} scheduler rather than as an external controller. The placement-only configuration uses the HEFT-relative residual gate described above. The DVFS configuration reuses the same placement path and enables the per-device proposal--commit frequency controller. This keeps the experimental configurations comparable: the DVFS experiments evaluate the additional frequency-control layer on top of the same placement mechanism, rather than mixing placement changes with frequency changes.
 
 The runtime also records structured diagnostic information used by the evaluation. For placement, the records include HEFT baseline choices, accepted residual deviations, copy estimates, window rewards, and selected gate profiles. For DVFS, they include task-level frequency intents, per-window vote summaries, committed frequency levels, and guardrail events. The concrete encoding of these records is treated as reproducibility metadata rather than as part of the scheduling method itself. In the thesis, these records are used only to connect observed performance differences to concrete mechanisms: baseline HEFT placement, copy-saving deviations, window-level profile selection, and DVFS frequency commits.
 

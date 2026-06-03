@@ -2,7 +2,7 @@
 \label{chap:results}
 \input{include/ResultsFigures}
 
-The evaluation studies the CUDASTF runtime scheduler on a single-node
+The evaluation studies the \CUDASTF{} runtime scheduler on a single-node
 multi-GPU platform. It first describes the experimental platform and
 measurement methodology, then separates placement from DVFS before reporting
 the end-to-end behavior of the complete runtime. Data-movement, clock, and
@@ -162,9 +162,9 @@ is evaluated first, with DVFS disabled, so that the effect of the residual
 scheduler can be measured against HEFT without frequency-control effects. The
 locality analysis then explains the placement result through copy traffic.
 Frequency control is evaluated in the next step by holding the placement layer
-fixed and comparing WinDVFS with a no-DVFS execution of the same scheduler.
+fixed and comparing \WinDVFS{} with a no-DVFS execution of the same scheduler.
 The final end-to-end comparison combines the two layers and compares the full
-Bandit+WinDVFS configuration against HEFT.
+\BanditWinDVFS{} configuration against HEFT.
 
 Table~\ref{tab:results-eval-configs} summarizes how the sections in this
 chapter connect to these comparisons. The purpose of the table is not to define
@@ -183,8 +183,8 @@ Section & Role in the evaluation & Comparison & Reported evidence \\
 \midrule
 Placement performance & Scheduler effect & HEFT vs Bandit, DVFS disabled & latency \\
 Placement locality evidence & Attribution of scheduler gains & HEFT vs Bandit, DVFS disabled & copy footprint and latency \\
-DVFS trade-off & Frequency-control effect & Bandit no-DVFS vs Bandit+WinDVFS & latency, energy, and EDP \\
-End-to-end comparison & Combined system effect & HEFT vs Bandit+WinDVFS & latency, energy, and EDP \\
+DVFS trade-off & Frequency-control effect & Bandit no-DVFS vs \BanditWinDVFS{} & latency, energy, and EDP \\
+End-to-end comparison & Combined system effect & HEFT vs \BanditWinDVFS{} & latency, energy, and EDP \\
 Overhead diagnostic & Control-path sanity check & Dynamic scheduling vs static replay & latency, energy, and EDP \\
 \bottomrule
 \end{tabular}%
@@ -440,7 +440,7 @@ Cholesky & \(+1.30\%\) & \(-3.42\%\) & \(-2.16\%\) \\
 \bottomrule
 \end{tabular}
 \endgroup
-\caption{Final WinDVFS result relative to no-DVFS execution under the same placement layer. Negative values indicate reductions relative to the no-DVFS baseline.}
+\caption{Final \WinDVFS{} result relative to no-DVFS execution under the same placement layer. Negative values indicate reductions relative to the no-DVFS baseline.}
 \label{tab:results-dvfs-energy}
 \end{table}
 
@@ -497,7 +497,7 @@ The previous sections isolate the two components of the system: placement is
 measured against HEFT with DVFS disabled, and frequency control is measured
 against the same placement layer without DVFS. Table~\ref{tab:results-end-to-end}
 combines the two effects by comparing HEFT directly with the final
-Bandit+WinDVFS configuration. The absolute values behind this end-to-end
+\BanditWinDVFS{} configuration. The absolute values behind this end-to-end
 comparison are reported in Appendix~\ref{app:supplementary-results}.
 
 \begin{table}[!htbp]
@@ -516,7 +516,7 @@ Cholesky & \(-9.04\%\) & \(-4.98\%\) & \(-13.56\%\) \\
 \bottomrule
 \end{tabular}
 \endgroup
-\caption{End-to-end comparison between HEFT and the final Bandit+WinDVFS configuration. Negative values indicate reductions relative to HEFT.}
+\caption{End-to-end comparison between HEFT and the final \BanditWinDVFS{} configuration. Negative values indicate reductions relative to HEFT.}
 \label{tab:results-end-to-end}
 \end{table}
 
@@ -608,11 +608,11 @@ data-movement results are consistent with a locality-driven explanation of
 these gains: the strongest placement cases reduce copy traffic, while the
 near-neutral workload remains close to HEFT.
 
-WinDVFS reduces geometric-mean energy by \(5.318\%\) with a \(0.479\%\)
+\WinDVFS{} reduces geometric-mean energy by \(5.318\%\) with a \(0.479\%\)
 geometric-mean latency overhead. The geometric-mean EDP ratio improves to
 0.951354, and all five reported benchmarks remain below an EDP ratio of 1.0.
 When the two layers are evaluated end to end against HEFT, the final
-Bandit+WinDVFS configuration reduces geometric-mean latency by \(8.795\%\),
+\BanditWinDVFS{} configuration reduces geometric-mean latency by \(8.795\%\),
 energy by \(11.874\%\), and EDP by \(19.625\%\).
 
 The boundary of the claim is therefore explicit. The placement result is a

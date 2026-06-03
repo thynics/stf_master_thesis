@@ -2,7 +2,7 @@
 \label{chap:discussion}
 
 The results in Chapter~\ref{chap:results} support a specific claim rather
-than a universal one. The placement layer improves runtime when the CUDASTF
+than a universal one. The placement layer improves runtime when the \CUDASTF{}
 task graph exposes copy-saving alternatives to HEFT, and it falls back to
 HEFT-like behavior when such alternatives are absent. The DVFS layer then
 provides conservative energy control on top of the same placement framework.
@@ -53,9 +53,9 @@ than one that pursues aggressive deviations everywhere.
 \section{Interpreting the DVFS Result}
 \label{sec:discussion-dvfs}
 
-The WinDVFS result should be interpreted as a conservative
+The \WinDVFS{} result should be interpreted as a conservative
 energy-control result rather than as a universal energy optimum. Across the
-five final rows, WinDVFS reduces geometric-mean energy by \(5.318\%\) with a
+five final rows, \WinDVFS{} reduces geometric-mean energy by \(5.318\%\) with a
 geometric-mean latency overhead of \(0.479\%\). The geometric-mean EDP ratio is
 0.951354. FDTD, CG, MiniWeather, LU decomposition, and Cholesky all reduce EDP
 relative to their no-DVFS counterparts, but the size of the benefit remains
@@ -86,7 +86,7 @@ aggregate latency cost small.
 \section{Answering the Research Questions}
 \label{sec:discussion-research-questions}
 
-The first research question asks how a CUDASTF runtime scheduler can preserve
+The first research question asks how a \CUDASTF{} runtime scheduler can preserve
 the performance advantages of HEFT while exploiting data locality. The answer
 in this thesis is a HEFT-relative residual gate. HEFT provides the baseline GPU
 choice, and the scheduler deviates only when the predicted copy saving is large
@@ -161,7 +161,7 @@ engine behavior may change the magnitude of the placement gains.
 
 The workload set is also limited. The five reported benchmarks cover several
 useful cases, including strong locality cases, a near-neutral placement
-control, and DVFS-positive rows, but they do not exhaust the range of CUDASTF
+control, and DVFS-positive rows, but they do not exhaust the range of \CUDASTF{}
 applications. The FDTD results also show that benchmark-level noise can affect
 the apparent magnitude of small effects. This is why the thesis treats FDTD as
 a moderate placement case rather than as the primary proof point.

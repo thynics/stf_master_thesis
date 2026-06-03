@@ -67,7 +67,7 @@
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=0.88\linewidth,height=0.25\textheight,keepaspectratio]{figures/theory_task_residency.png}
-\caption{CUDASTF task-graph execution model. Tasks form a DAG with data-driven dependencies, while each GPU maintains a changing view of logical data residency. Candidate placement decisions differ in device readiness, data-ready time, copy cost, and predicted finish time.}
+\caption{\CUDASTF{} task-graph execution model. Tasks form a DAG with data-driven dependencies, while each GPU maintains a changing view of logical data residency. Candidate placement decisions differ in device readiness, data-ready time, copy cost, and predicted finish time.}
 \label{fig:theory-task-residency}
 \end{figure}%
 }
@@ -122,7 +122,7 @@
 \begin{figure}[!htbp]
 \centering
 \includegraphics[width=\linewidth]{figures/system_overview.png}
-\caption{Overview of the proposed two-layer runtime scheduler. CUDASTF exposes a task graph and runtime state to the placement layer, which applies a HEFT-relative residual gate. The selected GPU is then passed to the guarded proposal--commit DVFS layer, and execution feedback updates ready times, data residency, bandit rewards, and slowdown guardrails.}
+\caption{Overview of the proposed two-layer runtime scheduler. \CUDASTF{} exposes a task graph and runtime state to the placement layer, which applies a HEFT-relative residual gate. The selected GPU is then passed to the guarded proposal--commit DVFS layer, and execution feedback updates ready times, data residency, bandit rewards, and slowdown guardrails.}
 \label{fig:methods-runtime-pipeline}
 \end{figure}%
 }

@@ -2,7 +2,7 @@
 \label{chap:conclusion}
 
 This thesis investigated runtime-level scheduling for single-node multi-GPU
-CUDASTF task graphs. The motivation was that GPU placement and GPU frequency
+\CUDASTF{} task graphs. The motivation was that GPU placement and GPU frequency
 control are coupled through data movement, slack, and critical-path behavior,
 but combining them into one monolithic online decision would make the
 scheduler difficult to learn, explain, and stabilize. The proposed solution is
@@ -33,7 +33,7 @@ reductions in copy bytes, while the near-neutral workload keeps the same copy
 footprint and remains close to HEFT.
 
 The final DVFS evaluation shows a smaller but meaningful energy result.
-WinDVFS reduces geometric-mean energy by \(5.318\%\) with a geometric-mean
+\WinDVFS{} reduces geometric-mean energy by \(5.318\%\) with a geometric-mean
 latency overhead of \(0.479\%\) under the fixed Bandit placement layer. The
 geometric-mean EDP ratio improves to 0.951354, and all five reported
 benchmarks remain below an EDP ratio of 1.0. The observed energy reductions
@@ -41,7 +41,7 @@ are consistent with lower average power in the selected DVFS configurations,
 but the result should be interpreted as an energy--performance measurement
 rather than as a full clock-residency or full-system power study.
 
-The main conclusion is therefore that CUDASTF task-graph information can be
+The main conclusion is therefore that \CUDASTF{} task-graph information can be
 used to make online scheduling both more locality aware and more energy aware,
 provided that the scheduler remains anchored to a strong performance baseline.
 The placement contribution is the clearer and stronger result: bounded
@@ -49,7 +49,7 @@ HEFT-relative deviations can reduce unnecessary data movement and improve
 runtime on copy-sensitive workloads. The DVFS contribution is more modest but
 still useful: guarded window-level frequency control can reduce energy over
 the benchmark execution window while keeping aggregate latency overhead small.
-The end-to-end result combines these effects: Bandit+WinDVFS reduces
+The end-to-end result combines these effects: \BanditWinDVFS{} reduces
 geometric-mean latency by \(8.795\%\), energy by \(11.874\%\), and EDP by
 \(19.625\%\) relative to HEFT.
 

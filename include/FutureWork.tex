@@ -2,7 +2,7 @@
 \label{chap:future-work}
 
 The results in this thesis show that task-graph information can support
-locality-aware placement and guarded DVFS control inside CUDASTF. At the same
+locality-aware placement and guarded DVFS control inside \CUDASTF{}. At the same
 time, the current implementation is deliberately conservative, and the
 evaluation is limited to a single-node benchmark suite. The most important
 extensions concern broader evaluation, richer runtime models, stronger DVFS
@@ -62,7 +62,7 @@ of the scheduler.
 \section{Richer DVFS Objectives}
 \label{sec:future-dvfs-objectives}
 
-The WinDVFS layer in this thesis focuses on guarded energy reduction over the
+The \WinDVFS{} layer in this thesis focuses on guarded energy reduction over the
 benchmark execution window with bounded latency overhead. Future work could
 extend the committer to optimize different objectives, such as EDP or a
 user-defined energy budget. The same proposal--commit structure could support
@@ -88,7 +88,7 @@ incorrect memory-frequency decisions can increase latency substantially.
 
 The proposal--commit design amortizes frequency decisions over windows, but it
 does not fully solve transition placement. Future work should measure and model
-where transitions become visible in the CUDASTF execution timeline. If the
+where transitions become visible in the \CUDASTF{} execution timeline. If the
 runtime can schedule transitions during communication, synchronization, or
 other slack periods, the visible latency cost of DVFS could be reduced.
 
@@ -113,7 +113,7 @@ parsing.
 For deployment, the scheduler should expose a small set of user-facing modes:
 for example, placement-only, conservative DVFS, and diagnostic logging. These
 modes would let users choose between maximum stability, energy savings, and
-explainability depending on the application. The long-term goal is a CUDASTF
+explainability depending on the application. The long-term goal is a \CUDASTF{}
 scheduler that offers locality and energy-efficiency modes by default while
 remaining transparent enough for users to understand when and why it deviates
 from HEFT.

@@ -49,8 +49,13 @@
    		 	filecolor=black, linkcolor=black,
     		urlcolor=black}
 
+% Keep method names and acronyms from being split across line breaks.
+\newcommand{\CUDASTF}{\texorpdfstring{\mbox{CUDASTF}}{CUDASTF}}
+\newcommand{\WinDVFS}{\texorpdfstring{\mbox{WinDVFS}}{WinDVFS}}
+\newcommand{\BanditWinDVFS}{\texorpdfstring{\mbox{Bandit+WinDVFS}}{Bandit+WinDVFS}}
+
 %% Bibliography https://www.overleaf.com/learn/latex/Bibliography_management_with_biblatex
-\usepackage[style=ieee]{biblatex} % style=apa also possible
+\usepackage[style=ieee,giveninits=false]{biblatex} % style=apa also possible
 \addbibresource{references.bib}
 
 

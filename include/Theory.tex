@@ -11,7 +11,7 @@
 \chapter{Theory}
 \label{ch:theory}
 
-Runtime-level energy optimization for multi-GPU task graphs requires a model of both scheduling and frequency control. The target execution model in this thesis is CUDA Sequential Task Flow (CUDASTF), where applications are represented as task graphs with data-driven dependencies. The central optimization goal is to reduce energy consumption and energy--delay product (EDP) while keeping performance loss within a user-defined bound. This chapter provides the theoretical background for that goal by reviewing multi-GPU task graph execution, CUDASTF, GPU dynamic voltage and frequency scaling (DVFS), energy--performance metrics, DAG scheduling, data-locality-aware placement, online bandit scheduling, and windowed proposal--commit DVFS control.
+Runtime-level energy optimization for multi-GPU task graphs requires a model of both scheduling and frequency control. The target execution model in this thesis is CUDA Sequential Task Flow (\CUDASTF{}), where applications are represented as task graphs with data-driven dependencies. The central optimization goal is to reduce energy consumption and energy--delay product (EDP) while keeping performance loss within a user-defined bound. This chapter provides the theoretical background for that goal by reviewing multi-GPU task graph execution, \CUDASTF{}, GPU dynamic voltage and frequency scaling (DVFS), energy--performance metrics, DAG scheduling, data-locality-aware placement, online bandit scheduling, and windowed proposal--commit DVFS control.
 
 \section{Multi-GPU Task Graph Execution}
 \label{sec:theory_task_graphs}
@@ -61,10 +61,10 @@ Slack is the opposite notion. A task has slack if it can be delayed, placed diff
 
 DVFS reduces energy only when the saved power outweighs the additional runtime and transition overhead. If a task is on the critical path, lowering its frequency may directly increase the application runtime. If the same task has slack, the runtime increase may be partially or fully hidden. Prior work on energy-aware GPU and DAG scheduling similarly shows that frequency, power-cap, or resource decisions must be interpreted under workload structure, timing requirements, or data-movement behavior~\cite{Song2014MemoryGPGPU,Wang2021RealTimeGPU,Wang2022EnergyAware,Guo2019EnergyEfficient,Huang2020TaskBalance,DAviau2025PowerCapping,Chab2025GPUSchedulingSurvey}. Therefore, a DAG-aware DVFS policy should not make frequency decisions from task cost alone; it should also consider dependency structure, data movement, and criticality.
 
-\section{CUDASTF Execution Model}
+\section{\CUDASTF{} Execution Model}
 \label{sec:theory_cudastf}
 
-CUDASTF is the runtime substrate considered in this thesis. It implements a CUDA-oriented Sequential Task Flow model in which applications are expressed through task submissions with data-access information. The runtime derives data-driven dependencies, manages data placement, and schedules work across GPUs \cite{Augonnet2024CUDASTF}.
+\CUDASTF{} is the runtime substrate considered in this thesis. It implements a CUDA-oriented Sequential Task Flow model in which applications are expressed through task submissions with data-access information. The runtime derives data-driven dependencies, manages data placement, and schedules work across GPUs \cite{Augonnet2024CUDASTF}.
 
 \subsection{Sequential Task Flow Model}
 \label{subsec:stf_model}
@@ -76,7 +76,7 @@ This model is useful for GPU applications because explicit synchronization is of
 \subsection{Data-Driven Dependencies and Data Residency}
 \label{subsec:cudastf_data_dependencies}
 
-In multi-GPU execution, dependencies are not only ordering constraints. They also determine where data are located and whether a task requires data migration. CUDASTF tracks data accesses and can therefore infer when a task needs a local copy, when data must be transferred between GPUs, and when multiple devices may share valid copies.
+In multi-GPU execution, dependencies are not only ordering constraints. They also determine where data are located and whether a task requires data migration. \CUDASTF{} tracks data accesses and can therefore infer when a task needs a local copy, when data must be transferred between GPUs, and when multiple devices may share valid copies.
 
 For the scheduler, this information is essential. A device that appears fast from a compute perspective may be a poor choice if the required data are located elsewhere. Conversely, a slightly slower or more loaded device may be attractive if it already holds the necessary input data. Figure~\ref{fig:theory-task-residency} summarizes this task, data, and residency view of the runtime.
 
@@ -85,7 +85,7 @@ For the scheduler, this information is essential. A device that appears fast fro
 \subsection{Runtime Scheduling Opportunities}
 \label{subsec:cudastf_scheduling_opportunities}
 
-CUDASTF exposes several opportunities for energy-aware scheduling:
+\CUDASTF{} exposes several opportunities for energy-aware scheduling:
 \begin{itemize}
     \item task dependencies can be used to estimate criticality and slack;
     \item data residency information can be used to reduce unnecessary transfers;
@@ -94,7 +94,7 @@ CUDASTF exposes several opportunities for energy-aware scheduling:
     \item task placement and DVFS decisions can be integrated into one runtime-level control pipeline.
 \end{itemize}
 
-These properties make CUDASTF a suitable setting for combining DAG scheduling with GPU DVFS. The thesis does not treat DVFS as an external node-level controller. Instead, DVFS decisions are made with direct access to task-graph information.
+These properties make \CUDASTF{} a suitable setting for combining DAG scheduling with GPU DVFS. The thesis does not treat DVFS as an external node-level controller. Instead, DVFS decisions are made with direct access to task-graph information.
 
 \section{GPU DVFS and Energy--Performance Trade-offs}
 \label{sec:theory_dvfs}
@@ -244,7 +244,7 @@ For each scheduled task $v$, the runtime observes or estimates a small set of fe
     \item a local criticality proxy derived from cost, dependencies, and input size;
     \item task-symbol hints for heavy kernels such as dense linear algebra operations.
 \end{itemize}
-These features are cheap to compute because they are already needed for HEFT-style candidate evaluation or are available from CUDASTF task metadata.
+These features are cheap to compute because they are already needed for HEFT-style candidate evaluation or are available from \CUDASTF{} task metadata.
 
 \subsection{Copy-Wait Ratio and Slack Proxy}
 \label{subsec:copy_wait_slack_proxy}
@@ -484,7 +484,7 @@ Whole application & Simple and stable & Too coarse for heterogeneous DAGs \\
 \label{tab:dvfs_granularity}
 \end{table}
 
-Per-task DVFS can approximate the best frequency for each task but may trigger too many transitions. Phase-level DVFS is stable but may ignore short-term changes in task type, data movement, and GPU load. Region-level DVFS is a compromise: it allows the runtime to react to task-graph structure while limiting transition overhead. This compromise is related to phase- and region-oriented energy-control approaches for heterogeneous systems, but the runtime window in this thesis is defined by CUDASTF scheduling events rather than by an external phase detector~\cite{Fan2023Synergy,Carpentieri2025Phase}.
+Per-task DVFS can approximate the best frequency for each task but may trigger too many transitions. Phase-level DVFS is stable but may ignore short-term changes in task type, data movement, and GPU load. Region-level DVFS is a compromise: it allows the runtime to react to task-graph structure while limiting transition overhead. This compromise is related to phase- and region-oriented energy-control approaches for heterogeneous systems, but the runtime window in this thesis is defined by \CUDASTF{} scheduling events rather than by an external phase detector~\cite{Fan2023Synergy,Carpentieri2025Phase}.
 
 \subsection{Frequency Regions in Task Graphs}
 \label{subsec:frequency_regions}
@@ -688,4 +688,4 @@ The theory motivates four design choices:
 \section{Summary}
 \label{sec:theory_summary}
 
-The theoretical foundation of the proposed framework is that a CUDASTF application can be viewed as a DAG in which tasks, dependencies, data residency, and communication costs are visible to the runtime. GPU DVFS introduces an energy--performance trade-off that depends on criticality, copy-wait behavior, backlog, frequency levels, and transition overhead. HEFT-style scheduling provides a strong baseline for performance, but it does not directly optimize energy or data-locality-driven trade-offs. Controlled deviation from HEFT, contextual bandit adaptation, region-level DVFS, and windowed proposal--commit frequency control therefore form the basis for the framework developed in this thesis.
+The theoretical foundation of the proposed framework is that a \CUDASTF{} application can be viewed as a DAG in which tasks, dependencies, data residency, and communication costs are visible to the runtime. GPU DVFS introduces an energy--performance trade-off that depends on criticality, copy-wait behavior, backlog, frequency levels, and transition overhead. HEFT-style scheduling provides a strong baseline for performance, but it does not directly optimize energy or data-locality-driven trade-offs. Controlled deviation from HEFT, contextual bandit adaptation, region-level DVFS, and windowed proposal--commit frequency control therefore form the basis for the framework developed in this thesis.
