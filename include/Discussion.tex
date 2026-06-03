@@ -32,18 +32,17 @@ copy footprint and remains close to HEFT, which is consistent with the
 interpretation that residual placement is useful only when the task graph
 exposes reducible data movement.
 
-The CG mechanism diagnostic in Section~\ref{sec:results-cg-copy-latency}
-adds an important nuance to this interpretation. Copy-byte reduction should not
-be read as a direct decomposition of latency. In CG, the modeled copy-time
-saving is only \(1.006\) ms, while the mean latency saving is \(1893.400\) ms.
-The no-deviation control shows why this does not contradict the locality
-explanation: when the same scheduler path is used but non-HEFT residual
-placements are disabled, the result returns to the near-HEFT regime. The large
-speedup appears only when a small and stable set of bounded residual choices is
-enabled. Thus, copy bytes provide directional evidence that the accepted
-placements are locality-oriented, while the larger latency effect comes from
-the way those placements change downstream data residency, ready order, and
-iterative execution.
+The trace-based mechanism analysis in
+Section~\ref{sec:results-trace-locality-mechanism} adds an important nuance to
+this interpretation. Copy-byte reduction should not be read as a direct
+decomposition of latency. It is a locality-volume metric, not a measured trace
+of transfer time or critical-path delay. The no-deviation control shows why the
+locality explanation remains plausible: when the same scheduler path is used but
+non-HEFT residual placements are disabled, the result returns to the near-HEFT
+regime. The task trace then explains where the larger latency effect comes from:
+the accepted residual placements reduce idle and readiness gaps along the
+repeated execution chain, even though the measured task work itself does not
+become shorter.
 
 The placement result should therefore be read as a workload-dependent locality
 result rather than as a uniform scheduler replacement. This matters for a

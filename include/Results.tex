@@ -309,15 +309,24 @@ interpretation that the residual policy is selective: it changes placements
 when copy-saving opportunities are visible and otherwise remains close to
 HEFT-like behavior.
 
-\subsection{CG Copy--Latency Mechanism}
-\label{sec:results-cg-copy-latency}
+\section{Trace-Based Explanation of Placement Gains}
+\label{sec:results-trace-locality-mechanism}
 
-The CG row is useful because its latency improvement is larger than what a
-direct copy-byte accounting would suggest. To examine this behavior, an
-additional five-run diagnostic compares HEFT, the full residual Bandit
-scheduler, and a no-deviation control that keeps the Bandit scheduler path but
-disables non-HEFT residual placement choices. Table~\ref{tab:results-cg-mechanism}
-summarizes the diagnostic.
+The previous section shows that the placement gains are aligned with reduced
+copy traffic, but copy bytes alone do not explain the full latency effect. CG is
+the most diagnostic case in this dataset. In the main placement result, CG
+reduces copy bytes by \(7.692\%\), while its latency decreases by \(13.733\%\).
+This gap does not mean that measured transfer time decreased by the same amount
+as latency. Copy-byte accounting is a locality-volume measurement: it indicates
+that less copy volume is observed, but it does not reveal overlap, queueing,
+readiness delay, or whether a transfer lies on the execution tail.
+
+To separate these effects, a single-run targeted CG diagnostic compares three
+configurations: HEFT, the full residual Bandit placement policy, and a
+no-deviation control. The no-deviation row keeps the Bandit scheduler path but
+disables accepted non-HEFT residual placements. It therefore isolates whether
+the observed improvement comes from residual placement decisions rather than
+from the surrounding scheduler code path.
 
 \begin{table}[!htbp]
 \centering
@@ -325,40 +334,78 @@ summarizes the diagnostic.
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{@{}lrrrrr@{}}
 \toprule
-Row & Mean latency & Latency \(\Delta\) & Copy bytes \(\Delta\) & Copy-time saving & Deviations \\
+Configuration & Latency & Latency \(\Delta\) & Copy bytes & Copy bytes \(\Delta\) & Accepted deviations \\
 \midrule
-HEFT & \(14370.4 \pm 119.7\) ms & \(0.000\%\) & \(0.000\%\) & \(0.000\) ms & \(0/2176\) \\
-Full residual & \(12477.0 \pm 77.6\) ms & \(-13.176\%\) & \(-7.692\%\) & \(1.006\) ms & \(128/2176\) \\
-No deviation & \(14227.0 \pm 70.2\) ms & \(-0.998\%\) & \(0.000\%\) & \(0.000\) ms & \(0/2176\) \\
+HEFT & \(14885.000\) ms & \(0.000\%\) & \(654{,}311{,}738\) & \(0.000\%\) & 0 \\
+Full residual & \(12624.000\) ms & \(-15.190\%\) & \(603{,}980{,}114\) & \(-7.692\%\) & 128 \\
+No deviation & \(14789.000\) ms & \(-0.645\%\) & \(654{,}311{,}762\) & \(0.000\%\) & 0 \\
 \bottomrule
 \end{tabular}
-\caption{CG mechanism diagnostic over five runs. The latency interval is the 95\% confidence-interval half-width. The no-deviation row keeps the Bandit scheduler path but disables accepted residual placement deviations.}
+\caption{Single-run CG no-deviation diagnostic. The no-deviation row keeps the Bandit scheduler path but disables accepted residual placement deviations. The table is used only for mechanism analysis and does not recompute the main placement result.}
 \label{tab:results-cg-mechanism}
 \end{table}
 
-The diagnostic supports two conclusions. First, the CG speedup is caused by
-accepted residual placement choices rather than by the Bandit scheduler path
-alone. Second, the measured copy-byte reduction is a locality signal rather
-than a complete explanation of the latency reduction.
+Table~\ref{tab:results-cg-mechanism} indicates that the large diagnostic gain
+appears only when residual placements are allowed. With deviations disabled,
+copy volume is unchanged and latency remains close to HEFT, improving by only
+\(0.645\%\). With deviations enabled, 128 accepted residual placements reduce
+copy bytes by \(7.692\%\) and latency by \(15.190\%\) in the same diagnostic
+setting. The mechanism question is therefore not whether copy traffic is lower,
+but how a small number of locality-preserving deviations changes the realized
+schedule.
 
-The full residual row reduces CG copy bytes from \(654{,}311{,}738\) to
-\(603{,}980{,}114\), a \(7.692\%\) reduction. The corresponding modeled
-copy-time saving is only \(1.006\) ms, whereas the mean latency saving is
-\(1893.400\) ms. The copy-byte reduction is therefore not a complete latency
-accounting. It is better interpreted as mechanism evidence: the accepted
-residual choices are locality-oriented, but their effect on latency is
-amplified through downstream data residency, task readiness, and iterative
-execution order.
+For this purpose, a second diagnostic records CUDA-event start and end times for
+individual tasks. This task trace is intrusive because event timing adds
+synchronization, so it is not used as a headline latency measurement. It is used
+only to decompose the observed schedule into measured task work and idle or
+readiness gaps. The trace does not provide a direct memcpy timeline. For each
+GPU, the gap is computed from measured task timestamps as:
 
-The no-deviation control makes this interpretation more precise. With the same
-Bandit scheduler path but no accepted non-HEFT placements, CG remains close to
-HEFT, improving latency by only \(0.998\%\) and preserving essentially the same
-copy volume. Enabling the residual gate accepts only \(128\) of \(2176\)
-placement certificates, yet it produces a stable \(13.176\%\) latency
-reduction. Thus, for CG, copy bytes should be read as directional locality
-evidence rather than as a one-to-one predictor of latency. The larger latency
-effect comes from a small number of bounded placement deviations that alter the
-subsequent execution path.
+\[
+  \mathrm{gap}_d
+  =
+  (\mathrm{last\ task\ end}_d - \mathrm{first\ task\ start}_d)
+  -
+  \mathrm{busy\ task\ time}_d .
+\]
+
+\begin{table}[!htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Trace quantity & HEFT & Full residual & Delta \\
+\midrule
+Total traced task duration & \(3899.267\) ms & \(3937.148\) ms & \(+37.881\) ms \\
+GPU 0 last task end & \(16460.898\) ms & \(13590.092\) ms & \(-2870.806\) ms \\
+GPU 0 busy task time & \(2186.048\) ms & \(2858.007\) ms & \(+671.959\) ms \\
+GPU 0 idle/readiness gap & \(14274.850\) ms & \(10732.085\) ms & \(-3542.765\) ms \\
+\bottomrule
+\end{tabular}
+\caption{Representative CG task-trace decomposition. The trace uses task start and end events, so the quantities are measured task timing and observed idle/readiness gaps, not modeled copy time.}
+\label{tab:results-cg-trace-gap}
+\end{table}
+
+Table~\ref{tab:results-cg-trace-gap} provides the trace-level explanation. The
+full residual run does not make the traced task bodies shorter. The total traced
+task duration slightly increases from \(3899.267\) ms to \(3937.148\) ms. The
+finishing GPU also receives more measured busy work. What changes is the
+non-busy part of the schedule: on GPU~0, the idle/readiness gap falls by
+\(3542.765\) ms, while busy task time increases by \(671.959\) ms. The net
+effect is a \(2870.806\) ms earlier last task end.
+
+This trace explains why, in this diagnostic, the latency reduction can be larger
+than the copy-byte reduction. The residual scheduler is not merely removing a
+proportional amount of transfer volume. It is changing where data is resident
+and when later dependent tasks become ready. In the CG trace, these changes
+repeat across the iterative task structure. Grouping matched timed tasks into
+recurring blocks, the full residual policy gains about \(45.7\) ms of additional
+end-time advantage per block, whereas the no-deviation control gains only about
+\(1.4\) ms per block. The latency improvement is therefore amplified through
+schedule compression along the repeated dependency chain. Copy bytes provide the
+directional locality evidence; the task trace shows that the runtime benefit is
+realized primarily as reduced readiness gaps on the execution tail.
 
 \section{DVFS Energy--Performance Trade-off}
 \label{sec:results-dvfs-energy}
