@@ -309,6 +309,57 @@ interpretation that the residual policy is selective: it changes placements
 when copy-saving opportunities are visible and otherwise remains close to
 HEFT-like behavior.
 
+\subsection{CG Copy--Latency Mechanism}
+\label{sec:results-cg-copy-latency}
+
+The CG row is useful because its latency improvement is larger than what a
+direct copy-byte accounting would suggest. To examine this behavior, an
+additional five-run diagnostic compares HEFT, the full residual Bandit
+scheduler, and a no-deviation control that keeps the Bandit scheduler path but
+disables non-HEFT residual placement choices. Table~\ref{tab:results-cg-mechanism}
+summarizes the diagnostic.
+
+\begin{table}[!htbp]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Row & Mean latency & Latency \(\Delta\) & Copy bytes \(\Delta\) & Copy-time saving & Deviations \\
+\midrule
+HEFT & \(14370.4 \pm 119.7\) ms & \(0.000\%\) & \(0.000\%\) & \(0.000\) ms & \(0/2176\) \\
+Full residual & \(12477.0 \pm 77.6\) ms & \(-13.176\%\) & \(-7.692\%\) & \(1.006\) ms & \(128/2176\) \\
+No deviation & \(14227.0 \pm 70.2\) ms & \(-0.998\%\) & \(0.000\%\) & \(0.000\) ms & \(0/2176\) \\
+\bottomrule
+\end{tabular}
+\caption{CG mechanism diagnostic over five runs. The latency interval is the 95\% confidence-interval half-width. The no-deviation row keeps the Bandit scheduler path but disables accepted residual placement deviations.}
+\label{tab:results-cg-mechanism}
+\end{table}
+
+The diagnostic supports two conclusions. First, the CG speedup is caused by
+accepted residual placement choices rather than by the Bandit scheduler path
+alone. Second, the measured copy-byte reduction is a locality signal rather
+than a complete explanation of the latency reduction.
+
+The full residual row reduces CG copy bytes from \(654{,}311{,}738\) to
+\(603{,}980{,}114\), a \(7.692\%\) reduction. The corresponding modeled
+copy-time saving is only \(1.006\) ms, whereas the mean latency saving is
+\(1893.400\) ms. The copy-byte reduction is therefore not a complete latency
+accounting. It is better interpreted as mechanism evidence: the accepted
+residual choices are locality-oriented, but their effect on latency is
+amplified through downstream data residency, task readiness, and iterative
+execution order.
+
+The no-deviation control makes this interpretation more precise. With the same
+Bandit scheduler path but no accepted non-HEFT placements, CG remains close to
+HEFT, improving latency by only \(0.998\%\) and preserving essentially the same
+copy volume. Enabling the residual gate accepts only \(128\) of \(2176\)
+placement certificates, yet it produces a stable \(13.176\%\) latency
+reduction. Thus, for CG, copy bytes should be read as directional locality
+evidence rather than as a one-to-one predictor of latency. The larger latency
+effect comes from a small number of bounded placement deviations that alter the
+subsequent execution path.
+
 \section{DVFS Energy--Performance Trade-off}
 \label{sec:results-dvfs-energy}
 
