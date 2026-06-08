@@ -119,12 +119,16 @@
 }
 
 \newcommand{\figMethodsRuntimePipeline}{%
-\begin{figure}[!htbp]
+\clearpage
+\begin{landscape}
+\begin{figure}[p]
 \centering
-\includegraphics[width=\linewidth]{figures/system_overview.png}
+\includegraphics[width=0.98\linewidth,height=0.78\textheight,keepaspectratio]{figures/system_overview.png}
 \caption{Overview of the proposed two-layer runtime scheduler. \CUDASTF{} exposes a task graph and runtime state to the placement layer, which applies a HEFT-relative residual gate. The selected GPU is then passed to the guarded proposal--commit DVFS layer, and execution feedback updates ready times, data residency, bandit rewards, and slowdown guardrails.}
 \label{fig:methods-runtime-pipeline}
 \end{figure}%
+\end{landscape}
+\clearpage
 }
 
 \newcommand{\figMethodsPlacementMotivation}{%
