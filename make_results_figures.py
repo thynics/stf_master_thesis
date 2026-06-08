@@ -25,32 +25,32 @@ COPY_BYTES = np.array(
     dtype=float,
 )
 
-PLACEMENT_LAT_DELTA = np.array([-6.530, -13.733, 0.019, -10.063, -18.539])
+PLACEMENT_LAT_DELTA = np.array([-6.53, -13.73, 0.02, -10.06, -18.54])
 PLACEMENT_BANDIT_NORM = 100.0 + PLACEMENT_LAT_DELTA
 
 LOC_BENCH = ["FDTD", "CG", "MiniWeather", "Cholesky", "LU"]
-COPY_DELTA = np.array([-12.030, -7.692, 0.0, -38.220, -23.905])
-LOC_LAT_DELTA = np.array([-6.530, -13.733, 0.019, -10.063, -18.539])
+COPY_DELTA = np.array([-12.03, -7.69, 0.0, -38.22, -23.91])
+LOC_LAT_DELTA = np.array([-6.53, -13.73, 0.02, -10.06, -18.54])
 
 DVFS_BENCH = ["FDTD", "CG", "MiniWeather", "LU", "Cholesky"]
 DVFS_SHORT = ["FDTD", "CG", "MiniW.", "LU", "Chol."]
-LAT_DELTA = np.array([0.130, -0.471, -0.050, 1.498, 1.303])
-ENERGY_DELTA = np.array([-6.208, -10.106, -1.656, -4.982, -3.421])
-EDP_DELTA = np.array([-6.086, -10.529, -1.705, -3.559, -2.162])
-EDP = np.array([0.939138, 0.894706, 0.982951, 0.964413, 0.978376])
+LAT_DELTA = np.array([0.13, -0.47, -0.05, 1.50, 1.30])
+ENERGY_DELTA = np.array([-6.21, -10.11, -1.66, -4.98, -3.42])
+EDP_DELTA = np.array([-6.09, -10.53, -1.70, -3.56, -2.16])
+EDP = np.array([0.939, 0.895, 0.983, 0.964, 0.978])
 
 CLOCK_BENCH = ["FDTD", "MiniWeather", "CG", "LU", "Cholesky"]
 CLOCK_SHORT = ["FDTD", "MiniW.", "CG", "LU", "Chol."]
-CLOCK_ENERGY_DELTA = np.array([-3.829, -3.079, -5.587, -3.287, -1.411])
-CLOCK_MID_SAMPLES = np.array([91.903, 0.0, 98.912, 58.685, 58.654])
-CLOCK_EFF_MID_SHARE = np.array([1.000, 0.000, 0.333, 0.697, 0.637])
+CLOCK_ENERGY_DELTA = np.array([-3.83, -3.08, -5.59, -3.29, -1.41])
+CLOCK_MID_SAMPLES = np.array([91.90, 0.0, 98.91, 58.69, 58.65])
+CLOCK_EFF_MID_SHARE = np.array([1.00, 0.00, 0.33, 0.70, 0.64])
 CLOCK_COMMIT_SWITCHES = np.array([8, 0, 512, 290, 57])
 CLOCK_FORCE_HIGH = np.array([0, 0, 0, 127, 23])
 CLOCK_SLOWDOWN = np.array([0, 0, 0, 127, 23])
 
 OVER_BENCH = ["FDTD", "CG", "MiniW.", "Chol.", "LU"]
-OVER_HEFT_LAT = np.array([-0.421, -0.739, -0.056, -0.077, -0.280])
-OVER_BANDIT_LAT = np.array([-0.573, 1.439, -0.060, -0.766, 0.822])
+OVER_HEFT_LAT = np.array([-0.42, -0.74, -0.06, -0.08, -0.28])
+OVER_BANDIT_LAT = np.array([-0.57, 1.44, -0.06, -0.77, 0.82])
 
 
 COLORS = {
@@ -191,7 +191,7 @@ def results_overview() -> None:
     fig, ax = plt.subplots(figsize=(5.15, 2.5))
     labels = ["Placement\nlatency", "DVFS\nenergy", "End-to-end\nEDP"]
     baseline = np.ones(3)
-    optimized = np.array([0.900113, 0.946816, 0.803748])
+    optimized = np.array([0.900, 0.947, 0.804])
     x = np.array([0.0, 1.35, 2.70])
     bw = 0.18
     ax.bar(x - bw / 2, baseline, width=bw, color=COLORS["baseline"], edgecolor="#333333", linewidth=0.35, label="Baseline")
@@ -202,7 +202,7 @@ def results_overview() -> None:
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     polish_axes(ax)
-    for bar, text in zip(bars, ["9.989% lower", "5.318% lower", "19.625% lower"]):
+    for bar, text in zip(bars, ["9.99% lower", "5.32% lower", "19.63% lower"]):
         ax.text(
             bar.get_x() + bar.get_width() / 2,
             bar.get_height() + 0.010,

@@ -16,7 +16,7 @@ The placement results support the main design choice of this thesis: HEFT
 should remain the performance anchor, while locality-aware deviations should be
 admitted only when there is sufficient copy-saving evidence. In the placement
 performance experiment, the bandit scheduler improves geometric-mean latency
-by \(9.989\%\) across the five reported benchmarks. The improvement is not
+by \(9.99\%\) across the five reported benchmarks. The improvement is not
 uniform. CG, Cholesky, and LU decomposition show the strongest gains, FDTD is a
 moderate positive case, and MiniWeather remains near neutral.
 
@@ -26,8 +26,8 @@ Instead, it asks whether a non-HEFT GPU can reduce predicted copy cost while
 keeping the local finish-time penalty bounded. The locality-attribution
 analysis confirms that this behavior is visible in the measurements. The
 largest improvements coincide with large copy byte reductions: Cholesky reduces
-copy bytes by \(38.220\%\), LU decomposition reduces copy bytes by \(23.905\%\),
-and CG reduces copy bytes by \(7.692\%\). MiniWeather keeps the same measured
+copy bytes by \(38.22\%\), LU decomposition reduces copy bytes by \(23.91\%\),
+and CG reduces copy bytes by \(7.69\%\). MiniWeather keeps the same measured
 copy footprint and remains close to HEFT, which is consistent with the
 interpretation that residual placement is useful only when the task graph
 exposes reducible data movement.
@@ -55,9 +55,9 @@ than one that pursues aggressive deviations everywhere.
 
 The \WinDVFS{} result should be interpreted as a conservative
 energy-control result rather than as a universal energy optimum. Across the
-five final rows, \WinDVFS{} reduces geometric-mean energy by \(5.318\%\) with a
-geometric-mean latency overhead of \(0.479\%\). The geometric-mean EDP ratio is
-0.951354. FDTD, CG, MiniWeather, LU decomposition, and Cholesky all reduce EDP
+five final rows, \WinDVFS{} reduces geometric-mean energy by \(5.32\%\) with a
+geometric-mean latency overhead of \(0.48\%\). The geometric-mean EDP ratio is
+0.951. FDTD, CG, MiniWeather, LU decomposition, and Cholesky all reduce EDP
 relative to their no-DVFS counterparts, but the size of the benefit remains
 workload dependent.
 
@@ -112,17 +112,17 @@ and only after guardrail checks.
 
 The fourth research question asks whether the two-level policy can improve
 energy while keeping runtime degradation bounded. The final DVFS result gives
-a qualified positive answer. Energy decreases by \(5.318\%\) geometric mean,
-while latency increases by only \(0.479\%\) geometric mean under the fixed
-Bandit placement layer. The EDP ratio improves to 0.951354. The result is
+a qualified positive answer. Energy decreases by \(5.32\%\) geometric mean,
+while latency increases by only \(0.48\%\) geometric mean under the fixed
+Bandit placement layer. The EDP ratio improves to 0.951. The result is
 workload dependent, so the correct conclusion is that the runtime can extract
 energy savings on the reported benchmarks without large aggregate slowdown, not
 that DVFS is always beneficial.
 
 The fifth research question concerns overhead. The overhead diagnostics show
 that the dynamic Bandit scheduler and the static-replay diagnostic differ by
-only \(-0.766\%\) to \(+1.439\%\) in latency across the five reported
-benchmarks, with a geometric-mean static-replay delta of \(+0.169\%\). This
+only \(-0.77\%\) to \(+1.44\%\) in latency across the five reported
+benchmarks, with a geometric-mean static-replay delta of \(+0.17\%\). This
 supports the interpretation that online Bandit decision overhead is small at
 benchmark scale. The HEFT replay row is shown only as a trace-replay sanity
 check; the main overhead interpretation comes from the Bandit replay row.

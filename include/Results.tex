@@ -222,19 +222,19 @@ placement alternatives.
 \toprule
 Benchmark & HEFT latency & Bandit latency & Latency \(\Delta\) \\
 \midrule
-FDTD & 6784.000 ms & 6341.000 ms & \(-6.530\%\) \\
-CG & 14301.000 ms & 12337.000 ms & \(-13.733\%\) \\
-MiniWeather & 15111.600 ms & 15114.400 ms & \(+0.019\%\) \\
-Cholesky & 20672.900 ms & 18592.600 ms & \(-10.063\%\) \\
-LU decomposition & 18591.620 ms & 15145.000 ms & \(-18.539\%\) \\
+FDTD & 6784 ms & 6341 ms & \(-6.53\%\) \\
+CG & 14301 ms & 12337 ms & \(-13.73\%\) \\
+MiniWeather & 15112 ms & 15114 ms & \(+0.02\%\) \\
+Cholesky & 20673 ms & 18593 ms & \(-10.06\%\) \\
+LU decomposition & 18592 ms & 15145 ms & \(-18.54\%\) \\
 \bottomrule
 \end{tabular}
 \caption{Placement-only results relative to HEFT. DVFS is disabled.}
 \label{tab:results-placement-main}
 \end{table}
 
-The five-benchmark geometric-mean speedup is \(1.110971\times\), equivalent to
-a \(9.989\%\) normalized latency reduction. This aggregate value should be read
+The five-benchmark geometric-mean speedup is \(1.111\times\), equivalent to
+a \(9.99\%\) normalized latency reduction. This aggregate value should be read
 together with the per-benchmark distribution. LU decomposition has the largest
 gain, followed by CG and Cholesky. These three workloads dominate the
 placement benefit because their task graphs expose useful alternatives to HEFT
@@ -272,11 +272,11 @@ improvement is consistent with reduced data movement.
 \toprule
 Benchmark & HEFT copy bytes & Bandit copy bytes & Copy bytes \(\Delta\) & Latency \(\Delta\) \\
 \midrule
-FDTD & 353,009,664 & 310,542,336 & \(-12.030\%\) & \(-6.530\%\) \\
-CG & 654,311,738 & 603,980,114 & \(-7.692\%\) & \(-13.733\%\) \\
-MiniWeather & 241,833,733,942 & 241,833,733,942 & \(0.000\%\) & \(+0.019\%\) \\
-Cholesky & 15,221,178,776 & 9,403,679,128 & \(-38.220\%\) & \(-10.063\%\) \\
-LU decomposition & 22,258,961,026 & 16,938,027,650 & \(-23.905\%\) & \(-18.539\%\) \\
+FDTD & 353,009,664 & 310,542,336 & \(-12.03\%\) & \(-6.53\%\) \\
+CG & 654,311,738 & 603,980,114 & \(-7.69\%\) & \(-13.73\%\) \\
+MiniWeather & 241,833,733,942 & 241,833,733,942 & \(0.00\%\) & \(+0.02\%\) \\
+Cholesky & 15,221,178,776 & 9,403,679,128 & \(-38.22\%\) & \(-10.06\%\) \\
+LU decomposition & 22,258,961,026 & 16,938,027,650 & \(-23.91\%\) & \(-18.54\%\) \\
 \bottomrule
 \end{tabular}
 \endgroup
@@ -315,7 +315,7 @@ HEFT-like behavior.
 The previous section shows that the placement gains are aligned with reduced
 copy traffic, but copy bytes alone do not explain the full latency effect. CG is
 the most diagnostic case in this dataset. In the main placement result, CG
-reduces copy bytes by \(7.692\%\), while its latency decreases by \(13.733\%\).
+reduces copy bytes by \(7.69\%\), while its latency decreases by \(13.73\%\).
 This gap does not mean that measured transfer time decreased by the same amount
 as latency. Copy-byte accounting is a locality-volume measurement: it indicates
 that less copy volume is observed, but it does not reveal overlap, queueing,
@@ -336,9 +336,9 @@ from the surrounding scheduler code path.
 \toprule
 Configuration & Latency & Latency \(\Delta\) & Copy bytes & Copy bytes \(\Delta\) & Accepted deviations \\
 \midrule
-HEFT & \(14885.000\) ms & \(0.000\%\) & \(654{,}311{,}738\) & \(0.000\%\) & 0 \\
-Full residual & \(12624.000\) ms & \(-15.190\%\) & \(603{,}980{,}114\) & \(-7.692\%\) & 128 \\
-No deviation & \(14789.000\) ms & \(-0.645\%\) & \(654{,}311{,}762\) & \(0.000\%\) & 0 \\
+HEFT & \(14885\) ms & \(0.00\%\) & \(654{,}311{,}738\) & \(0.00\%\) & 0 \\
+Full residual & \(12624\) ms & \(-15.19\%\) & \(603{,}980{,}114\) & \(-7.69\%\) & 128 \\
+No deviation & \(14789\) ms & \(-0.65\%\) & \(654{,}311{,}762\) & \(0.00\%\) & 0 \\
 \bottomrule
 \end{tabular}
 \caption{Single-run CG no-deviation diagnostic. The no-deviation row keeps the Bandit scheduler path but disables accepted residual placement deviations. The table is used only for mechanism analysis and does not recompute the main placement result.}
@@ -348,8 +348,8 @@ No deviation & \(14789.000\) ms & \(-0.645\%\) & \(654{,}311{,}762\) & \(0.000\%
 Table~\ref{tab:results-cg-mechanism} indicates that the large diagnostic gain
 appears only when residual placements are allowed. With deviations disabled,
 copy volume is unchanged and latency remains close to HEFT, improving by only
-\(0.645\%\). With deviations enabled, 128 accepted residual placements reduce
-copy bytes by \(7.692\%\) and latency by \(15.190\%\) in the same diagnostic
+\(0.65\%\). With deviations enabled, 128 accepted residual placements reduce
+copy bytes by \(7.69\%\) and latency by \(15.19\%\) in the same diagnostic
 setting. The mechanism question is therefore not whether copy traffic is lower,
 but how a small number of locality-preserving deviations changes the realized
 schedule.
@@ -377,10 +377,10 @@ GPU, the gap is computed from measured task timestamps as:
 \toprule
 Trace quantity & HEFT & Full residual & Delta \\
 \midrule
-Total traced task duration & \(3899.267\) ms & \(3937.148\) ms & \(+37.881\) ms \\
-GPU 0 last task end & \(16460.898\) ms & \(13590.092\) ms & \(-2870.806\) ms \\
-GPU 0 busy task time & \(2186.048\) ms & \(2858.007\) ms & \(+671.959\) ms \\
-GPU 0 idle/readiness gap & \(14274.850\) ms & \(10732.085\) ms & \(-3542.765\) ms \\
+Total traced task duration & \(3899.3\) ms & \(3937.1\) ms & \(+37.9\) ms \\
+GPU 0 last task end & \(16460.9\) ms & \(13590.1\) ms & \(-2870.8\) ms \\
+GPU 0 busy task time & \(2186.0\) ms & \(2858.0\) ms & \(+672.0\) ms \\
+GPU 0 idle/readiness gap & \(14274.9\) ms & \(10732.1\) ms & \(-3542.8\) ms \\
 \bottomrule
 \end{tabular}
 \caption{Representative CG task-trace decomposition. The trace uses task start and end events, so the quantities are measured task timing and observed idle/readiness gaps, not modeled copy time.}
@@ -389,11 +389,11 @@ GPU 0 idle/readiness gap & \(14274.850\) ms & \(10732.085\) ms & \(-3542.765\) m
 
 Table~\ref{tab:results-cg-trace-gap} provides the trace-level explanation. The
 full residual run does not make the traced task bodies shorter. The total traced
-task duration slightly increases from \(3899.267\) ms to \(3937.148\) ms. The
+task duration slightly increases from \(3899.3\) ms to \(3937.1\) ms. The
 finishing GPU also receives more measured busy work. What changes is the
 non-busy part of the schedule: on GPU~0, the idle/readiness gap falls by
-\(3542.765\) ms, while busy task time increases by \(671.959\) ms. The net
-effect is a \(2870.806\) ms earlier last task end.
+\(3542.8\) ms, while busy task time increases by \(672.0\) ms. The net
+effect is a \(2870.8\) ms earlier last task end.
 
 This trace explains why, in this diagnostic, the latency reduction can be larger
 than the copy-byte reduction. The residual scheduler is not merely removing a
@@ -445,10 +445,10 @@ Cholesky & \(+1.30\%\) & \(-3.42\%\) & \(-2.16\%\) \\
 \end{table}
 
 Across the five benchmarks, the geometric-mean energy ratio is
-0.946816, corresponding to \(5.318\%\) lower normalized energy. The
-geometric-mean latency ratio is 1.004793, corresponding to a \(0.479\%\)
-latency overhead. The geometric-mean EDP ratio is 0.951354, corresponding to a
-\(4.865\%\) improvement. This is the main DVFS result: guarded window-level
+0.947, corresponding to \(5.32\%\) lower normalized energy. The
+geometric-mean latency ratio is 1.005, corresponding to a \(0.48\%\)
+latency overhead. The geometric-mean EDP ratio is 0.951, corresponding to a
+\(4.87\%\) improvement. This is the main DVFS result: guarded window-level
 frequency control reduces energy and EDP on this benchmark set while keeping
 the aggregate latency cost below one percent.
 
@@ -456,10 +456,10 @@ the aggregate latency cost below one percent.
 
 Figure~\ref{fig:results-dvfs-tradeoff} shows why the aggregate result needs to
 be read as a trade-off. CG provides the strongest row, with slightly lower
-latency and a \(10.106\%\) energy reduction. FDTD is close to latency-neutral
-while still reducing energy by \(6.208\%\). MiniWeather is also nearly
+latency and a \(10.11\%\) energy reduction. FDTD is close to latency-neutral
+while still reducing energy by \(6.21\%\). MiniWeather is also nearly
 latency-neutral, but its energy reduction is smaller. LU decomposition and
-Cholesky accept modest latency overheads of \(1.498\%\) and \(1.303\%\),
+Cholesky accept modest latency overheads of \(1.50\%\) and \(1.30\%\),
 respectively, while still improving both energy and EDP.
 
 \begin{table}[!htbp]
@@ -469,13 +469,13 @@ respectively, while still improving both energy and EDP.
 \toprule
 Benchmark & EDP ratio \\
 \midrule
-FDTD & 0.939138 \\
-CG & 0.894706 \\
-MiniWeather & 0.982951 \\
-LU decomposition & 0.964413 \\
-Cholesky & 0.978376 \\
+FDTD & 0.939 \\
+CG & 0.895 \\
+MiniWeather & 0.983 \\
+LU decomposition & 0.964 \\
+Cholesky & 0.978 \\
 \midrule
-Geometric mean & 0.951354 \\
+Geometric mean & 0.951 \\
 \bottomrule
 \end{tabular}
 \caption{DVFS energy--delay ratios computed from the energy and latency ratios in Table~\ref{tab:results-dvfs-energy}. Values below 1.0 indicate improvement.}
@@ -520,12 +520,12 @@ Cholesky & \(-9.04\%\) & \(-4.98\%\) & \(-13.56\%\) \\
 \label{tab:results-end-to-end}
 \end{table}
 
-The end-to-end comparison gives a geometric-mean latency ratio of 0.912049,
-which corresponds to an \(8.795\%\) latency reduction relative to HEFT. The
-geometric-mean energy ratio is 0.881255, corresponding to an \(11.874\%\)
+The end-to-end comparison gives a geometric-mean latency ratio of 0.912,
+which corresponds to an \(8.80\%\) latency reduction relative to HEFT. The
+geometric-mean energy ratio is 0.881, corresponding to an \(11.87\%\)
 energy reduction. Because both latency and energy improve on most benchmarks,
-the EDP effect is stronger: the geometric-mean EDP ratio is 0.803748, or a
-\(19.625\%\) reduction.
+the EDP effect is stronger: the geometric-mean EDP ratio is 0.804, or a
+\(19.63\%\) reduction.
 
 The per-benchmark distribution is also important. CG and LU decomposition are
 the strongest end-to-end cases because they benefit from both placement and
@@ -560,11 +560,11 @@ benchmarks.
 \cmidrule(lr){2-3}\cmidrule(l){4-6}
 Benchmark & Dynamic & Static replay & Latency & Energy & EDP \\
 \midrule
-FDTD & 6283.000 & 6247.000 & \(-0.573\%\) & \(-0.508\%\) & \(+3.681\%\) \\
-CG & 12404.000 & 12582.500 & \(+1.439\%\) & \(+0.957\%\) & \(+2.758\%\) \\
-MiniWeather & 15101.000 & 15092.000 & \(-0.060\%\) & \(+0.134\%\) & \(-0.084\%\) \\
-Cholesky & 18701.450 & 18558.250 & \(-0.766\%\) & \(+0.047\%\) & \(-0.129\%\) \\
-LU decomposition & 15389.700 & 15516.200 & \(+0.822\%\) & \(+1.056\%\) & \(+3.047\%\) \\
+FDTD & 6283.0 & 6247.0 & \(-0.57\%\) & \(-0.51\%\) & \(+3.68\%\) \\
+CG & 12404.0 & 12582.5 & \(+1.44\%\) & \(+0.96\%\) & \(+2.76\%\) \\
+MiniWeather & 15101.0 & 15092.0 & \(-0.06\%\) & \(+0.13\%\) & \(-0.08\%\) \\
+Cholesky & 18701.5 & 18558.3 & \(-0.77\%\) & \(+0.05\%\) & \(-0.13\%\) \\
+LU decomposition & 15389.7 & 15516.2 & \(+0.82\%\) & \(+1.06\%\) & \(+3.05\%\) \\
 \bottomrule
 \end{tabular}%
 \endgroup
@@ -576,9 +576,9 @@ LU decomposition & 15389.700 & 15516.200 & \(+0.822\%\) & \(+1.056\%\) & \(+3.04
 
 The Bandit replay rows are the cleanest diagnostic for scheduling overhead.
 Across the five benchmarks, the latency delta between dynamic Bandit and
-static replay ranges from \(-0.766\%\) to \(+1.439\%\), with a geometric-mean
-static-replay delta of \(+0.169\%\). Energy deltas remain between
-\(-0.508\%\) and \(+1.056\%\). These values are small relative to the
+static replay ranges from \(-0.77\%\) to \(+1.44\%\), with a geometric-mean
+static-replay delta of \(+0.17\%\). Energy deltas remain between
+\(-0.51\%\) and \(+1.06\%\). These values are small relative to the
 placement gains reported in Section~\ref{sec:results-placement-performance},
 which indicates that the online Bandit decision path is not the source of the
 measured latency improvements.
@@ -602,18 +602,18 @@ does not replace a full-system power study.
 \label{sec:results-summary}
 
 The experimental evidence supports both layers of the proposed design. The
-bandit scheduler improves geometric-mean latency by \(9.989\%\) relative
+bandit scheduler improves geometric-mean latency by \(9.99\%\) relative
 to HEFT, with the largest gains appearing on copy-sensitive workloads. The
 data-movement results are consistent with a locality-driven explanation of
 these gains: the strongest placement cases reduce copy traffic, while the
 near-neutral workload remains close to HEFT.
 
-\WinDVFS{} reduces geometric-mean energy by \(5.318\%\) with a \(0.479\%\)
+\WinDVFS{} reduces geometric-mean energy by \(5.32\%\) with a \(0.48\%\)
 geometric-mean latency overhead. The geometric-mean EDP ratio improves to
-0.951354, and all five reported benchmarks remain below an EDP ratio of 1.0.
+0.951, and all five reported benchmarks remain below an EDP ratio of 1.0.
 When the two layers are evaluated end to end against HEFT, the final
-\BanditWinDVFS{} configuration reduces geometric-mean latency by \(8.795\%\),
-energy by \(11.874\%\), and EDP by \(19.625\%\).
+\BanditWinDVFS{} configuration reduces geometric-mean latency by \(8.80\%\),
+energy by \(11.87\%\), and EDP by \(19.63\%\).
 
 The boundary of the claim is therefore explicit. The placement result is a
 locality-sensitive latency improvement, not a claim that every task graph

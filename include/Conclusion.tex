@@ -26,16 +26,16 @@ guardrails prevent unstable per-task frequency switching and force recovery to
 high frequency when performance risk appears.
 
 The experimental results support the value of this layered design. With DVFS
-disabled, the bandit scheduler improves geometric-mean latency by \(9.989\%\)
+disabled, the bandit scheduler improves geometric-mean latency by \(9.99\%\)
 across the five reported benchmarks. The behavior is visible in the
 locality-attribution experiment: the largest improvements coincide with large
 reductions in copy bytes, while the near-neutral workload keeps the same copy
 footprint and remains close to HEFT.
 
 The final DVFS evaluation shows a smaller but meaningful energy result.
-\WinDVFS{} reduces geometric-mean energy by \(5.318\%\) with a geometric-mean
-latency overhead of \(0.479\%\) under the fixed Bandit placement layer. The
-geometric-mean EDP ratio improves to 0.951354, and all five reported
+\WinDVFS{} reduces geometric-mean energy by \(5.32\%\) with a geometric-mean
+latency overhead of \(0.48\%\) under the fixed Bandit placement layer. The
+geometric-mean EDP ratio improves to 0.951, and all five reported
 benchmarks remain below an EDP ratio of 1.0. The observed energy reductions
 are consistent with lower average power in the selected DVFS configurations,
 but the result should be interpreted as an energy--performance measurement
@@ -50,8 +50,8 @@ runtime on copy-sensitive workloads. The DVFS contribution is more modest but
 still useful: guarded window-level frequency control can reduce energy over
 the benchmark execution window while keeping aggregate latency overhead small.
 The end-to-end result combines these effects: \BanditWinDVFS{} reduces
-geometric-mean latency by \(8.795\%\), energy by \(11.874\%\), and EDP by
-\(19.625\%\) relative to HEFT.
+geometric-mean latency by \(8.80\%\), energy by \(11.87\%\), and EDP by
+\(19.63\%\) relative to HEFT.
 
 The work also identifies the limits of the current implementation. The results
 are single-node measurements, the benchmark suite is limited, the criticality
